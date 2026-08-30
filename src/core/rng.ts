@@ -15,7 +15,8 @@
  * identical across engines. `Math.sin`, `Math.pow` and friends are explicitly
  * implementation-dependent in ECMAScript and must never appear in a decision path.
  *
- * `Math.random` is banned everywhere else in `src/`. See `test/no-math-random.test.ts`.
+ * The global generator is banned everywhere else in `src/`; `test/rng.test.ts` greps for
+ * it.
  */
 
 /** A generator of uniform values in [0, 1). */

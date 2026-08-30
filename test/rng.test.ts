@@ -139,7 +139,8 @@ test("Math.random appears nowhere in src/ outside rng.ts", () => {
       if (statSync(path).isDirectory()) {
         walk(path);
       } else if (entry.endsWith(".ts") && path !== join("src", "core", "rng.ts")) {
-        if (readFileSync(path, "utf8").includes("Math.random")) offenders.push(path);
+        // A call, not a mention: prose about the rule is allowed to name it.
+        if (/Math\s*\.\s*random\s*\(/.test(readFileSync(path, "utf8"))) offenders.push(path);
       }
     }
   };
