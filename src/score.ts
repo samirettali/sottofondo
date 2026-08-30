@@ -5,6 +5,7 @@ import { floorMod } from "./core/time.ts";
 import { voiceLead } from "./harmony/chords.ts";
 import { chordAt, chooseKey, chooseProgression, type Progression } from "./harmony/progression.ts";
 import { defaultVoice, realise } from "./pattern/gen.ts";
+import { metricFromGrouping } from "./pattern/metric.ts";
 import { chooseNoteSet, defaultNoteVoice, realiseNotes } from "./pattern/notes.ts";
 import type { GenreDef } from "./genre/schema.ts";
 
@@ -122,6 +123,23 @@ export function effectiveDensity(
   return densityAt(base, energyAt(genre, bar), def?.densitySwing ?? 0);
 }
 
+/** Steps per beat, stated by the genre or assumed to be sixteenths in 4/4. */
+export function stepsPerBeat(genre: GenreDef): number {
+  return genre.clock.stepsPerBeat ?? genre.clock.stepsPerBar / 4;
+}
+
+/**
+ * The metric curve for a lane, or null to use the tabulated hierarchies.
+ *
+ * Only for lanes the length of a bar: a polymetric lane of another length has its own
+ * internal metre and the bar's grouping says nothing about it.
+ */
+function withMetric(genre: GenreDef, len: number): { metric?: readonly number[] } {
+  const grouping = genre.clock.grouping;
+  if (grouping === undefined || len !== genre.clock.stepsPerBar) return {};
+  return { metric: metricFromGrouping(grouping, len) };
+}
+
 function specs(genre: GenreDef): { pattern: EpochSpec; notes: EpochSpec } {
   return {
     pattern: {
@@ -195,6 +213,7 @@ export function scoreLane(
       accentAt: drum.accentAt ?? 0.75,
       ...(drum.vel === undefined ? {} : { vel: drum.vel }),
       ...(drum.syncopation === undefined ? {} : { syncopation: drum.syncopation }),
+      ...withMetric(genre, len),
     });
     // Pattern from the epoch so it repeats; chaos from the bar so it breathes; the fill
     // bonus is per step, so it thickens the end of the bar without touching the rest.
@@ -228,6 +247,7 @@ export function scoreLane(
     chaos: bass.chaos ?? 0,
     accentP: bass.accentP,
     slideP: bass.slideP,
+    ...withMetric(genre, len),
   });
   const epoch = epochAt(seed, bar, pattern);
   return realiseNotes(voice, noteSet, len, seed, epoch, laneIndex).map((slot) => ({
@@ -265,6 +285,7 @@ function scoreChords(
   const voice = defaultVoice(def.gen, {
     density: effectiveDensity(genre, laneIndex, bar, state.density),
     chaos: def.chaos ?? 0,
+    ...withMetric(genre, len),
   });
   const epoch = epochAt(seed, bar, specs(genre).pattern);
   const hits = realise(voice, len, seed, epoch, laneIndex, bar);

@@ -60,6 +60,11 @@ export interface VoicePattern {
   readonly vel: { readonly base: number; readonly accent: number; readonly ghost: number };
   /** Reshapes the metric curve: below 1 flattens it, above 1 sharpens it. */
   readonly syncopation?: number;
+  /**
+   * An explicit metric curve, for metres the tabulated hierarchies do not describe —
+   * anything additive rather than divisive. Falls back to the tables when absent.
+   */
+  readonly metric?: readonly number[];
 }
 
 export interface Hit {
@@ -101,6 +106,14 @@ export function strengths(
 ): number[] {
   const gen = voice.gen;
   const syncopation = voice.syncopation ?? 1;
+  // A supplied curve wins, for metres the tabulated hierarchies get wrong; it is only
+  // valid at its own length, so a shorter polymetric lane still uses the tables.
+  const supplied = voice.metric !== undefined && voice.metric.length === len ? voice.metric : null;
+  const weight = (i: number): number => {
+    if (supplied === null) return shapedWeight(i, len, syncopation);
+    const w = supplied[i] ?? 0.1;
+    return syncopation === 1 ? w : w ** syncopation;
+  };
 
   switch (gen.type) {
     case "none":
@@ -112,7 +125,7 @@ export function strengths(
         const i = floorMod(Math.floor(s), len);
         // A masked onset carries its metric weight rather than a flat 1, so density and
         // accent still discriminate between the downbeat and the pickup.
-        out[i] = 0.55 + 0.45 * shapedWeight(i, len, syncopation);
+        out[i] = 0.55 + 0.45 * weight(i);
       }
       return out;
     }
@@ -121,7 +134,7 @@ export function strengths(
       const p = euclid(gen.k, gen.n, gen.rot ?? 0);
       return Array.from({ length: len }, (_, i) => {
         const on = p[i % p.length] ?? 0;
-        return on ? 0.55 + 0.45 * shapedWeight(i, len, syncopation) : 0;
+        return on ? 0.55 + 0.45 * weight(i) : 0;
       });
     }
 
@@ -129,7 +142,7 @@ export function strengths(
       const p = timeline(gen.name, gen.rot ?? 0);
       return Array.from({ length: len }, (_, i) => {
         const on = p[i % p.length] ?? 0;
-        return on ? 0.55 + 0.45 * shapedWeight(i, len, syncopation) : 0;
+        return on ? 0.55 + 0.45 * weight(i) : 0;
       });
     }
 
@@ -137,7 +150,7 @@ export function strengths(
       const rng = rngFor(seed, bar, voiceIndex, SALT.strength);
       const amount = gen.amount ?? 1;
       return Array.from({ length: len }, (_, i) => {
-        const metric = shapedWeight(i, len, syncopation);
+        const metric = weight(i);
         // Inverted, the downbeat is the least likely place and the offbeat sixteenths the
         // most. The floor keeps the strongest positions merely unlikely rather than
         // forbidden, so a ghost lane can still land on a beat occasionally.

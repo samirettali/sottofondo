@@ -23,7 +23,22 @@ test("every genre is internally well formed", () => {
     const { bpm } = genre.clock;
     assert.ok(bpm.min <= bpm.default && bpm.default <= bpm.max, `${genre.id} tempo range`);
     assert.ok(genre.clock.swing >= 0.5 && genre.clock.swing <= 0.75, `${genre.id} swing`);
-    assert.ok(genre.clock.stepsPerBar % 4 === 0, `${genre.id} grid`);
+    // Not "a multiple of four": that is a 4/4 assumption, and an additive metre is not
+    // obliged to honour it. What must hold is that the grouping, where there is one,
+    // accounts for exactly the bar.
+    assert.ok(genre.clock.stepsPerBar > 0, `${genre.id} grid`);
+    const grouping = genre.clock.grouping;
+    if (grouping === undefined) {
+      assert.equal(genre.clock.stepsPerBar % 4, 0, `${genre.id} has no grouping and is not 4/4`);
+    } else {
+      assert.ok(grouping.length > 0, `${genre.id} has an empty grouping`);
+      for (const g of grouping) assert.ok(g > 0, `${genre.id} has a zero-length beat`);
+      assert.equal(
+        grouping.reduce((a, b) => a + b, 0),
+        genre.clock.stepsPerBar,
+        `${genre.id}'s grouping does not add up to its bar`,
+      );
+    }
     assert.ok(genre.drums.length > 0, `${genre.id} has no drums`);
     assert.ok(genre.version >= 1, `${genre.id} version`);
     assert.ok(genre.refs.length > 0, `${genre.id} cites no reference tracks`);

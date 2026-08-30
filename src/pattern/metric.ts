@@ -69,6 +69,43 @@ export function metricWeight(step: number, len: number): number {
 }
 
 /**
+ * A metric curve from an additive grouping.
+ *
+ * Aksak metres — 7/8 as 3+2+2, 9/8 as 2+2+2+3 — are not a subdivision hierarchy at all.
+ * They are unequal beats laid end to end, so the tabulated curves above, which halve at
+ * each binary level, describe them wrongly: they would make step 6 of a 3+2+2 bar weak
+ * when it is the start of a beat.
+ *
+ * The rule is the one the music actually follows: the downbeat is strongest, the first
+ * step of every group is strong, and a *longer* group takes a slightly stronger accent
+ * than a short one, which is what makes 3+2+2 audibly different from 2+2+3 rather than a
+ * rotation of it.
+ *
+ * `grouping` is in steps, so 3+2+2 eighths on a sixteenth grid is [6, 4, 4].
+ */
+export function metricFromGrouping(grouping: readonly number[], len: number): number[] {
+  const out = new Array<number>(len).fill(0.1);
+  const total = grouping.reduce((a, b) => a + b, 0);
+  if (total <= 0) return out;
+  const longest = Math.max(...grouping);
+
+  let step = 0;
+  grouping.forEach((group, i) => {
+    for (let j = 0; j < group && step < len; j++, step++) {
+      if (j === 0) {
+        // 1.0 on the bar's downbeat; other group heads scale with the group's length.
+        out[step] = i === 0 ? 1 : 0.6 + 0.25 * (group / longest);
+      } else if (j % 2 === 0) {
+        out[step] = 0.3; // the middle of a long group
+      } else {
+        out[step] = 0.12; // between the eighths
+      }
+    }
+  });
+  return out;
+}
+
+/**
  * Reshape the metric curve.
  *
  * `syncopation < 1` flattens it, so onsets spread away from the beats — house, dnb,

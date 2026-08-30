@@ -17,7 +17,7 @@ import { isMuted } from "./arrange/epoch.ts";
 import { Clock, type StepEvent } from "./core/clock.ts";
 import { formatSeed } from "./core/rng.ts";
 import { compositeCycleSteps, floorMod, swingOffsetBeats, track } from "./core/time.ts";
-import { lanesOf, patternIndexAt, scoreLane, type LaneState } from "./score.ts";
+import { lanesOf, patternIndexAt, scoreLane, stepsPerBeat, type LaneState } from "./score.ts";
 import type { BassDef, ChordsDef, DrumVoiceDef, GenreDef } from "./genre/schema.ts";
 
 /**
@@ -171,7 +171,7 @@ export class Engine {
     if (this.bass !== null) lanes.push(track(this.bass.len));
     if (this.chords !== null) lanes.push(track(this.chords.len));
     this.clock = new Clock(() => ctx.currentTime, lanes, {
-      stepsPerBeat: genre.clock.stepsPerBar / 4,
+      stepsPerBeat: stepsPerBeat(genre),
     });
     this.clock.onStep((e) => this.step(e));
   }

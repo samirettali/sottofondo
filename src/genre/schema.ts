@@ -144,6 +144,18 @@ export interface GenreDef {
   readonly clock: {
     readonly bpm: { readonly min: number; readonly max: number; readonly default: number };
     readonly stepsPerBar: number;
+    /**
+     * Steps per beat. Four gives sixteenths in 4/4. Stated rather than derived, because
+     * an additive metre has no single answer: 7/8 as 3+2+2 has three beats of unequal
+     * length in fourteen steps, and `stepsPerBar / 4` describes nothing there.
+     */
+    readonly stepsPerBeat?: number;
+    /**
+     * Beat lengths in steps, for additive metres — 3+2+2 eighths on a sixteenth grid is
+     * `[6, 4, 4]`. When present it also generates the metric curve, since the tabulated
+     * hierarchies assume a divisive metre and get an aksak bar wrong.
+     */
+    readonly grouping?: readonly number[];
     /** Linn/MPC percentage: 50 is straight, 66.67 a true triplet. */
     readonly swing: number;
     readonly swingSubdiv: 8 | 16;
