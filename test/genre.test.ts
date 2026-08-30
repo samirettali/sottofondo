@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import { epochAt, EPOCHS } from "../src/arrange/epoch.ts";
 import { GENRES, defaultGenre, genreList } from "../src/genre/index.ts";
 import { acid } from "../src/genre/acid.ts";
+import { techno } from "../src/genre/techno.ts";
+import { compositeCycleSteps, track } from "../src/core/time.ts";
 import { defaultVoice, realise } from "../src/pattern/gen.ts";
 import { chooseNoteSet, defaultNoteVoice, realiseNotes } from "../src/pattern/notes.ts";
 
@@ -121,6 +123,20 @@ test("acid's kick is four on the floor and its open hat is on the offbeats", () 
     0,
   ).map((h) => h.step);
   assert.deepEqual(hits, [0, 4, 8, 12]);
+});
+
+test("techno's perc lane is polymetric against the bar", () => {
+  const perc = techno.drums.find((d) => d.name === "perc");
+  assert.equal(perc?.len, 7);
+  const lanes = techno.drums.map((d) => track(d.len ?? techno.clock.stepsPerBar));
+  // Seven against sixteen is coprime, so the figure lands somewhere new for seven bars.
+  assert.equal(compositeCycleSteps(lanes), 112);
+});
+
+test("two lanes may share one kit voice", () => {
+  const closed = techno.drums.filter((d) => d.kitVoice === "closedHat");
+  assert.equal(closed.length, 2, "a steady lane and a ghost lane on the same voice");
+  assert.notEqual(closed[0]?.name, closed[1]?.name);
 });
 
 test("acid's kick drops out far less often than anything else", () => {
