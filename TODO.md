@@ -27,9 +27,10 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 
 ## 2. Pattern layer
 
-- [ ] `src/pattern/euclid.ts` — Bjorklund (**not** Bresenham; the rotation is the music)
-- [ ] Verify against Toussaint's table: `E(3,8) E(5,8) E(5,16) E(7,16) E(5,13)`
-- [ ] `(k, n, rotation)` triples as the stored form, with a named-rhythm table
+- [x] `src/pattern/euclid.ts` — Bjorklund (**not** Bresenham; the rotation is the music)
+- [x] Verify against Toussaint's table — all 23 published entries, plus maximal-evenness
+      and onset-count properties over every `(k, n)` with n ≤ 32
+- [x] `(k, n, rotation)` triples as the stored form, with a named-rhythm table
 - [ ] `src/pattern/clave.ts` — the six 5-in-16 timelines (son, rumba, bossa, shiko,
       soukous, gahu). Son is **not** `E(5,16)`
 - [ ] `src/pattern/metric.ts` — 16-entry metric-weight table
