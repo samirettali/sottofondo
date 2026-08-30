@@ -81,11 +81,11 @@ export const house: GenreDef = {
     {
       name: "shaker",
       kitVoice: "rim",
-      gen: { type: "stepClassP" },
-      density: 0.3,
-      chaos: 0.25,
-      // Flattening the metric curve pushes this off the beats, where a shaker belongs.
-      syncopation: 0.5,
+      // Inverted, so the shaker lands between the beats where it belongs.
+      gen: { type: "stepClassP", invert: true },
+      // Inverted lanes want a much lower density: almost every step is a likely one.
+      density: 0.2,
+      chaos: 0.15,
       vel: { base: 0.12, accent: 0.18, ghost: 0.06 },
       swingDepth: 1,
       muteP: 0.5,

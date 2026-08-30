@@ -1,4 +1,5 @@
 import { acid } from "./acid.ts";
+import { dnb } from "./dnb.ts";
 import { house } from "./house.ts";
 import { techno } from "./techno.ts";
 import type { GenreDef } from "./schema.ts";
@@ -14,6 +15,7 @@ export const GENRES: Readonly<Record<string, GenreDef>> = {
   [acid.id]: acid,
   [techno.id]: techno,
   [house.id]: house,
+  [dnb.id]: dnb,
 };
 
 export const defaultGenre: GenreDef = acid;

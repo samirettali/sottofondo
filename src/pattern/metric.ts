@@ -15,6 +15,20 @@ export const METRIC_16: readonly number[] = [
   1.0, 0.1, 0.3, 0.15, 0.7, 0.1, 0.35, 0.15, 0.85, 0.1, 0.3, 0.15, 0.7, 0.1, 0.35, 0.2,
 ];
 
+/**
+ * 32 steps: a two-bar pattern, which is the unit breakbeat genres actually work in.
+ *
+ * The second bar repeats the first's hierarchy at nine tenths the weight. That small
+ * asymmetry is what makes a two-bar pattern read as one phrase rather than as the same
+ * bar twice — the variation lands in bar two because bar two is where the curve is
+ * weakest, which is where a drummer puts it too.
+ */
+export const METRIC_32: readonly number[] = [
+  1.0, 0.1, 0.3, 0.15, 0.7, 0.1, 0.35, 0.15, 0.85, 0.1, 0.3, 0.15, 0.7, 0.1, 0.35, 0.2,
+  0.9, 0.09, 0.27, 0.14, 0.63, 0.09, 0.32, 0.14, 0.77, 0.09, 0.27, 0.14, 0.63, 0.09, 0.32,
+  0.22,
+];
+
 /** 12 steps: 4/4 in eighth-note triplets, or 12/8. */
 export const METRIC_12: readonly number[] = [
   1.0, 0.15, 0.25, 0.7, 0.15, 0.25, 0.85, 0.15, 0.25, 0.7, 0.15, 0.3,
@@ -30,7 +44,15 @@ export const METRIC_8: readonly number[] = [1.0, 0.2, 0.7, 0.25, 0.85, 0.2, 0.7,
  */
 export function metricWeight(step: number, len: number): number {
   const table =
-    len === 16 ? METRIC_16 : len === 12 ? METRIC_12 : len === 8 ? METRIC_8 : null;
+    len === 16
+      ? METRIC_16
+      : len === 32
+        ? METRIC_32
+        : len === 12
+          ? METRIC_12
+          : len === 8
+            ? METRIC_8
+            : null;
   if (table !== null) return table[((step % len) + len) % len] ?? 0;
 
   const i = ((step % len) + len) % len;

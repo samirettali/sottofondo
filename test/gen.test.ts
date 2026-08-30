@@ -126,6 +126,47 @@ test("stepClassP favours the beats", () => {
   assert.ok(onBeat > offBeat, `${onBeat} on the beat vs ${offBeat} off it`);
 });
 
+test("inverted stepClassP prefers exactly what the beat is not", () => {
+  const gen = { type: "stepClassP", invert: true } as const;
+  const v = defaultVoice(gen, { density: 0.5 });
+  let onBeat = 0;
+  let offBeat = 0;
+  for (let bar = 0; bar < 400; bar++) {
+    for (const h of realise(v, LEN, 55, bar, 0)) {
+      if (h.step % 4 === 0) onBeat++;
+      else offBeat++;
+    }
+  }
+  assert.ok(offBeat > onBeat * 3, `${offBeat} off the beat vs ${onBeat} on it`);
+});
+
+test("inverting is not the same as flattening", () => {
+  // Flattening reduces how much the strong positions win by; they still win. Only
+  // inverting makes the weak positions the likely ones.
+  const flat = defaultVoice({ type: "stepClassP" }, { density: 0.5, syncopation: 0.4 });
+  const inverted = defaultVoice({ type: "stepClassP", invert: true }, { density: 0.5 });
+  const downbeatRate = (v: VoicePattern) => {
+    let hits = 0;
+    for (let bar = 0; bar < 300; bar++) {
+      if (realise(v, LEN, 12, bar, 0).some((h) => h.step === 0)) hits++;
+    }
+    return hits / 300;
+  };
+  assert.ok(downbeatRate(flat) > 0.7, "flattening should still favour the downbeat");
+  assert.ok(downbeatRate(inverted) < 0.3, "inverting should avoid the downbeat");
+});
+
+test("an inverted lane can still occasionally land on a beat", () => {
+  // The floor keeps strong positions unlikely rather than forbidden, so a ghost lane
+  // does not become a rigid anti-pattern.
+  const v = defaultVoice({ type: "stepClassP", invert: true }, { density: 0.9 });
+  let downbeats = 0;
+  for (let bar = 0; bar < 300; bar++) {
+    if (realise(v, LEN, 31, bar, 0).some((h) => h.step === 0)) downbeats++;
+  }
+  assert.ok(downbeats > 0, "never lands on the downbeat at all");
+});
+
 test("stepClassP varies bar to bar but repeats for the same bar", () => {
   const v = defaultVoice({ type: "stepClassP" }, { density: 0.5 });
   assert.deepEqual(realise(v, LEN, 3, 12, 0), realise(v, LEN, 3, 12, 0));

@@ -23,6 +23,10 @@ import { shapedWeight } from "./metric.ts";
  * **density 0.5 the firing probability is exactly the metric weight**. On the 16-step
  * curve that sums to 5.6 onsets per bar, which is where the presets are anchored.
  *
+ * An **inverted** lane needs a much lower density for the same event count, because
+ * inverting makes almost every step a likely one: around 0.15 gives a handful of ghost
+ * notes where 0.5 would give twenty.
+ *
  * Chaos is rolled **once per bar per voice**, not per step. Per-step noise sounds
  * sprinkled; a whole bar of busier hats sounds like a decision. That coherence is most
  * of what separates musical probabilistic sequencing from a random gate.
@@ -30,8 +34,15 @@ import { shapedWeight } from "./metric.ts";
 
 /** What a voice plays, before it is gated. */
 export type PatternGen =
-  /** Probability by metric position — the model the reference implementation uses. */
-  | { readonly type: "stepClassP"; readonly amount?: number }
+  /**
+   * Probability by metric position — the model the reference implementation uses.
+   *
+   * `invert` turns the metric curve upside down, so the generator prefers exactly the
+   * places the beat is not. That is what ghost notes, shakers and offbeat percussion do,
+   * and flattening the curve with `syncopation` cannot express it: flattening reduces how
+   * much the strong positions win by, but they still win.
+   */
+  | { readonly type: "stepClassP"; readonly amount?: number; readonly invert?: boolean }
   /** Fixed onsets. Genre conventions that are simply conventions live here. */
   | { readonly type: "mask"; readonly steps: readonly number[] }
   | { readonly type: "euclid"; readonly k: number; readonly n: number; readonly rot?: number }
@@ -126,7 +137,11 @@ export function strengths(
       const rng = rngFor(seed, bar, voiceIndex, SALT.strength);
       const amount = gen.amount ?? 1;
       return Array.from({ length: len }, (_, i) => {
-        const w = shapedWeight(i, len, syncopation);
+        const metric = shapedWeight(i, len, syncopation);
+        // Inverted, the downbeat is the least likely place and the offbeat sixteenths the
+        // most. The floor keeps the strongest positions merely unlikely rather than
+        // forbidden, so a ghost lane can still land on a beat occasionally.
+        const w = gen.invert === true ? Math.max(0.08, 1 - metric) : metric;
         // Half the strength is where the step sits in the bar, half is the draw. Pure
         // metric weight gives the same pattern every bar; pure draw gives noise.
         //
