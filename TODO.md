@@ -19,10 +19,10 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 - [x] Ban `Math.random` in `src/` outside `rng.ts` (lint rule or a test that greps)
 - [x] `src/core/time.ts` — rational time, `beatOfStep`, `beatToTime`, tempo map anchored
       at `(anchorBeat, anchorTime)`, swing, `autoSwing`, polymeter cycle length
-- [ ] `src/core/clock.ts` — lookahead scheduler: 25 ms tick, 100 ms horizon, absolute
+- [x] `src/core/clock.ts` — lookahead scheduler: 25 ms tick, 100 ms horizon, absolute
       `AudioContext` times, per-voice cursors
-- [ ] Move the ticker into a `Worker` so a hidden tab does not stop the sequencer
-- [ ] `AudioContext` created lazily inside the first user gesture (autoplay policy)
+- [x] Move the ticker into a `Worker` so a hidden tab does not stop the sequencer
+- [x] `AudioContext` created lazily inside the first user gesture (autoplay policy)
 - [ ] Seed in the URL hash, `?g=<genre>&s=<hex>`, read on load
 
 ## 2. Pattern layer
