@@ -119,12 +119,17 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
 
 ## 8. UI
 
-- [ ] Canvas pattern display and an oscilloscope
-- [ ] Dials — pointer events, not mouse events (EAB is desktop-only because of this)
-- [ ] Genre picker, seed field, "new seed" button, copy-link
-- [ ] Sliders: BPM, per-voice density, swing, chaos, filter, FX, sidechain
+- [x] Canvas pattern display and an oscilloscope
+- [x] Range inputs rather than dials — keyboard-reachable and touch-usable, which the
+      reference's mouse-only dials are not
+- [x] Genre picker, seed field, "new seed" button
+- [x] Sliders: BPM, swing, volume, per-voice density; per-voice mute
+- [x] Every lane drawn one bar wide, so a polymetric lane visibly drifts
+- [ ] Copy-link button
+- [ ] Sliders for the 303: cutoff, resonance, env mod, decay
+- [ ] Sliders for FX: delay wet and feedback, sidechain depth
 - [ ] Genre morph: crossfade the numeric fields of two `GenreDef`s
-- [ ] Show the composite cycle length ("repeats in 35 bars") when voices are polymetric
+- [ ] Show the composite cycle length ("repeats in 7 bars") when voices are polymetric
 
 ## 9. Verification
 

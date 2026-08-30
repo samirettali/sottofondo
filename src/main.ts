@@ -1,6 +1,7 @@
 import { Engine } from "./app.ts";
 import { formatSeed, parseSeed } from "./core/rng.ts";
 import { GENRES, defaultGenre } from "./genre/index.ts";
+import { buildUi } from "./ui/ui.ts";
 
 /**
  * Entry point.
@@ -30,33 +31,42 @@ function writeUrl(genreId: string, seed: number): void {
 const app = document.getElementById("app");
 const startButton = document.getElementById("start") as HTMLButtonElement | null;
 
+let ctx: AudioContext | null = null;
 let engine: Engine | null = null;
+let teardown: (() => void) | null = null;
 
-startButton?.addEventListener("click", async () => {
-  if (engine === null) {
-    const ctx = new AudioContext();
+/**
+ * Rebuild the engine for a new genre or seed.
+ *
+ * A whole new engine rather than a mutated one: the graph a genre wants differs, and
+ * tearing it down is the only way to be sure nothing from the old one is left scheduled.
+ * The AudioContext is reused, so this stays inside the original gesture's permission.
+ */
+function load(genreId: string, seed: number): void {
+  if (ctx === null || app === null) return;
+  teardown?.();
+  engine?.dispose();
+
+  const genre = GENRES[genreId] ?? defaultGenre;
+  writeUrl(genre.id, seed);
+
+  engine = new Engine(ctx, genre, seed);
+  if (import.meta.env.DEV) Object.assign(window, { engine });
+  engine.start();
+
+  teardown = buildUi(app, engine, {
+    onGenre: (id) => load(id, seed),
+    onSeed: (next) => load(genreId, next),
+  });
+}
+
+startButton?.addEventListener(
+  "click",
+  async () => {
+    ctx = new AudioContext();
     await ctx.resume();
     const { genreId, seed } = readUrl();
-    const genre = GENRES[genreId] ?? defaultGenre;
-    writeUrl(genre.id, seed);
-
-    engine = new Engine(ctx, genre, seed);
-    if (import.meta.env.DEV) Object.assign(window, { engine });
-    engine.start();
-
-    startButton.textContent = "stop";
-    const label = document.createElement("p");
-    label.id = "status";
-    label.textContent = `${genre.name} · seed ${engine.seedLabel} · ${engine.tempo} bpm`;
-    app?.append(label);
-    return;
-  }
-
-  if (engine.clock.isRunning) {
-    engine.stop();
-    startButton.textContent = "start";
-  } else {
-    engine.start();
-    startButton.textContent = "stop";
-  }
-});
+    load(genreId, seed);
+  },
+  { once: true },
+);

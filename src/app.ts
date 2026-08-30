@@ -29,6 +29,8 @@ interface RuntimeVoice {
   readonly def: DrumVoiceDef;
   readonly len: number;
   readonly out: DrumVoice;
+  /** Live override of the preset's density. */
+  density: number;
   /** Set by the UI. Distinct from the arrangement's own mutes. */
   userMuted: boolean;
 }
@@ -37,9 +39,23 @@ interface RuntimeBass {
   readonly def: BassDef;
   readonly len: number;
   readonly synth: ThreeOh;
+  density: number;
   userMuted: boolean;
   /** Whether the previous note left the gate open for a slide. */
   gateOpen: boolean;
+}
+
+/** What a display needs to know about one lane. */
+export interface VoiceView {
+  readonly name: string;
+  /** The lane's own pattern length, which may differ from a bar. */
+  readonly len: number;
+  readonly density: number;
+  readonly userMuted: boolean;
+  /** Muted by the arrangement, as opposed to by the user. */
+  readonly autoMuted: boolean;
+  /** The current bar's pattern as velocities, zero where silent. */
+  readonly steps: readonly number[];
 }
 
 export interface EngineOptions {
@@ -90,6 +106,7 @@ export class Engine {
         def,
         len: def.len ?? genre.clock.stepsPerBar,
         out: this.kit[def.kitVoice],
+        density: def.density,
         userMuted: false,
       });
     }
@@ -105,6 +122,7 @@ export class Engine {
         def,
         len: def.len ?? genre.clock.stepsPerBar,
         synth: createThreeOh(ctx, out, def.wave, def.synth),
+        density: def.density,
         userMuted: false,
         gateOpen: false,
       };
@@ -142,6 +160,19 @@ export class Engine {
     this.clock.stop();
   }
 
+  /**
+   * Tear the whole graph down.
+   *
+   * Required before building a second engine on the same context: the master chain is
+   * connected to the destination and the 303's oscillator never stops on its own, so an
+   * abandoned engine keeps playing and keeps everything downstream of it alive.
+   */
+  dispose(): void {
+    this.stop();
+    this.bass?.synth.dispose();
+    this.master.dispose();
+  }
+
   setBpm(bpm: number): void {
     this.bpm = bpm;
     this.clock.setBpm(bpm);
@@ -170,6 +201,87 @@ export class Engine {
     }
   }
 
+  setDensity(index: number, density: number): void {
+    const clamped = Math.max(0, Math.min(1, density));
+    if (index === this.bassLane && this.bass !== null) this.bass.density = clamped;
+    else {
+      const v = this.voices[index];
+      if (v !== undefined) v.density = clamped;
+    }
+  }
+
+  get swingAmount(): number {
+    return this.swing;
+  }
+
+  setSwing(swing: number): void {
+    this.swing = Math.max(0.5, Math.min(0.75, swing));
+  }
+
+  setVolume(v: number): void {
+    this.master.setVolume(v);
+  }
+
+  /** Which bar the audio clock is currently in. */
+  get currentBar(): number {
+    const stepsPerBar = this.genre.clock.stepsPerBar;
+    const step = this.clock.currentBeat * this.clock.stepsPerBeat;
+    return Math.max(0, Math.floor(step / stepsPerBar));
+  }
+
+  /** Step within the current bar, for a playhead. */
+  get currentStep(): number {
+    const step = Math.floor(this.clock.currentBeat * this.clock.stepsPerBeat);
+    return floorMod(step, this.genre.clock.stepsPerBar);
+  }
+
+  /** A snapshot of every lane, for the display. Cheap: generation is pure. */
+  views(bar = this.currentBar): VoiceView[] {
+    const out: VoiceView[] = [];
+    const muteEvery = this.genre.arrangement.muteEvery;
+    const perBar = this.genre.clock.stepsPerBar;
+
+    /**
+     * A lane is always drawn as one bar, whatever its own length. A seven-step lane is
+     * shown tiled across the bar and lands somewhere different in the next one, which is
+     * the whole point of a polymetric lane and is invisible if each lane is drawn as its
+     * own cycle.
+     */
+    const spread = (velocities: readonly number[], len: number): number[] =>
+      Array.from({ length: perBar }, (_, i) => velocities[this.patternIndexAt(len, bar, i)] ?? 0);
+
+    this.voices.forEach((voice, i) => {
+      const own = new Array<number>(voice.len).fill(0);
+      for (const hit of this.hitsFor(voice, bar, i)) own[hit.step] = hit.velocity;
+      const steps = spread(own, voice.len);
+      out.push({
+        name: voice.name,
+        len: voice.len,
+        density: voice.density,
+        userMuted: voice.userMuted,
+        autoMuted: isMuted(this.seed, bar, i, muteEvery, voice.def.muteP ?? 0),
+        steps,
+      });
+    });
+
+    if (this.bass !== null) {
+      const i = this.bassLane;
+      const own = new Array<number>(this.bass.len).fill(0);
+      for (const slot of this.slotsFor(this.bass, bar, i)) own[slot.step] = slot.velocity;
+      const steps = spread(own, this.bass.len);
+      out.push({
+        name: this.bass.def.name,
+        len: this.bass.len,
+        density: this.bass.density,
+        userMuted: this.bass.userMuted,
+        autoMuted: isMuted(this.seed, bar, i, muteEvery, this.bass.def.muteP ?? 0),
+        steps,
+      });
+    }
+
+    return out;
+  }
+
   private step(e: StepEvent): void {
     if (e.voice === this.bassLane) this.bassStep(e);
     else this.drumStep(e);
@@ -179,13 +291,18 @@ export class Engine {
     const voice = this.voices[e.voice];
     if (voice === undefined || voice.userMuted) return;
 
-    const stepInBar = floorMod(e.step, voice.len);
-    const bar = Math.floor(e.step / voice.len);
+    // The bar is global — floor(step / stepsPerBar) — not floor(step / voice.len). A
+    // seven-step lane still lives in the same bars as everything else; keying its epochs
+    // and mutes on its own cycle would make it change pattern more than twice as often
+    // as the rest of the kit, which is not what a polymetric lane means.
+    const patternStep = floorMod(e.step, voice.len);
+    const stepInBar = floorMod(e.step, this.genre.clock.stepsPerBar);
+    const bar = Math.floor(e.step / this.genre.clock.stepsPerBar);
     if (isMuted(this.seed, bar, e.voice, this.genre.arrangement.muteEvery, voice.def.muteP ?? 0)) {
       return;
     }
 
-    const hit = this.hitsFor(voice, bar, e.voice).find((h) => h.step === stepInBar);
+    const hit = this.hitsFor(voice, bar, e.voice).find((h) => h.step === patternStep);
     if (hit === undefined) return;
 
     const at = this.displace(e, stepInBar, voice.def.swingDepth ?? 0, voice.def.nudgeMs ?? 0);
@@ -195,17 +312,23 @@ export class Engine {
     this.onHit(e.voice, stepInBar, hit.velocity, at);
   }
 
+  /** Where in its own pattern a lane is, at a given position in a bar. */
+  private patternIndexAt(len: number, bar: number, stepInBar: number): number {
+    return floorMod(bar * this.genre.clock.stepsPerBar + stepInBar, len);
+  }
+
   private bassStep(e: StepEvent): void {
     const bass = this.bass;
     if (bass === null || bass.userMuted) return;
 
-    const stepInBar = floorMod(e.step, bass.len);
-    const bar = Math.floor(e.step / bass.len);
+    const patternStep = floorMod(e.step, bass.len);
+    const stepInBar = floorMod(e.step, this.genre.clock.stepsPerBar);
+    const bar = Math.floor(e.step / this.genre.clock.stepsPerBar);
     if (isMuted(this.seed, bar, e.voice, this.genre.arrangement.muteEvery, bass.def.muteP ?? 0)) {
       return;
     }
 
-    const slot = this.slotsFor(bass, bar, e.voice).find((s) => s.step === stepInBar);
+    const slot = this.slotsFor(bass, bar, e.voice).find((s) => s.step === patternStep);
     const at = this.displace(e, stepInBar, bass.def.swingDepth ?? 0, bass.def.nudgeMs ?? 0);
 
     if (slot === undefined) {
@@ -237,7 +360,7 @@ export class Engine {
   private hitsFor(voice: RuntimeVoice, bar: number, voiceIndex: number): Hit[] {
     const epoch = epochAt(this.seed, bar, this.patternSpec);
     const pattern = defaultVoice(voice.def.gen, {
-      density: voice.def.density,
+      density: voice.density,
       chaos: voice.def.chaos ?? 0,
       accentAt: voice.def.accentAt ?? 0.75,
       ...(voice.def.vel === undefined ? {} : { vel: voice.def.vel }),
@@ -260,7 +383,7 @@ export class Engine {
     );
     const voice = defaultNoteVoice({
       gen: bass.def.gen,
-      density: bass.def.density,
+      density: bass.density,
       chaos: bass.def.chaos ?? 0,
       accentP: bass.def.accentP,
       slideP: bass.def.slideP,

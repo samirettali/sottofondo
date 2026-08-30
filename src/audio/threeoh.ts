@@ -32,6 +32,11 @@ export interface ThreeOh {
   noteOff(at: number): void;
   readonly params: ThreeOhParams;
   set(params: Partial<ThreeOhParams>, at?: number): void;
+  /**
+   * Stop the always-running oscillator. Without this the voice stays permanently
+   * "actively processing", and neither it nor anything downstream is ever collected.
+   */
+  dispose(): void;
 }
 
 /** Glide time constants: a slid note takes 60 ms, a plain one still takes 2 ms. */
@@ -137,6 +142,19 @@ export function createThreeOh(
       anchor(vca.gain, at);
       // A 10 ms fade, not a hard gate — a hard gate clicks.
       vca.gain.setTargetAtTime(0, at, 0.01);
+    },
+
+    dispose() {
+      const now = ctx.currentTime;
+      anchor(vca.gain, now);
+      vca.gain.linearRampToValueAtTime(0, now + 0.02);
+      osc.stop(now + 0.05);
+      env.stop(now + 0.05);
+      osc.onended = () => {
+        vca.disconnect();
+        filter.disconnect();
+        envDepth.disconnect();
+      };
     },
   };
 }

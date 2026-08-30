@@ -18,6 +18,8 @@ export interface Master {
   readonly input: GainNode;
   readonly analyser: AnalyserNode;
   setVolume(v: number, at?: number): void;
+  /** Disconnect from the destination. Required before building a second engine. */
+  dispose(): void;
 }
 
 /**
@@ -81,6 +83,13 @@ export function createMaster(ctx: BaseAudioContext, destination?: AudioNode): Ma
       // Never step a gain: an instantaneous change is a click. A few milliseconds of
       // ramp is inaudible and removes it.
       input.gain.linearRampToValueAtTime(Math.max(0, v), at + 0.01);
+    },
+    dispose() {
+      input.disconnect();
+      shaper.disconnect();
+      dc.disconnect();
+      glue.disconnect();
+      analyser.disconnect();
     },
   };
 }

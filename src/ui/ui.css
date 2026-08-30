@@ -1,9 +1,13 @@
 :root {
   color-scheme: dark;
   --bg: #101014;
+  --panel: #16161c;
   --fg: #e6e6ea;
   --dim: #6c6c78;
-  --accent: #4ade80;
+  --line: #26262e;
+  --on: #4ade80;
+  --off: #26262e;
+  --head: #8b8b99;
 }
 
 * {
@@ -15,7 +19,19 @@ body {
   min-height: 100dvh;
   background: var(--bg);
   color: var(--fg);
-  font: 14px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
+  font: 13px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding: 3rem 1rem;
+}
+
+#app {
+  width: min(46rem, 100%);
+}
+
+/* The pre-start state is a single button and nothing else. */
+#app:not(.rack) {
   display: grid;
   place-items: center;
 }
@@ -24,13 +40,141 @@ button {
   font: inherit;
   color: inherit;
   background: transparent;
-  border: 1px solid var(--dim);
+  border: 1px solid var(--line);
   border-radius: 2px;
-  padding: 0.6em 1.2em;
+  padding: 0.45em 0.9em;
   cursor: pointer;
 }
 
 button:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--on);
+  color: var(--on);
+}
+
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--on);
+  outline-offset: 2px;
+}
+
+.rack {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+select,
+input[type="text"],
+.seed {
+  font: inherit;
+  color: inherit;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  padding: 0.45em 0.6em;
+}
+
+.seed {
+  /* Eight hex digits plus the padding, or the seed is clipped. */
+  width: 12ch;
+}
+
+.globals {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+
+.slider {
+  display: grid;
+  grid-template-columns: 5rem 1fr 9rem;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.slider .label {
+  color: var(--dim);
+}
+
+.slider .value {
+  color: var(--dim);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--on);
+}
+
+.lanes {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.lane {
+  display: grid;
+  grid-template-columns: 7rem 1fr 12rem;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.lane .name {
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lane.muted .name {
+  color: var(--dim);
+  border-style: dashed;
+}
+
+/* Muted by the arrangement rather than by the user: dimmed, but not marked as a choice. */
+.lane.auto-muted .steps {
+  opacity: 0.5;
+}
+
+.lane .density {
+  grid-template-columns: 0 1fr 3.5rem;
+}
+
+.steps,
+.scope {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.scope {
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: var(--panel);
+}
+
+.status {
+  margin: 0;
+  color: var(--dim);
+}
+
+@media (max-width: 34rem) {
+  .lane,
+  .slider {
+    grid-template-columns: 6rem 1fr;
+  }
+
+  .slider .value,
+  .lane .density {
+    grid-column: 2;
+  }
 }
