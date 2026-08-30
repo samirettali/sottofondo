@@ -55,7 +55,14 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
     }
   });
 
-  header.append(transport, genre, seed, reroll);
+  const copy = button("link", "copy link", () => {
+    void navigator.clipboard?.writeText(location.href).then(
+      () => flash(copy, "copied"),
+      () => flash(copy, "failed"),
+    );
+  });
+
+  header.append(transport, genre, seed, reroll, copy);
 
   const globals = el("div", "globals");
   const bpm = slider("bpm", engine.genre.clock.bpm.min, engine.genre.clock.bpm.max, 1, engine.tempo, (v) => {
@@ -71,6 +78,42 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
     return v.toFixed(2);
   });
   globals.append(bpm.row, swing.row, volume.row);
+
+  // Synth and effect controls, only for the voices this genre actually has.
+  const synth = engine.synthState;
+  const tweaks = el("div", "globals");
+  if (synth.bass !== null) {
+    // Cutoff on a logarithmic slider: an octave should be the same distance everywhere,
+    // which a linear hertz control does not give.
+    tweaks.append(
+      logSlider("cutoff", 60, 6000, synth.bass.cutoff, (v) => {
+        engine.setBassParam("cutoff", v);
+        return `${Math.round(v)} Hz`;
+      }).row,
+      slider("res", 0.5, 24, 0.1, synth.bass.resonance, (v) => {
+        engine.setBassParam("resonance", v);
+        return v.toFixed(1);
+      }).row,
+      slider("env mod", 0, 8000, 50, synth.bass.envMod, (v) => {
+        engine.setBassParam("envMod", v);
+        return `${Math.round(v)} c`;
+      }).row,
+      slider("decay", 0.05, 1.2, 0.01, synth.bass.decay, (v) => {
+        engine.setBassParam("decay", v);
+        return `${v.toFixed(2)} s`;
+      }).row,
+    );
+  }
+  tweaks.append(
+    slider("delay", 0, 0.6, 0.01, synth.delay.wet, (v) => {
+      engine.setDelayParam("wet", v);
+      return v.toFixed(2);
+    }).row,
+    slider("feedback", 0, 0.9, 0.01, synth.delay.feedback, (v) => {
+      engine.setDelayParam("feedback", v);
+      return v.toFixed(2);
+    }).row,
+  );
 
   const lanes = el("div", "lanes");
   const laneViews = engine.views().map((view, index) => {
@@ -115,10 +158,16 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
 
   const status = el("p", "status");
 
-  root.append(header, globals, lanes, energyBar, scope, status);
+  root.append(header, globals, lanes, energyBar, tweaks, scope, status);
 
   // Drawing runs on requestAnimationFrame and reads the engine; it never writes to it,
   // and it never touches the audio clock for anything but display.
+  // How long before every lane realigns. Only worth saying when it is not one bar —
+  // it is the single most useful readout a polymetric sequencer can give, and there is
+  // no other way to know a seven-step lane will not repeat for seven bars.
+  const cycleBars = engine.compositeCycleBars;
+  const cycleNote = cycleBars > 1 ? ` · repeats every ${cycleBars} bars` : "";
+
   const wave = new Float32Array(engine.master.analyser.fftSize);
   let raf = 0;
   const draw = () => {
@@ -141,7 +190,7 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
     const where = section.bars > 0 ? ` ${section.bar + 1}/${section.bars}` : "";
     status.textContent =
       `${engine.genre.name} · seed ${formatSeed(engine.seed)} · bar ${bar + 1}` +
-      ` · ${section.name}${where} · energy ${section.energy.toFixed(2)}`;
+      ` · ${section.name}${where} · energy ${section.energy.toFixed(2)}${cycleNote}`;
     raf = requestAnimationFrame(draw);
   };
   raf = requestAnimationFrame(draw);
@@ -210,6 +259,33 @@ function button(label: string, aria: string, onClick: () => void): HTMLButtonEle
   b.setAttribute("aria-label", aria);
   b.addEventListener("click", onClick);
   return b;
+}
+
+function flash(node: HTMLElement, text: string): void {
+  const original = node.textContent;
+  node.textContent = text;
+  setTimeout(() => {
+    node.textContent = original;
+  }, 900);
+}
+
+/**
+ * A slider whose travel is logarithmic.
+ *
+ * For cutoff and anything else heard as pitch, an octave should occupy the same distance
+ * wherever it sits. A linear hertz control puts nine tenths of its travel above 1 kHz,
+ * where almost nothing musical happens.
+ */
+function logSlider(
+  label: string,
+  min: number,
+  max: number,
+  value: number,
+  onInput: (v: number) => string,
+): { row: HTMLElement; input: HTMLInputElement } {
+  const toNorm = (v: number) => Math.log(v / min) / Math.log(max / min);
+  const fromNorm = (t: number) => min * (max / min) ** t;
+  return slider(label, 0, 1, 0.001, toNorm(value), (t) => onInput(fromNorm(t)));
 }
 
 function slider(

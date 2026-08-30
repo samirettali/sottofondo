@@ -16,7 +16,7 @@ import { energyAt, sectionAt } from "./arrange/energy.ts";
 import { isMuted } from "./arrange/epoch.ts";
 import { Clock, type StepEvent } from "./core/clock.ts";
 import { formatSeed } from "./core/rng.ts";
-import { floorMod, swingOffsetBeats, track } from "./core/time.ts";
+import { compositeCycleSteps, floorMod, swingOffsetBeats, track } from "./core/time.ts";
 import { lanesOf, patternIndexAt, scoreLane, type LaneState } from "./score.ts";
 import type { BassDef, ChordsDef, DrumVoiceDef, GenreDef } from "./genre/schema.ts";
 
@@ -46,6 +46,12 @@ interface RuntimeBass {
   readonly synth: ThreeOh;
   density: number;
   userMuted: boolean;
+  /**
+   * The cutoff the energy curve swings around. Held separately from the preset so that
+   * moving the slider changes what the curve modulates rather than being overwritten by
+   * it at the next bar.
+   */
+  cutoffBase: number;
   /** Whether the previous note left the gate open for a slide. */
   gateOpen: boolean;
 }
@@ -56,6 +62,7 @@ interface RuntimeChords {
   readonly synth: Poly;
   density: number;
   userMuted: boolean;
+  cutoffBase: number;
 }
 
 /** What a display needs to know about one lane. */
@@ -143,6 +150,7 @@ export class Engine {
         synth: createThreeOh(ctx, destination(def.name), def.wave, def.synth),
         density: def.density,
         userMuted: false,
+        cutoffBase: def.synth.cutoff,
         gateOpen: false,
       };
     }
@@ -155,6 +163,7 @@ export class Engine {
         synth: createPoly(ctx, destination(def.name), def.synth),
         density: def.density,
         userMuted: false,
+        cutoffBase: def.synth.cutoff ?? 1800,
       };
     }
 
@@ -257,6 +266,18 @@ export class Engine {
     return Math.max(0, Math.floor(step / stepsPerBar));
   }
 
+  /**
+   * How many bars before every lane's pattern realigns.
+   *
+   * Maximal when the lane lengths are pairwise coprime. Worth showing: with a seven-step
+   * lane against sixteen there is no other way to know the combination will not come
+   * round for seven bars.
+   */
+  get compositeCycleBars(): number {
+    const steps = compositeCycleSteps(this.clock.tracks);
+    return Math.max(1, Math.round(steps / this.genre.clock.stepsPerBar));
+  }
+
   /** Where the arrangement is: the section name and the energy there. */
   sectionAt(bar = this.currentBar): { name: string; energy: number; bar: number; bars: number } {
     const sections = this.genre.arrangement.sections;
@@ -355,13 +376,58 @@ export class Engine {
 
     const bassSwing = this.bass?.def.filterSwing ?? 0;
     if (this.bass !== null && bassSwing > 0) {
-      this.bass.synth.set({ cutoff: swing(this.bass.def.synth.cutoff, bassSwing) }, e.time);
+      this.bass.synth.set({ cutoff: swing(this.bass.cutoffBase, bassSwing) }, e.time);
     }
     const chordSwing = this.chords?.def.filterSwing ?? 0;
     if (this.chords !== null && chordSwing > 0) {
-      const base = this.chords.def.synth.cutoff ?? 1800;
-      this.chords.synth.set({ cutoff: swing(base, chordSwing) }, e.time);
+      this.chords.synth.set({ cutoff: swing(this.chords.cutoffBase, chordSwing) }, e.time);
     }
+  }
+
+  /** What the synth sliders should show. */
+  get synthState(): {
+    bass: { cutoff: number; resonance: number; envMod: number; decay: number } | null;
+    chords: { cutoff: number; decay: number } | null;
+    delay: { wet: number; feedback: number };
+  } {
+    return {
+      bass:
+        this.bass === null
+          ? null
+          : {
+              cutoff: this.bass.cutoffBase,
+              resonance: this.bass.synth.params.resonance,
+              envMod: this.bass.synth.params.envMod,
+              decay: this.bass.synth.params.decay,
+            },
+      chords:
+        this.chords === null
+          ? null
+          : { cutoff: this.chords.cutoffBase, decay: this.chords.synth.params.decay },
+      delay: { wet: this.genre.fx.delay.wet, feedback: this.genre.fx.delay.feedback },
+    };
+  }
+
+  setBassParam(name: "cutoff" | "resonance" | "envMod" | "decay", value: number): void {
+    if (this.bass === null) return;
+    if (name === "cutoff") {
+      // Moving the base moves what the energy curve swings around, and takes effect at
+      // once rather than waiting for the next bar.
+      this.bass.cutoffBase = value;
+      this.bass.synth.set({ cutoff: value });
+      return;
+    }
+    this.bass.synth.set({ [name]: value });
+  }
+
+  setChordParam(name: "cutoff" | "decay", value: number): void {
+    if (this.chords === null) return;
+    if (name === "cutoff") this.chords.cutoffBase = value;
+    this.chords.synth.set({ [name]: value });
+  }
+
+  setDelayParam(name: "wet" | "feedback", value: number): void {
+    this.delay.set({ [name]: value });
   }
 
   private chordStep(e: StepEvent): void {
