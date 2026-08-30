@@ -34,14 +34,15 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 - [x] `src/pattern/clave.ts` — the six 5-in-16 timelines (son, rumba, bossa, shiko,
       soukous, gahu), 3-2/2-3 sides, Arom's rhythmic oddity. Son is **not** `E(5,16)`,
       and is not even a rotation of it
-- [ ] `src/pattern/metric.ts` — 16-entry metric-weight table
-- [ ] `src/pattern/gen.ts` — the `PatternGen` tagged union: `stepClassP`, `mask`,
+- [x] `src/pattern/metric.ts` — metric-weight tables for 8, 12 and 16, a generated
+      fallback for anything else, and a `syncopation` exponent that reshapes the curve
+- [x] `src/pattern/gen.ts` — the `PatternGen` tagged union: `stepClassP`, `mask`,
       `euclid`, `clave`, `none` (the rest land with their genres)
-- [ ] Per-step `strength: number`, never a boolean — one threshold gives density,
+- [x] Per-step `strength: number`, never a boolean — one threshold gives density,
       accents, fills and morphing
-- [ ] Grids-style density thresholding: `fires ⟺ strength + density > 1`, accent above
+- [x] Grids-style density thresholding: `fires ⟺ strength + density > 1`, accent above
       a second threshold
-- [ ] Chaos as a **per-bar, per-voice** offset rolled at step 0 — not per-step noise
+- [x] Chaos as a **per-bar, per-voice** offset rolled at step 0 — not per-step noise
 
 ## 3. Synthesis
 
