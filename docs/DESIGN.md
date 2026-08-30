@@ -558,6 +558,9 @@ the ratio falls roughly linearly with tempo, **the short note stays ≈100 ms ab
 ratio = clamp((60000/bpm - 100) / 100, 1.0, 3.5)   // 150→3.0 · 200→2.0 · 250→1.4
 ```
 
+(Equivalent to the `autoSwing` percentage above — same curve, expressed as a ratio
+rather than as a Linn percentage.)
+
 Soloists swing *less* than the drummer (ratios 1.0–2.0), and in 20 of 21 excerpts the
 soloist plays **after** the ride on downbeats while offbeats stay synchronised.
 Contested by Honing & de Haas (2008), who find ~2.2:1 at slow tempi with no 100 ms floor —
@@ -736,11 +739,12 @@ the backbone.
 ### Concrete pieces worth having on hand
 
 **Auto-swing** — one constant reproduces Friberg & Sundström's published curve, because
-what is actually held constant is the short note at ≈100 ms:
+what is actually held constant is the short note at ≈100 ms. Measured on ride cymbals,
+so the swung pair spans a whole beat (two eighths), not half of one:
 
 ```ts
 const autoSwing = (bpm: number) => {
-  const pair = 60 / bpm / 2;
+  const pair = 60 / bpm;                        // a beat, split into two swung eighths
   return clamp(1 - 0.100 / pair, 0.50, 0.75);   // 100→3:1 · 200→exactly 2:1 · 300→straight
 };
 ```

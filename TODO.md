@@ -17,8 +17,8 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 - [x] `src/core/rng.ts` — `h32` integer hash (`Math.imul`), `mulberry32`, `cyrb128`
 - [x] `rngFor(seed, bar, voice)` — generation as a **pure function**, no shared stream
 - [x] Ban `Math.random` in `src/` outside `rng.ts` (lint rule or a test that greps)
-- [ ] `src/core/time.ts` — rational time, `beatOfStep`, `beatToTime`, tempo map anchored
-      at `(anchorBeat, anchorTime)`
+- [x] `src/core/time.ts` — rational time, `beatOfStep`, `beatToTime`, tempo map anchored
+      at `(anchorBeat, anchorTime)`, swing, `autoSwing`, polymeter cycle length
 - [ ] `src/core/clock.ts` — lookahead scheduler: 25 ms tick, 100 ms horizon, absolute
       `AudioContext` times, per-voice cursors
 - [ ] Move the ticker into a `Worker` so a hidden tab does not stop the sequencer
