@@ -177,13 +177,16 @@ export function realise(
   patternKey: number,
   voiceIndex: number,
   barKey: number = patternKey,
+  /** Extra density per step, for fills. Added to the threshold offset, not the strength. */
+  perStep?: readonly number[],
 ): Hit[] {
   const s = strengths(voice, len, seed, patternKey, voiceIndex);
   const offset = voice.density + barChaos(voice, seed, barKey, voiceIndex);
   const hits: Hit[] = [];
   for (let i = 0; i < len; i++) {
     const strength = s[i] ?? 0;
-    if (strength <= 0 || strength + offset <= 1) continue;
+    const bonus = perStep?.[i] ?? 0;
+    if (strength <= 0 || strength + offset + bonus <= 1) continue;
     const accent = strength > voice.accentAt;
     const { base, accent: accentVel, ghost } = voice.vel;
     // Below the accent threshold, velocity tracks strength down towards the ghost level,

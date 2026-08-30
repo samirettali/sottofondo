@@ -72,6 +72,9 @@ export const acid: GenreDef = {
       vel: { base: 0.25, accent: 0.4, ghost: 0.1 },
       muteP: 0.5,
       densitySwing: 0.2,
+      // No fill. The reference has none, and this preset has no sparse decorative lane
+      // to put one on — at peak energy the hat is near-saturated, so the extra density
+      // would have nowhere to go even if it were declared.
     },
   ],
 

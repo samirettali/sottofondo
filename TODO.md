@@ -116,7 +116,7 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
 - [x] `src/arrange/energy.ts` — one `E ∈ [0,1]` per bar driving lane windows and density
 - [x] Section table per genre, cycling, with the form matching how the genre arranges
 - [x] `variationStrength(bar)` — written, but not yet wired to anything
-- [ ] Drive filter cutoff from the energy curve too — currently only lanes and density
+- [x] Drive filter cutoff from the energy curve too: a mix filter plus per-voice swing
 - [ ] Quantise section changes to the next bar in the scheduler (they already land on
       bar boundaries, but nothing enforces it)
 - [ ] Fills: probability by phrase position, plus `nextBarOneShots` for the crash that

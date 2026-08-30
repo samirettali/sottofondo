@@ -1,5 +1,6 @@
 import { densityAt, energyAt, laneIsIn } from "./arrange/energy.ts";
 import { EPOCHS, epochAt, isMuted, type EpochSpec } from "./arrange/epoch.ts";
+import { fillBonus } from "./arrange/fill.ts";
 import { floorMod } from "./core/time.ts";
 import { voiceLead } from "./harmony/chords.ts";
 import { chordAt, chooseKey, chooseProgression, type Progression } from "./harmony/progression.ts";
@@ -195,9 +196,11 @@ export function scoreLane(
       ...(drum.vel === undefined ? {} : { vel: drum.vel }),
       ...(drum.syncopation === undefined ? {} : { syncopation: drum.syncopation }),
     });
-    // Pattern from the epoch so it repeats; chaos from the bar so it breathes.
+    // Pattern from the epoch so it repeats; chaos from the bar so it breathes; the fill
+    // bonus is per step, so it thickens the end of the bar without touching the rest.
     const epoch = epochAt(seed, bar, pattern);
-    return realise(voice, len, seed, epoch, laneIndex, bar).map((hit) => ({
+    const bonus = fillBonus(drum.fill, len, bar) ?? undefined;
+    return realise(voice, len, seed, epoch, laneIndex, bar, bonus).map((hit) => ({
       lane: laneIndex,
       name: drum.name,
       patternStep: hit.step,

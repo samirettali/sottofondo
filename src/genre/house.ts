@@ -82,6 +82,8 @@ export const house: GenreDef = {
       swingDepth: 1,
       muteP: 0.35,
       // The hats thicken as the track lifts: this is most of what a build sounds like.
+      // No fill here: at peak energy this lane is firing on nearly every sixteenth, so
+      // extra density has nowhere to go. The shaker carries the fills instead.
       densitySwing: 0.25,
     },
     {
@@ -97,6 +99,7 @@ export const house: GenreDef = {
       muteP: 0.5,
       minEnergy: 0.5,
       densitySwing: 0.2,
+      fill: { amount: 0.3, span: 0.25 },
     },
   ],
 

@@ -2,6 +2,7 @@ import type { EnergyFilterOptions, NoteValue, TextureOptions } from "../audio/fx
 import type { PolyParams } from "../audio/poly.ts";
 import type { ThreeOhParams } from "../audio/threeoh.ts";
 import type { SectionDef } from "../arrange/energy.ts";
+import type { FillDef } from "../arrange/fill.ts";
 import type { HarmonyDef } from "../harmony/progression.ts";
 import type { ScaleName } from "../harmony/scales.ts";
 import type { PatternGen } from "../pattern/gen.ts";
@@ -68,6 +69,8 @@ export interface DrumVoiceDef {
   readonly maxEnergy?: number;
   /** How far the energy curve may move this lane's density, 0..1. */
   readonly densitySwing?: number;
+  /** Extra density at phrase ends. Suits a hat, a ghost snare or a tom — not a kick. */
+  readonly fill?: FillDef;
 }
 
 export interface BassDef {

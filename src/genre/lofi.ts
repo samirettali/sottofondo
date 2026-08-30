@@ -72,6 +72,7 @@ export const lofi: GenreDef = {
       swingDepth: 1,
       nudgeMs: -14, // ghosts follow the backbeat's grid, not the kick's
       muteP: 0.35,
+      fill: { amount: 0.35, span: 0.25 },
     },
     {
       name: "hat",

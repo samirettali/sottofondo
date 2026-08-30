@@ -82,6 +82,9 @@ export const dnb: GenreDef = {
       muteP: 0.4,
       minEnergy: 0.4,
       densitySwing: 0.1,
+      // The ghosts crowd in at phrase ends: the genre's own way of filling, and it needs
+      // no separate voice.
+      fill: { amount: 0.4, span: 0.25 },
     },
     {
       name: "hat",
