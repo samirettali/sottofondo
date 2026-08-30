@@ -115,12 +115,16 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
 
 - [x] `src/arrange/energy.ts` — one `E ∈ [0,1]` per bar driving lane windows and density
 - [x] Section table per genre, cycling, with the form matching how the genre arranges
-- [x] `variationStrength(bar)` — written, but not yet wired to anything
+- [x] `variationStrength(bar)` — drives fills at phrase ends
+- [x] Fills: density increase on a sparse lane. A mask lane and a saturated lane both
+      cannot fill, and tests now enforce that a preset does not declare an inert one
+- [ ] Rolls and ratchets — need onsets between grid positions, which the scheduler
+      matches by integer step. A real change, not a parameter
 - [x] Drive filter cutoff from the energy curve too: a mix filter plus per-voice swing
 - [ ] Quantise section changes to the next bar in the scheduler (they already land on
       bar boundaries, but nothing enforces it)
-- [ ] Fills: probability by phrase position, plus `nextBarOneShots` for the crash that
-      lands on the following downbeat
+- [ ] A crash landing on the downbeat *after* a fill — needs the score to emit events
+      belonging to the next bar, and there is no crash voice in the kit yet
 - [ ] Marbles-style déjà-vu: `dejaVu > rnd ? hash(seed, i % loopLen) : hash(seed, i)`
 
 ## 8. UI
