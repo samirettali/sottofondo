@@ -2,17 +2,11 @@ import { createKit, type DrumVoice, type Kit } from "./audio/drums.ts";
 import { createDelay, createDucker, type Delay, type Ducker } from "./audio/fx.ts";
 import { createMaster, type Master } from "./audio/master.ts";
 import { createThreeOh, midiToFrequency, type ThreeOh } from "./audio/threeoh.ts";
-import { EPOCHS, epochAt, isMuted, type EpochSpec } from "./arrange/epoch.ts";
+import { isMuted } from "./arrange/epoch.ts";
 import { Clock, type StepEvent } from "./core/clock.ts";
 import { formatSeed } from "./core/rng.ts";
 import { floorMod, swingOffsetBeats, track } from "./core/time.ts";
-import { defaultVoice, realise, type Hit } from "./pattern/gen.ts";
-import {
-  chooseNoteSet,
-  defaultNoteVoice,
-  realiseNotes,
-  type NoteSlot,
-} from "./pattern/notes.ts";
+import { lanesOf, patternIndexAt, scoreLane, type LaneState } from "./score.ts";
 import type { BassDef, DrumVoiceDef, GenreDef } from "./genre/schema.ts";
 
 /**
@@ -75,8 +69,6 @@ export class Engine {
 
   private readonly voices: RuntimeVoice[] = [];
   private readonly bass: RuntimeBass | null = null;
-  private readonly patternSpec: EpochSpec;
-  private readonly noteSpec: EpochSpec;
   private bpm: number;
   private swing: number;
 
@@ -127,17 +119,6 @@ export class Engine {
         gateOpen: false,
       };
     }
-
-    this.patternSpec = {
-      every: genre.arrangement.newPatternEvery,
-      p: genre.arrangement.newPatternP,
-      salt: EPOCHS.pattern,
-    };
-    this.noteSpec = {
-      every: genre.arrangement.newNotesEvery,
-      p: genre.arrangement.newNotesP,
-      salt: EPOCHS.notes,
-    };
 
     const lanes = this.voices.map((v) => track(v.len));
     if (this.bass !== null) lanes.push(track(this.bass.len));
@@ -248,38 +229,43 @@ export class Engine {
      * own cycle.
      */
     const spread = (velocities: readonly number[], len: number): number[] =>
-      Array.from({ length: perBar }, (_, i) => velocities[this.patternIndexAt(len, bar, i)] ?? 0);
+      Array.from(
+        { length: perBar },
+        (_, i) => velocities[patternIndexAt(this.genre, len, bar, i)] ?? 0,
+      );
 
-    this.voices.forEach((voice, i) => {
-      const own = new Array<number>(voice.len).fill(0);
-      for (const hit of this.hitsFor(voice, bar, i)) own[hit.step] = hit.velocity;
-      const steps = spread(own, voice.len);
+    lanesOf(this.genre).forEach((lane) => {
+      const state = this.laneState(lane.index);
+      const own = new Array<number>(lane.len).fill(0);
+      // Scored unmuted, so the display can show what a muted lane would be playing.
+      for (const ev of scoreLane(this.genre, lane.index, this.seed, bar, {
+        density: state.density,
+        userMuted: false,
+      })) {
+        own[ev.patternStep] = ev.velocity;
+      }
+      const def = this.genre.drums[lane.index] ?? this.genre.bass;
       out.push({
-        name: voice.name,
-        len: voice.len,
-        density: voice.density,
-        userMuted: voice.userMuted,
-        autoMuted: isMuted(this.seed, bar, i, muteEvery, voice.def.muteP ?? 0),
-        steps,
+        name: lane.name,
+        len: lane.len,
+        density: state.density,
+        userMuted: state.userMuted,
+        autoMuted: isMuted(this.seed, bar, lane.index, muteEvery, def?.muteP ?? 0),
+        steps: spread(own, lane.len),
       });
     });
 
-    if (this.bass !== null) {
-      const i = this.bassLane;
-      const own = new Array<number>(this.bass.len).fill(0);
-      for (const slot of this.slotsFor(this.bass, bar, i)) own[slot.step] = slot.velocity;
-      const steps = spread(own, this.bass.len);
-      out.push({
-        name: this.bass.def.name,
-        len: this.bass.len,
-        density: this.bass.density,
-        userMuted: this.bass.userMuted,
-        autoMuted: isMuted(this.seed, bar, i, muteEvery, this.bass.def.muteP ?? 0),
-        steps,
-      });
-    }
-
     return out;
+  }
+
+  private laneState(index: number): LaneState {
+    if (index === this.bassLane && this.bass !== null) {
+      return { density: this.bass.density, userMuted: this.bass.userMuted };
+    }
+    const v = this.voices[index];
+    return v === undefined
+      ? { density: 0, userMuted: true }
+      : { density: v.density, userMuted: v.userMuted };
   }
 
   private step(e: StepEvent): void {
@@ -289,7 +275,7 @@ export class Engine {
 
   private drumStep(e: StepEvent): void {
     const voice = this.voices[e.voice];
-    if (voice === undefined || voice.userMuted) return;
+    if (voice === undefined) return;
 
     // The bar is global — floor(step / stepsPerBar) — not floor(step / voice.len). A
     // seven-step lane still lives in the same bars as everything else; keying its epochs
@@ -298,11 +284,10 @@ export class Engine {
     const patternStep = floorMod(e.step, voice.len);
     const stepInBar = floorMod(e.step, this.genre.clock.stepsPerBar);
     const bar = Math.floor(e.step / this.genre.clock.stepsPerBar);
-    if (isMuted(this.seed, bar, e.voice, this.genre.arrangement.muteEvery, voice.def.muteP ?? 0)) {
-      return;
-    }
 
-    const hit = this.hitsFor(voice, bar, e.voice).find((h) => h.step === patternStep);
+    const hit = scoreLane(this.genre, e.voice, this.seed, bar, this.laneState(e.voice)).find(
+      (ev) => ev.patternStep === patternStep,
+    );
     if (hit === undefined) return;
 
     const at = this.displace(e, stepInBar, voice.def.swingDepth ?? 0, voice.def.nudgeMs ?? 0);
@@ -312,26 +297,20 @@ export class Engine {
     this.onHit(e.voice, stepInBar, hit.velocity, at);
   }
 
-  /** Where in its own pattern a lane is, at a given position in a bar. */
-  private patternIndexAt(len: number, bar: number, stepInBar: number): number {
-    return floorMod(bar * this.genre.clock.stepsPerBar + stepInBar, len);
-  }
-
   private bassStep(e: StepEvent): void {
     const bass = this.bass;
-    if (bass === null || bass.userMuted) return;
+    if (bass === null) return;
 
     const patternStep = floorMod(e.step, bass.len);
     const stepInBar = floorMod(e.step, this.genre.clock.stepsPerBar);
     const bar = Math.floor(e.step / this.genre.clock.stepsPerBar);
-    if (isMuted(this.seed, bar, e.voice, this.genre.arrangement.muteEvery, bass.def.muteP ?? 0)) {
-      return;
-    }
 
-    const slot = this.slotsFor(bass, bar, e.voice).find((s) => s.step === patternStep);
+    const slot = scoreLane(this.genre, e.voice, this.seed, bar, this.laneState(e.voice)).find(
+      (ev) => ev.patternStep === patternStep,
+    );
     const at = this.displace(e, stepInBar, bass.def.swingDepth ?? 0, bass.def.nudgeMs ?? 0);
 
-    if (slot === undefined) {
+    if (slot === undefined || slot.midi === undefined) {
       // Close the gate on a rest — unless the previous note slid into this step, in
       // which case the gate is deliberately still open.
       if (bass.gateOpen) bass.gateOpen = false;
@@ -339,8 +318,8 @@ export class Engine {
       return;
     }
 
-    bass.synth.noteOn(at, midiToFrequency(slot.midi), slot.accent, slot.glide);
-    bass.gateOpen = slot.slide;
+    bass.synth.noteOn(at, midiToFrequency(slot.midi), slot.accent, slot.glide ?? false);
+    bass.gateOpen = slot.slide ?? false;
     this.onHit(e.voice, stepInBar, slot.velocity, at);
   }
 
@@ -357,37 +336,4 @@ export class Engine {
     return Math.max(e.earliest, e.time + seconds);
   }
 
-  private hitsFor(voice: RuntimeVoice, bar: number, voiceIndex: number): Hit[] {
-    const epoch = epochAt(this.seed, bar, this.patternSpec);
-    const pattern = defaultVoice(voice.def.gen, {
-      density: voice.density,
-      chaos: voice.def.chaos ?? 0,
-      accentAt: voice.def.accentAt ?? 0.75,
-      ...(voice.def.vel === undefined ? {} : { vel: voice.def.vel }),
-      ...(voice.def.syncopation === undefined ? {} : { syncopation: voice.def.syncopation }),
-    });
-    // Pattern from the epoch so it repeats; chaos from the bar so the repetition
-    // breathes.
-    return realise(pattern, voice.len, this.seed, epoch, voiceIndex, bar);
-  }
-
-  private slotsFor(bass: RuntimeBass, bar: number, voiceIndex: number): NoteSlot[] {
-    const patternEpoch = epochAt(this.seed, bar, this.patternSpec);
-    const noteEpoch = epochAt(this.seed, bar, this.noteSpec);
-    const noteSet = chooseNoteSet(
-      bass.def.bags,
-      bass.def.rootRange,
-      this.seed,
-      noteEpoch,
-      voiceIndex,
-    );
-    const voice = defaultNoteVoice({
-      gen: bass.def.gen,
-      density: bass.density,
-      chaos: bass.def.chaos ?? 0,
-      accentP: bass.def.accentP,
-      slideP: bass.def.slideP,
-    });
-    return realiseNotes(voice, noteSet, bass.len, this.seed, patternEpoch, voiceIndex);
-  }
 }

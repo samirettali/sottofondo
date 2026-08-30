@@ -134,9 +134,12 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
 ## 9. Verification
 
 - [ ] Euclid table test against the paper
-- [ ] Determinism test: same seed ⇒ identical event list, across a mute/unmute
-- [ ] Seek test: jumping to bar 500 gives the same events as playing there
-- [ ] No transcendentals in decision paths (they are not cross-engine exact)
+- [x] `src/score.ts` — musical events separated from audio scheduling, so all of the
+      below can be tested without an AudioContext
+- [x] Determinism test: same seed ⇒ identical event list, across a mute/unmute and across
+      a density change on another lane
+- [x] Seek test: jumping to bar 600 gives the same events as playing there
+- [x] No transcendentals in decision paths (they are not cross-engine exact)
 - [ ] Leak check: an hour of playback, node count stays flat
 - [ ] **The schema test** — add a 12th genre (footwork, gqom, or a 7/8 Balkan preset)
       with no new code, only a new JSON file
