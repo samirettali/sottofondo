@@ -1,4 +1,4 @@
-import type { NoteValue } from "../audio/fx.ts";
+import type { NoteValue, TextureOptions } from "../audio/fx.ts";
 import type { PolyParams } from "../audio/poly.ts";
 import type { ThreeOhParams } from "../audio/threeoh.ts";
 import type { HarmonyDef } from "../harmony/progression.ts";
@@ -149,6 +149,8 @@ export interface GenreDef {
       readonly releaseMs: number;
       readonly targets: readonly string[];
     };
+    /** Vinyl noise, tape wow and bit reduction, applied to the whole mix. */
+    readonly texture?: TextureOptions;
   };
 
   readonly arrangement: {

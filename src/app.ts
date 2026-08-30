@@ -1,5 +1,12 @@
 import { createKit, type DrumVoice, type Kit } from "./audio/drums.ts";
-import { createDelay, createDucker, type Delay, type Ducker } from "./audio/fx.ts";
+import {
+  createDelay,
+  createDucker,
+  createTexture,
+  type Delay,
+  type Ducker,
+  type Texture,
+} from "./audio/fx.ts";
 import { createMaster, type Master } from "./audio/master.ts";
 import { createPoly, type Poly } from "./audio/poly.ts";
 import { createThreeOh, midiToFrequency, type ThreeOh } from "./audio/threeoh.ts";
@@ -75,6 +82,7 @@ export class Engine {
   readonly seed: number;
   readonly delay: Delay;
   readonly ducker: Ducker;
+  readonly texture: Texture;
 
   private readonly voices: RuntimeVoice[] = [];
   private readonly bass: RuntimeBass | null = null;
@@ -93,14 +101,13 @@ export class Engine {
     this.swing = genre.clock.swing;
 
     this.master = createMaster(ctx);
-    this.ducker = createDucker(
-      ctx,
-      this.master.input,
-      genre.fx.sidechain.db,
-      genre.fx.sidechain.releaseMs,
-    );
-    this.delay = createDelay(ctx, this.master.input, genre.fx.delay, this.bpm);
-    this.kit = createKit(ctx, this.master.input);
+    // The texture chain sits in front of the master bus, so wow and bit reduction apply
+    // to the whole mix rather than to one voice — which is what a tape or a record does.
+    this.texture = createTexture(ctx, this.master.input, genre.fx.texture ?? {});
+    const bus = this.texture.input;
+    this.ducker = createDucker(ctx, bus, genre.fx.sidechain.db, genre.fx.sidechain.releaseMs);
+    this.delay = createDelay(ctx, bus, genre.fx.delay, this.bpm);
+    this.kit = createKit(ctx, bus);
 
     for (const def of genre.drums) {
       this.voices.push({
@@ -180,6 +187,7 @@ export class Engine {
     this.stop();
     this.bass?.synth.dispose();
     this.chords?.synth.dispose();
+    this.texture.dispose();
     this.master.dispose();
   }
 

@@ -1,4 +1,4 @@
-import { anchor } from "./env.ts";
+import { anchor, noiseBuffer } from "./env.ts";
 
 /**
  * Effects.
@@ -147,4 +147,127 @@ export function createDucker(
 function dbToDepth(db: number): number {
   if (db <= 0) return 0;
   return Math.min(0.95, 1 - 10 ** (-db / 20));
+}
+
+/**
+ * A staircase transfer curve: bit-depth reduction without an AudioWorklet.
+ *
+ * Quantising the *amplitude* is most of what "lo-fi" means, and a WaveShaper does it
+ * exactly — the node maps input to a sampled curve, so a curve that is already a
+ * staircase quantises whatever passes through. Sample-rate reduction is the other half
+ * and genuinely does need a worklet, since it is a function of time rather than of
+ * amplitude; it is not here yet.
+ */
+export function bitCrushCurve(bits: number, n = 4096): Float32Array<ArrayBuffer> {
+  const curve = new Float32Array(n);
+  const levels = Math.max(2, 2 ** Math.max(1, bits));
+  const step = 2 / levels;
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / (n - 1) - 1;
+    curve[i] = Math.max(-1, Math.min(1, Math.round(x / step) * step));
+  }
+  return curve;
+}
+
+export interface TextureOptions {
+  /** Continuous vinyl noise level in dBFS. Around −28 is audible but not intrusive. */
+  readonly vinylDb?: number;
+  /** Tape wow: rate in Hz and depth in cents. */
+  readonly wowHz?: number;
+  readonly wowCents?: number;
+  /** Amplitude quantisation. 12 is gentle, 8 is obvious. */
+  readonly bitDepth?: number;
+}
+
+export interface Texture {
+  /** Route the mix through here. */
+  readonly input: GainNode;
+  dispose(): void;
+}
+
+/**
+ * The lo-fi chain: wow, then bit reduction, plus a bed of vinyl noise.
+ *
+ * Wow is a short delay whose time is modulated by a slow LFO. `delayTime` is a-rate and
+ * moving it resamples the buffer, so it pitch-shifts — which is a nuisance everywhere
+ * else and is exactly the effect wanted here.
+ */
+export function createTexture(
+  ctx: BaseAudioContext,
+  out: AudioNode,
+  options: TextureOptions,
+): Texture {
+  const input = ctx.createGain();
+  let tail: AudioNode = input;
+  const disposers: (() => void)[] = [];
+
+  const wowHz = options.wowHz ?? 0;
+  const wowCents = options.wowCents ?? 0;
+  if (wowHz > 0 && wowCents > 0) {
+    const delay = ctx.createDelay(0.05);
+    const base = 0.012;
+    delay.delayTime.value = base;
+    // A cent is 1/1200 of an octave; over a 12 ms delay the depth that produces the
+    // wanted detune is small, so this is deliberately gentle.
+    const depth = base * (2 ** (wowCents / 1200) - 1);
+    const lfo = ctx.createOscillator();
+    lfo.frequency.value = wowHz;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = depth;
+    lfo.connect(lfoGain).connect(delay.delayTime);
+    lfo.start();
+    tail.connect(delay);
+    tail = delay;
+    disposers.push(() => {
+      lfo.stop();
+      lfo.disconnect();
+      lfoGain.disconnect();
+      delay.disconnect();
+    });
+  }
+
+  const bitDepth = options.bitDepth ?? 0;
+  if (bitDepth > 0 && bitDepth < 16) {
+    const crusher = ctx.createWaveShaper();
+    crusher.curve = bitCrushCurve(bitDepth);
+    tail.connect(crusher);
+    tail = crusher;
+    disposers.push(() => crusher.disconnect());
+  }
+
+  tail.connect(out);
+
+  const vinylDb = options.vinylDb ?? 0;
+  if (vinylDb < 0) {
+    const buffer = noiseBuffer(ctx, 4, 0x71ce);
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    // Band-limited: unfiltered white noise sounds like a broken tweeter, not a record.
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 400;
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 6000;
+    const gain = ctx.createGain();
+    gain.gain.value = 10 ** (vinylDb / 20);
+    source.connect(hp).connect(lp).connect(gain).connect(out);
+    source.start();
+    disposers.push(() => {
+      source.stop();
+      source.disconnect();
+      hp.disconnect();
+      lp.disconnect();
+      gain.disconnect();
+    });
+  }
+
+  return {
+    input,
+    dispose() {
+      input.disconnect();
+      for (const d of disposers) d();
+    },
+  };
 }
