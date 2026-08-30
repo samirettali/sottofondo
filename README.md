@@ -43,5 +43,5 @@ generation algorithms, and where each constant comes from. `TODO.md` is what is 
 
 ## Status
 
-Local, unfinished, and unrelated to anything published. Two genres so far: acid techno
-and minimal techno.
+Local and unfinished. Five genres: acid techno, minimal techno, deep house, liquid drum
+& bass, lo-fi hip hop.

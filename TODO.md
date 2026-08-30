@@ -81,10 +81,13 @@ These cannot be retrofitted cheaply. Build them first and build them right.
       note number so it transposes musically)
 - [x] `techno.ts` — minimal techno, with a polymetric perc lane
 - [x] `house.ts` — deep house: the first with harmony, swing and a sidechain
-- [ ] `dnb.ts`
-- [ ] `lofi.ts`
-- [ ] Per-genre swing table, never one global constant
-- [ ] Humanisation: `nudgeMs` signed and constant per bar, `jitterMs` unsigned and
+- [x] `dnb.ts` — liquid drum & bass: two-bar patterns, half-time harmony, fixed snare
+- [x] `lofi.ts` — lo-fi hip hop: the Dilla nudge, swing 58%, vinyl and wow
+- [x] Per-genre swing, never one global constant — and per-voice depth on top of it
+- [x] Texture: vinyl noise, tape wow, bit-depth reduction on the whole mix
+- [ ] Sample-rate reduction — needs an AudioWorklet, being a function of time rather
+      than of amplitude
+- [x] Humanisation: `nudgeMs` signed and constant per bar, `jitterMs` unsigned and
       random, **default 0 everywhere**
 
 ## 5. Harmony
