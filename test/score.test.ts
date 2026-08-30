@@ -143,7 +143,9 @@ test("a lane's pattern index wraps against the global bar", () => {
 test("a polymetric lane lands somewhere new each bar", () => {
   const percIndex = techno.drums.findIndex((d) => d.name === "perc");
   const seen = new Set<string>();
-  for (let bar = 0; bar < 7; bar++) {
+  // Bars inside a peak section: the perc lane has an energy window and is out of the
+  // intro entirely.
+  for (let bar = 70; bar < 77; bar++) {
     const own = new Array<number>(7).fill(0);
     for (const ev of scoreLane(techno, percIndex, 9, bar, { density: 0.5, userMuted: false })) {
       own[ev.patternStep] = 1;

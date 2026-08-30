@@ -71,6 +71,7 @@ export const acid: GenreDef = {
       accentAt: 0.8,
       vel: { base: 0.25, accent: 0.4, ghost: 0.1 },
       muteP: 0.5,
+      densitySwing: 0.2,
     },
   ],
 
@@ -119,5 +120,15 @@ export const acid: GenreDef = {
     newNotesEvery: 64,
     newNotesP: 0.2,
     muteEvery: 8,
+    // Gentler than the others on purpose. The reference implementation has no form at
+    // all — it re-rolls mutes every eight bars and that is the whole arrangement — and
+    // that suits acid, where the interest is in the filter rather than the structure.
+    // This adds a shallow arc without turning it into a dance-floor build.
+    sections: [
+      { name: "intro", bars: 16, energy: 0.4 },
+      { name: "rise", bars: 32, energy: 0.55, energyTo: 0.85 },
+      { name: "peak", bars: 32, energy: 0.9 },
+      { name: "strip", bars: 16, energy: 0.45 },
+    ],
   },
 };

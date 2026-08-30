@@ -54,6 +54,7 @@ export const techno: GenreDef = {
       density: 0.55,
       vel: { base: 0.5, accent: 0.65, ghost: 0.3 },
       muteP: 0.4,
+      minEnergy: 0.4,
     },
     {
       name: "closed hat",
@@ -71,6 +72,8 @@ export const techno: GenreDef = {
       chaos: 0.2,
       vel: { base: 0.12, accent: 0.18, ghost: 0.06 },
       muteP: 0.5,
+      minEnergy: 0.5,
+      densitySwing: 0.2,
     },
     {
       name: "perc",
@@ -82,6 +85,8 @@ export const techno: GenreDef = {
       density: 0.5,
       vel: { base: 0.22, accent: 0.3, ghost: 0.12 },
       muteP: 0.45,
+      // The last element to arrive, and the first to go.
+      minEnergy: 0.65,
     },
   ],
 
@@ -100,6 +105,8 @@ export const techno: GenreDef = {
     // Low cutoff and a short envelope: stabby rather than squelchy.
     synth: { cutoff: 260, resonance: 9, envMod: 2200, decay: 0.2 },
     muteP: 0.15,
+    minEnergy: 0.45,
+    densitySwing: 0.15,
   },
 
   fx: {
@@ -122,5 +129,15 @@ export const techno: GenreDef = {
     newNotesEvery: 64,
     newNotesP: 0.15,
     muteEvery: 16,
+    // No drop. Techno arranges by accretion: energy climbs slowly, holds a long time,
+    // dips once, and climbs again. The kick never leaves.
+    sections: [
+      { name: "intro", bars: 32, energy: 0.3, energyTo: 0.5 },
+      { name: "layer", bars: 32, energy: 0.55, energyTo: 0.75 },
+      { name: "peak", bars: 64, energy: 0.85 },
+      { name: "strip", bars: 16, energy: 0.4 },
+      { name: "peak", bars: 64, energy: 0.95 },
+      { name: "outro", bars: 32, energy: 0.6, energyTo: 0.3 },
+    ],
   },
 };

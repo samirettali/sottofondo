@@ -1,6 +1,7 @@
 import type { NoteValue, TextureOptions } from "../audio/fx.ts";
 import type { PolyParams } from "../audio/poly.ts";
 import type { ThreeOhParams } from "../audio/threeoh.ts";
+import type { SectionDef } from "../arrange/energy.ts";
 import type { HarmonyDef } from "../harmony/progression.ts";
 import type { ScaleName } from "../harmony/scales.ts";
 import type { PatternGen } from "../pattern/gen.ts";
@@ -61,6 +62,12 @@ export interface DrumVoiceDef {
   readonly jitterMs?: number;
   /** Probability this voice is muted for an 8-bar block. */
   readonly muteP?: number;
+  /** Energy below which this voice is out. */
+  readonly minEnergy?: number;
+  /** Energy above which it drops out again — how a pad clears the way for a drop. */
+  readonly maxEnergy?: number;
+  /** How far the energy curve may move this lane's density, 0..1. */
+  readonly densitySwing?: number;
 }
 
 export interface BassDef {
@@ -79,6 +86,9 @@ export interface BassDef {
   readonly swingDepth?: number;
   readonly nudgeMs?: number;
   readonly muteP?: number;
+  readonly minEnergy?: number;
+  readonly maxEnergy?: number;
+  readonly densitySwing?: number;
 }
 
 export interface ChordsDef {
@@ -94,6 +104,9 @@ export interface ChordsDef {
   readonly swingDepth?: number;
   readonly nudgeMs?: number;
   readonly muteP?: number;
+  readonly minEnergy?: number;
+  readonly maxEnergy?: number;
+  readonly densitySwing?: number;
 }
 
 /**
@@ -162,5 +175,10 @@ export interface GenreDef {
     readonly newNotesP: number;
     /** Bars between mute re-rolls. */
     readonly muteEvery: number;
+    /**
+     * The form. Cycles, since a generative piece has no end. Omit for a flat arrangement
+     * driven only by the mute re-rolls above.
+     */
+    readonly sections?: readonly SectionDef[];
   };
 }

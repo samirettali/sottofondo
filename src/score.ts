@@ -1,3 +1,4 @@
+import { densityAt, energyAt, laneIsIn } from "./arrange/energy.ts";
 import { EPOCHS, epochAt, isMuted, type EpochSpec } from "./arrange/epoch.ts";
 import { floorMod } from "./core/time.ts";
 import { voiceLead } from "./harmony/chords.ts";
@@ -90,11 +91,34 @@ export function defaultLaneStates(genre: GenreDef): LaneState[] {
   return states;
 }
 
-function defOf(genre: GenreDef, laneIndex: number): { muteP?: number } | undefined {
+interface LaneEnergy {
+  readonly muteP?: number;
+  readonly minEnergy?: number;
+  readonly maxEnergy?: number;
+  readonly densitySwing?: number;
+}
+
+function defOf(genre: GenreDef, laneIndex: number): LaneEnergy | undefined {
   const lane = lanesOf(genre)[laneIndex];
   if (lane === undefined) return undefined;
   if (lane.kind === "drum") return genre.drums[laneIndex];
   return lane.kind === "bass" ? genre.bass : genre.chords;
+}
+
+/**
+ * The density a lane actually plays at, once the energy curve has had its say.
+ *
+ * The user's slider stays the base value; energy moves it around that. Otherwise moving a
+ * slider during a build would fight the arrangement instead of steering it.
+ */
+export function effectiveDensity(
+  genre: GenreDef,
+  laneIndex: number,
+  bar: number,
+  base: number,
+): number {
+  const def = defOf(genre, laneIndex);
+  return densityAt(base, energyAt(genre, bar), def?.densitySwing ?? 0);
 }
 
 function specs(genre: GenreDef): { pattern: EpochSpec; notes: EpochSpec } {
@@ -121,8 +145,12 @@ export function laneSilent(
   state: LaneState,
 ): boolean {
   if (state.userMuted) return true;
-  const muteP = defOf(genre, laneIndex)?.muteP ?? 0;
-  return isMuted(seed, bar, laneIndex, genre.arrangement.muteEvery, muteP);
+  const def = defOf(genre, laneIndex);
+  // The energy window decides whether a lane belongs in this section at all; the mute
+  // roll is the variation *within* a section. Two different jobs, and a lane silenced by
+  // the curve should not also be rolling dice.
+  if (!laneIsIn(energyAt(genre, bar), def)) return true;
+  return isMuted(seed, bar, laneIndex, genre.arrangement.muteEvery, def?.muteP ?? 0);
 }
 
 /**
@@ -161,7 +189,7 @@ export function scoreLane(
   if (drum !== undefined) {
     const len = drum.len ?? genre.clock.stepsPerBar;
     const voice = defaultVoice(drum.gen, {
-      density: state.density,
+      density: effectiveDensity(genre, laneIndex, bar, state.density),
       chaos: drum.chaos ?? 0,
       accentAt: drum.accentAt ?? 0.75,
       ...(drum.vel === undefined ? {} : { vel: drum.vel }),
@@ -193,7 +221,7 @@ export function scoreLane(
   );
   const voice = defaultNoteVoice({
     gen: bass.gen,
-    density: state.density,
+    density: effectiveDensity(genre, laneIndex, bar, state.density),
     chaos: bass.chaos ?? 0,
     accentP: bass.accentP,
     slideP: bass.slideP,
@@ -232,7 +260,7 @@ function scoreChords(
 
   const len = def.len ?? genre.clock.stepsPerBar;
   const voice = defaultVoice(def.gen, {
-    density: state.density,
+    density: effectiveDensity(genre, laneIndex, bar, state.density),
     chaos: def.chaos ?? 0,
   });
   const epoch = epochAt(seed, bar, specs(genre).pattern);

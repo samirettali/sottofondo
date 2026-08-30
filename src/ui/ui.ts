@@ -109,9 +109,13 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
   scope.width = 640;
   scope.height = 80;
 
+  const energyBar = el("div", "energy");
+  const energyFill = el("div", "fill");
+  energyBar.append(energyFill);
+
   const status = el("p", "status");
 
-  root.append(header, globals, lanes, scope, status);
+  root.append(header, globals, lanes, energyBar, scope, status);
 
   // Drawing runs on requestAnimationFrame and reads the engine; it never writes to it,
   // and it never touches the audio clock for anything but display.
@@ -132,7 +136,12 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
     engine.master.analyser.getFloatTimeDomainData(wave);
     drawScope(scope, wave);
 
-    status.textContent = `${engine.genre.name} · seed ${formatSeed(engine.seed)} · bar ${bar + 1}`;
+    const section = engine.sectionAt(bar);
+    energyFill.style.width = `${(section.energy * 100).toFixed(1)}%`;
+    const where = section.bars > 0 ? ` ${section.bar + 1}/${section.bars}` : "";
+    status.textContent =
+      `${engine.genre.name} · seed ${formatSeed(engine.seed)} · bar ${bar + 1}` +
+      ` · ${section.name}${where} · energy ${section.energy.toFixed(2)}`;
     raf = requestAnimationFrame(draw);
   };
   raf = requestAnimationFrame(draw);

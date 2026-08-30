@@ -10,6 +10,7 @@ import {
 import { createMaster, type Master } from "./audio/master.ts";
 import { createPoly, type Poly } from "./audio/poly.ts";
 import { createThreeOh, midiToFrequency, type ThreeOh } from "./audio/threeoh.ts";
+import { energyAt, sectionAt } from "./arrange/energy.ts";
 import { isMuted } from "./arrange/epoch.ts";
 import { Clock, type StepEvent } from "./core/clock.ts";
 import { formatSeed } from "./core/rng.ts";
@@ -245,6 +246,15 @@ export class Engine {
     const stepsPerBar = this.genre.clock.stepsPerBar;
     const step = this.clock.currentBeat * this.clock.stepsPerBeat;
     return Math.max(0, Math.floor(step / stepsPerBar));
+  }
+
+  /** Where the arrangement is: the section name and the energy there. */
+  sectionAt(bar = this.currentBar): { name: string; energy: number; bar: number; bars: number } {
+    const sections = this.genre.arrangement.sections;
+    const at = sections === undefined ? null : sectionAt(sections, bar);
+    return at === null
+      ? { name: "—", energy: energyAt(this.genre, bar), bar: 0, bars: 0 }
+      : { name: at.name, energy: at.energy, bar: at.bar, bars: at.bars };
   }
 
   /** Step within the current bar, for a playhead. */

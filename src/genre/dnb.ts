@@ -52,6 +52,9 @@ export const dnb: GenreDef = {
       density: 0.55,
       vel: { base: 0.95, accent: 1, ghost: 0.6 },
       muteP: 0.1,
+      // The breakdown takes the drums out completely — filtering them is a house move,
+      // not a drum & bass one.
+      minEnergy: 0.25,
     },
     {
       name: "snare",
@@ -62,6 +65,7 @@ export const dnb: GenreDef = {
       density: 0.6,
       vel: { base: 1, accent: 1, ghost: 0.7 },
       muteP: 0.05,
+      minEnergy: 0.25,
     },
     {
       name: "ghost snare",
@@ -76,6 +80,8 @@ export const dnb: GenreDef = {
       chaos: 0.12,
       vel: { base: 0.16, accent: 0.24, ghost: 0.08 },
       muteP: 0.4,
+      minEnergy: 0.4,
+      densitySwing: 0.1,
     },
     {
       name: "hat",
@@ -88,6 +94,8 @@ export const dnb: GenreDef = {
       vel: { base: 0.3, accent: 0.4, ghost: 0.12 },
       swingDepth: 1,
       muteP: 0.3,
+      minEnergy: 0.25,
+      densitySwing: 0.2,
     },
     {
       name: "ride",
@@ -118,6 +126,7 @@ export const dnb: GenreDef = {
     slideP: 0.3, // the slide between sub notes is a genre signature
     synth: { cutoff: 180, resonance: 2, envMod: 600, decay: 0.9 },
     muteP: 0.1,
+    minEnergy: 0.3,
   },
 
   chords: {
@@ -138,6 +147,8 @@ export const dnb: GenreDef = {
       envMod: 900,
     },
     muteP: 0.25,
+    // The pad is what the breakdown is made of, so it is the one voice that stays.
+    minEnergy: 0,
   },
 
   tonality: {
@@ -181,5 +192,16 @@ export const dnb: GenreDef = {
     newNotesEvery: 64,
     newNotesP: 0.25,
     muteEvery: 16,
+    // The genre's own shape: a drums-only DJ intro, a build, a 32-bar drop, and a
+    // breakdown that removes the drums entirely rather than filtering them.
+    sections: [
+      { name: "intro", bars: 16, energy: 0.35 },
+      { name: "build", bars: 16, energy: 0.4, energyTo: 0.85 },
+      { name: "drop", bars: 32, energy: 0.9 },
+      { name: "breakdown", bars: 32, energy: 0.12 },
+      { name: "build", bars: 16, energy: 0.4, energyTo: 0.95 },
+      { name: "drop", bars: 32, energy: 1 },
+      { name: "outro", bars: 16, energy: 0.4, energyTo: 0.25 },
+    ],
   },
 };

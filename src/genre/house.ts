@@ -48,6 +48,9 @@ export const house: GenreDef = {
       vel: { base: 1, accent: 1, ghost: 0.85 },
       swingDepth: 0, // the anchor: never swung
       muteP: 0.15,
+      // The breakdown is defined by the kick leaving. That absence is the loudest event
+      // in a house track.
+      minEnergy: 0.25,
     },
     {
       name: "clap",
@@ -57,6 +60,7 @@ export const house: GenreDef = {
       vel: { base: 0.85, accent: 1, ghost: 0.5 },
       swingDepth: 0,
       muteP: 0.4,
+      minEnergy: 0.4,
     },
     {
       name: "open hat",
@@ -77,6 +81,8 @@ export const house: GenreDef = {
       vel: { base: 0.25, accent: 0.35, ghost: 0.1 },
       swingDepth: 1,
       muteP: 0.35,
+      // The hats thicken as the track lifts: this is most of what a build sounds like.
+      densitySwing: 0.25,
     },
     {
       name: "shaker",
@@ -89,6 +95,8 @@ export const house: GenreDef = {
       vel: { base: 0.12, accent: 0.18, ghost: 0.06 },
       swingDepth: 1,
       muteP: 0.5,
+      minEnergy: 0.5,
+      densitySwing: 0.2,
     },
   ],
 
@@ -114,6 +122,7 @@ export const house: GenreDef = {
     synth: { cutoff: 320, resonance: 4, envMod: 1400, decay: 0.22 },
     swingDepth: 1,
     muteP: 0.15,
+    minEnergy: 0.3,
   },
 
   chords: {
@@ -135,6 +144,8 @@ export const house: GenreDef = {
     },
     swingDepth: 1,
     muteP: 0.3,
+    // Chords carry the breakdown, so they stay in when everything else has gone.
+    minEnergy: 0.1,
   },
 
   tonality: {
@@ -182,5 +193,16 @@ export const house: GenreDef = {
     newNotesEvery: 64,
     newNotesP: 0.25,
     muteEvery: 8,
+    // DJ-friendly: a long intro of drums only, a breakdown that takes the kick away,
+    // and everything in multiples of eight.
+    sections: [
+      { name: "intro", bars: 16, energy: 0.3 },
+      { name: "build", bars: 16, energy: 0.35, energyTo: 0.75 },
+      { name: "main", bars: 32, energy: 0.85 },
+      { name: "breakdown", bars: 16, energy: 0.15 },
+      { name: "build", bars: 8, energy: 0.4, energyTo: 0.9 },
+      { name: "main", bars: 32, energy: 0.95 },
+      { name: "outro", bars: 16, energy: 0.5, energyTo: 0.3 },
+    ],
   },
 };
