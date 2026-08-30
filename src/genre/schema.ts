@@ -1,5 +1,8 @@
 import type { NoteValue } from "../audio/fx.ts";
+import type { PolyParams } from "../audio/poly.ts";
 import type { ThreeOhParams } from "../audio/threeoh.ts";
+import type { HarmonyDef } from "../harmony/progression.ts";
+import type { ScaleName } from "../harmony/scales.ts";
 import type { PatternGen } from "../pattern/gen.ts";
 import type { PitchBag } from "../pattern/notes.ts";
 
@@ -78,6 +81,35 @@ export interface BassDef {
   readonly muteP?: number;
 }
 
+export interface ChordsDef {
+  readonly name: string;
+  /** Which steps of the bar a chord is struck on. House stabs on the offbeat eighths. */
+  readonly gen: PatternGen;
+  readonly len?: number;
+  readonly density: number;
+  readonly chaos?: number;
+  /** Where the voicing may sit. Voice leading keeps it inside. */
+  readonly register: readonly [number, number];
+  readonly synth: Partial<PolyParams>;
+  readonly swingDepth?: number;
+  readonly nudgeMs?: number;
+  readonly muteP?: number;
+}
+
+/**
+ * A genre's tonal content: what key, what scale, what chords.
+ *
+ * Optional, and genuinely so — acid and minimal techno have none, and that is not an
+ * omission. Butler's phrase for techno is a "total lack of cadences"; a progression under
+ * an acid line destroys it.
+ */
+export interface TonalityDef {
+  readonly scales: readonly { readonly name: ScaleName; readonly weight: number }[];
+  /** Pitch classes the genre favours. Omit for no preference. */
+  readonly keyPrefs?: readonly number[];
+  readonly harmony: HarmonyDef;
+}
+
 export interface GenreDef {
   readonly id: string;
   readonly name: string;
@@ -100,6 +132,8 @@ export interface GenreDef {
 
   readonly drums: readonly DrumVoiceDef[];
   readonly bass?: BassDef;
+  readonly chords?: ChordsDef;
+  readonly tonality?: TonalityDef;
 
   readonly fx: {
     readonly delay: {
@@ -121,7 +155,7 @@ export interface GenreDef {
     /** Bars between possible pattern regenerations, and the odds each time. */
     readonly newPatternEvery: number;
     readonly newPatternP: number;
-    /** Bars between possible key/bag changes. */
+    /** Bars between possible key, bag and progression changes. */
     readonly newNotesEvery: number;
     readonly newNotesP: number;
     /** Bars between mute re-rolls. */

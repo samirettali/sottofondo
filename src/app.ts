@@ -1,13 +1,14 @@
 import { createKit, type DrumVoice, type Kit } from "./audio/drums.ts";
 import { createDelay, createDucker, type Delay, type Ducker } from "./audio/fx.ts";
 import { createMaster, type Master } from "./audio/master.ts";
+import { createPoly, type Poly } from "./audio/poly.ts";
 import { createThreeOh, midiToFrequency, type ThreeOh } from "./audio/threeoh.ts";
 import { isMuted } from "./arrange/epoch.ts";
 import { Clock, type StepEvent } from "./core/clock.ts";
 import { formatSeed } from "./core/rng.ts";
 import { floorMod, swingOffsetBeats, track } from "./core/time.ts";
 import { lanesOf, patternIndexAt, scoreLane, type LaneState } from "./score.ts";
-import type { BassDef, DrumVoiceDef, GenreDef } from "./genre/schema.ts";
+import type { BassDef, ChordsDef, DrumVoiceDef, GenreDef } from "./genre/schema.ts";
 
 /**
  * The engine: a genre definition in, sound out.
@@ -37,6 +38,14 @@ interface RuntimeBass {
   userMuted: boolean;
   /** Whether the previous note left the gate open for a slide. */
   gateOpen: boolean;
+}
+
+interface RuntimeChords {
+  readonly def: ChordsDef;
+  readonly len: number;
+  readonly synth: Poly;
+  density: number;
+  userMuted: boolean;
 }
 
 /** What a display needs to know about one lane. */
@@ -69,6 +78,7 @@ export class Engine {
 
   private readonly voices: RuntimeVoice[] = [];
   private readonly bass: RuntimeBass | null = null;
+  private readonly chords: RuntimeChords | null = null;
   private bpm: number;
   private swing: number;
 
@@ -103,25 +113,38 @@ export class Engine {
       });
     }
 
+    // A voice named in the delay's send list is routed through it; everything else goes
+    // to the ducked bus. This is the one piece of routing a preset chooses, and it
+    // chooses by name from a fixed pair of destinations rather than describing a graph.
+    const destination = (name: string): AudioNode =>
+      genre.fx.delay.sends.includes(name) ? this.delay.input : this.ducker.output;
+
     if (genre.bass !== undefined) {
       const def = genre.bass;
-      // A voice named in the delay's send list is routed through it; everything else
-      // goes to the ducked bus. This is the one piece of routing a preset chooses, and
-      // it chooses by name from a fixed pair of destinations.
-      const sent = genre.fx.delay.sends.includes(def.name);
-      const out = sent ? this.delay.input : this.ducker.output;
       this.bass = {
         def,
         len: def.len ?? genre.clock.stepsPerBar,
-        synth: createThreeOh(ctx, out, def.wave, def.synth),
+        synth: createThreeOh(ctx, destination(def.name), def.wave, def.synth),
         density: def.density,
         userMuted: false,
         gateOpen: false,
       };
     }
 
+    if (genre.chords !== undefined) {
+      const def = genre.chords;
+      this.chords = {
+        def,
+        len: def.len ?? genre.clock.stepsPerBar,
+        synth: createPoly(ctx, destination(def.name), def.synth),
+        density: def.density,
+        userMuted: false,
+      };
+    }
+
     const lanes = this.voices.map((v) => track(v.len));
     if (this.bass !== null) lanes.push(track(this.bass.len));
+    if (this.chords !== null) lanes.push(track(this.chords.len));
     this.clock = new Clock(() => ctx.currentTime, lanes, {
       stepsPerBeat: genre.clock.stepsPerBar / 4,
     });
@@ -131,6 +154,11 @@ export class Engine {
   /** Index of the bass lane in the clock's track list, or -1. */
   private get bassLane(): number {
     return this.bass === null ? -1 : this.voices.length;
+  }
+
+  private get chordLane(): number {
+    if (this.chords === null) return -1;
+    return this.voices.length + (this.bass === null ? 0 : 1);
   }
 
   start(): void {
@@ -151,6 +179,7 @@ export class Engine {
   dispose(): void {
     this.stop();
     this.bass?.synth.dispose();
+    this.chords?.synth.dispose();
     this.master.dispose();
   }
 
@@ -169,13 +198,12 @@ export class Engine {
   }
 
   get voiceNames(): string[] {
-    const names = this.voices.map((v) => v.name);
-    if (this.bass !== null) names.push(this.bass.def.name);
-    return names;
+    return lanesOf(this.genre).map((lane) => lane.name);
   }
 
   setUserMute(index: number, muted: boolean): void {
     if (index === this.bassLane && this.bass !== null) this.bass.userMuted = muted;
+    else if (index === this.chordLane && this.chords !== null) this.chords.userMuted = muted;
     else {
       const v = this.voices[index];
       if (v !== undefined) v.userMuted = muted;
@@ -185,6 +213,7 @@ export class Engine {
   setDensity(index: number, density: number): void {
     const clamped = Math.max(0, Math.min(1, density));
     if (index === this.bassLane && this.bass !== null) this.bass.density = clamped;
+    else if (index === this.chordLane && this.chords !== null) this.chords.density = clamped;
     else {
       const v = this.voices[index];
       if (v !== undefined) v.density = clamped;
@@ -262,6 +291,9 @@ export class Engine {
     if (index === this.bassLane && this.bass !== null) {
       return { density: this.bass.density, userMuted: this.bass.userMuted };
     }
+    if (index === this.chordLane && this.chords !== null) {
+      return { density: this.chords.density, userMuted: this.chords.userMuted };
+    }
     const v = this.voices[index];
     return v === undefined
       ? { density: 0, userMuted: true }
@@ -270,7 +302,26 @@ export class Engine {
 
   private step(e: StepEvent): void {
     if (e.voice === this.bassLane) this.bassStep(e);
+    else if (e.voice === this.chordLane) this.chordStep(e);
     else this.drumStep(e);
+  }
+
+  private chordStep(e: StepEvent): void {
+    const chords = this.chords;
+    if (chords === null) return;
+
+    const patternStep = floorMod(e.step, chords.len);
+    const stepInBar = floorMod(e.step, this.genre.clock.stepsPerBar);
+    const bar = Math.floor(e.step / this.genre.clock.stepsPerBar);
+
+    const hit = scoreLane(this.genre, e.voice, this.seed, bar, this.laneState(e.voice)).find(
+      (ev) => ev.patternStep === patternStep,
+    );
+    if (hit?.notes === undefined) return;
+
+    const at = this.displace(e, stepInBar, chords.def.swingDepth ?? 0, chords.def.nudgeMs ?? 0);
+    chords.synth.play(at, hit.notes, hit.velocity);
+    this.onHit(e.voice, stepInBar, hit.velocity, at);
   }
 
   private drumStep(e: StepEvent): void {

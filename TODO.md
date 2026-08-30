@@ -79,9 +79,10 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 - [x] `src/genre/index.ts` — the registry
 - [ ] Unitless preset values, expanded by the engine (`2^(2*(p-0.5))`, cutoff as a MIDI
       note number so it transposes musically)
-- [ ] `house.json`
-- [ ] `dnb.json`
-- [ ] `lofi.json`
+- [x] `techno.ts` — minimal techno, with a polymetric perc lane
+- [x] `house.ts` — deep house: the first with harmony, swing and a sidechain
+- [ ] `dnb.ts`
+- [ ] `lofi.ts`
 - [ ] Per-genre swing table, never one global constant
 - [ ] Humanisation: `nudgeMs` signed and constant per bar, `jitterMs` unsigned and
       random, **default 0 everywhere**
@@ -90,14 +91,14 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 
 Only from house onward. Acid, minimal techno and dub techno have none by design.
 
-- [ ] `src/harmony/scales.ts` — scale-degree space, `degToMidi` at the boundary only
-- [ ] `src/harmony/progression.ts` — genre pools + the McGill 12×12 matrix
-- [ ] Two transition tables, classical and pop (rock's `V IV I` is nearly as common as
-      `IV V I`)
-- [ ] `src/harmony/voicing.ts` — closest-inversion voice leading (kills the "chords jump
-      around" artefact for ~15 lines)
-- [ ] Rootless A/B voicings, drop-2, quartal
+- [x] `src/harmony/scales.ts` — scale-degree space, `degToMidi` at the boundary only
+- [x] `src/harmony/chords.ts` — roman numerals, and closest-inversion voice leading
+- [x] `src/harmony/progression.ts` — genre pools + the McGill 12×12 matrix
+- [x] `src/audio/poly.ts` — polyphonic chord voice
+- [ ] Rootless A/B voicings, drop-2, quartal (needed for jazz and lo-fi)
 - [ ] Available-tension table
+- [ ] Use `tonality.scales` — the field is read but the scale is not yet used to
+      constrain the bass, which still draws from interval bags
 
 ## 6. Melody
 

@@ -20,18 +20,32 @@ const stringify = (events: ReturnType<typeof scoreBar>) =>
     .map((e) => `${e.lane}:${e.patternStep}:${e.velocity.toFixed(4)}:${e.accent}:${e.midi ?? ""}`)
     .join("|");
 
-test("lanes are declared in the engine's order, with the bass last", () => {
+test("lanes are declared in the engine's order: drums, bass, chords", () => {
   for (const genre of genreList()) {
     const lanes = lanesOf(genre);
-    assert.equal(lanes.length, genre.drums.length + (genre.bass === undefined ? 0 : 1));
+    const expected =
+      genre.drums.length +
+      (genre.bass === undefined ? 0 : 1) +
+      (genre.chords === undefined ? 0 : 1);
+    assert.equal(lanes.length, expected, genre.id);
     lanes.forEach((lane, i) => assert.equal(lane.index, i));
-    if (genre.bass !== undefined) {
-      assert.equal(lanes.at(-1)?.pitched, true);
-      assert.equal(lanes.at(-1)?.name, genre.bass.name);
-    }
-    assert.equal(lanes.filter((l) => l.pitched).length, genre.bass === undefined ? 0 : 1);
+
+    // The order is a contract: a lane index is a hash coordinate, so reordering would
+    // change every seed's music.
+    const kinds = lanes.map((l) => l.kind);
+    assert.deepEqual(kinds, [...kinds].sort(byKind), `${genre.id} lanes are out of order`);
+    assert.equal(lanes.filter((l) => l.kind === "bass").length, genre.bass === undefined ? 0 : 1);
+    assert.equal(
+      lanes.filter((l) => l.kind === "chords").length,
+      genre.chords === undefined ? 0 : 1,
+    );
   }
 });
+
+function byKind(a: string, b: string): number {
+  const order = { drum: 0, bass: 1, chords: 2 } as Record<string, number>;
+  return (order[a] ?? 0) - (order[b] ?? 0);
+}
 
 test("the same bar always scores identically", () => {
   for (const genre of genreList()) {
@@ -157,7 +171,7 @@ test("scored velocities are in range and pitches are sane", () => {
 
 test("a glide only ever follows a slide", () => {
   const genre = acid;
-  const laneIndex = lanesOf(genre).findIndex((l) => l.pitched);
+  const laneIndex = lanesOf(genre).findIndex((l) => l.kind === "bass");
   for (let bar = 0; bar < 200; bar++) {
     const events = scoreLane(genre, laneIndex, 15, bar, { density: 0.7, userMuted: false });
     events.forEach((e, i) => {

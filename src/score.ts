@@ -1,5 +1,7 @@
 import { EPOCHS, epochAt, isMuted, type EpochSpec } from "./arrange/epoch.ts";
 import { floorMod } from "./core/time.ts";
+import { voiceLead } from "./harmony/chords.ts";
+import { chordAt, chooseKey, chooseProgression, type Progression } from "./harmony/progression.ts";
 import { defaultVoice, realise } from "./pattern/gen.ts";
 import { chooseNoteSet, defaultNoteVoice, realiseNotes } from "./pattern/notes.ts";
 import type { GenreDef } from "./genre/schema.ts";
@@ -21,8 +23,10 @@ export interface LaneEvent {
   readonly patternStep: number;
   readonly velocity: number;
   readonly accent: boolean;
-  /** Pitched lanes only. */
+  /** Monophonic pitched lanes only. */
   readonly midi?: number;
+  /** Chord lanes only: the whole voicing. */
+  readonly notes?: readonly number[];
   /** This note holds into the next step. */
   readonly slide?: boolean;
   /** This note glides in from the previous one. */
@@ -35,27 +39,41 @@ export interface LaneState {
   readonly userMuted: boolean;
 }
 
+export type LaneKind = "drum" | "bass" | "chords";
+
 export interface Lane {
   readonly index: number;
   readonly name: string;
   readonly len: number;
-  readonly pitched: boolean;
+  readonly kind: LaneKind;
 }
 
-/** The lanes a genre declares, in the order the engine assigns them. */
+/**
+ * The lanes a genre declares, in the order the engine assigns them: drums, then bass,
+ * then chords. The order is part of the contract — a lane's index is a coordinate that
+ * feeds the hash, so reordering would change every seed's music.
+ */
 export function lanesOf(genre: GenreDef): Lane[] {
   const lanes: Lane[] = genre.drums.map((d, index) => ({
     index,
     name: d.name,
     len: d.len ?? genre.clock.stepsPerBar,
-    pitched: false,
+    kind: "drum" as const,
   }));
   if (genre.bass !== undefined) {
     lanes.push({
       index: lanes.length,
       name: genre.bass.name,
       len: genre.bass.len ?? genre.clock.stepsPerBar,
-      pitched: true,
+      kind: "bass",
+    });
+  }
+  if (genre.chords !== undefined) {
+    lanes.push({
+      index: lanes.length,
+      name: genre.chords.name,
+      len: genre.chords.len ?? genre.clock.stepsPerBar,
+      kind: "chords",
     });
   }
   return lanes;
@@ -66,7 +84,17 @@ export function defaultLaneStates(genre: GenreDef): LaneState[] {
   if (genre.bass !== undefined) {
     states.push({ density: genre.bass.density, userMuted: false });
   }
+  if (genre.chords !== undefined) {
+    states.push({ density: genre.chords.density, userMuted: false });
+  }
   return states;
+}
+
+function defOf(genre: GenreDef, laneIndex: number): { muteP?: number } | undefined {
+  const lane = lanesOf(genre)[laneIndex];
+  if (lane === undefined) return undefined;
+  if (lane.kind === "drum") return genre.drums[laneIndex];
+  return lane.kind === "bass" ? genre.bass : genre.chords;
 }
 
 function specs(genre: GenreDef): { pattern: EpochSpec; notes: EpochSpec } {
@@ -93,9 +121,29 @@ export function laneSilent(
   state: LaneState,
 ): boolean {
   if (state.userMuted) return true;
-  const def = genre.drums[laneIndex] ?? genre.bass;
-  const muteP = def === undefined ? 0 : (def.muteP ?? 0);
+  const muteP = defOf(genre, laneIndex)?.muteP ?? 0;
   return isMuted(seed, bar, laneIndex, genre.arrangement.muteEvery, muteP);
+}
+
+/**
+ * The harmony in force at a bar: key, scale and progression, all on the note epoch.
+ *
+ * Returned whole rather than per-lane so that chords and any future melody read the same
+ * harmony from the same coordinates, rather than each deriving its own and drifting.
+ */
+export function harmonyAt(
+  genre: GenreDef,
+  seed: number,
+  bar: number,
+): { key: number; progression: Progression } | null {
+  const tonality = genre.tonality;
+  if (tonality === undefined) return null;
+  const epoch = epochAt(seed, bar, specs(genre).notes);
+  // Lane index 0 deliberately: the harmony belongs to the piece, not to a voice.
+  return {
+    key: chooseKey(tonality.keyPrefs, seed, epoch, 0),
+    progression: chooseProgression(tonality.harmony, seed, epoch, 0),
+  };
 }
 
 /** One lane's events for one bar. */
@@ -130,6 +178,9 @@ export function scoreLane(
     }));
   }
 
+  const lane = lanesOf(genre)[laneIndex];
+  if (lane?.kind === "chords") return scoreChords(genre, laneIndex, seed, bar, state);
+
   const bass = genre.bass;
   if (bass === undefined) return [];
   const len = bass.len ?? genre.clock.stepsPerBar;
@@ -158,6 +209,70 @@ export function scoreLane(
     slide: slot.slide,
     glide: slot.glide,
   }));
+}
+
+/**
+ * One bar of chords.
+ *
+ * The voicing is led from the previous bar's chord rather than from nothing, and that
+ * previous voicing is recomputed rather than remembered — generation stays pure, and
+ * seeking to bar 500 gives the voicing it would have had. The chain is only as deep as
+ * the progression is long, since a full cycle brings it back to the same chord.
+ */
+function scoreChords(
+  genre: GenreDef,
+  laneIndex: number,
+  seed: number,
+  bar: number,
+  state: LaneState,
+): LaneEvent[] {
+  const def = genre.chords;
+  const harmony = harmonyAt(genre, seed, bar);
+  if (def === undefined || harmony === null) return [];
+
+  const len = def.len ?? genre.clock.stepsPerBar;
+  const voice = defaultVoice(def.gen, {
+    density: state.density,
+    chaos: def.chaos ?? 0,
+  });
+  const epoch = epochAt(seed, bar, specs(genre).pattern);
+  const hits = realise(voice, len, seed, epoch, laneIndex, bar);
+  if (hits.length === 0) return [];
+
+  const notes = voicingAt(genre, seed, bar, harmony, def.register);
+  return hits.map((hit) => ({
+    lane: laneIndex,
+    name: def.name,
+    patternStep: hit.step,
+    velocity: hit.velocity,
+    accent: hit.accent,
+    notes,
+  }));
+}
+
+/** The voicing for a bar, led from the bars before it inside one progression cycle. */
+function voicingAt(
+  genre: GenreDef,
+  seed: number,
+  bar: number,
+  harmony: { key: number; progression: Progression },
+  register: readonly [number, number],
+): number[] {
+  const cycle = harmony.progression.chords.length * harmony.progression.barsPerChord;
+  const start = bar - (((bar % cycle) + cycle) % cycle);
+  let previous: number[] | null = null;
+  let voicing: number[] = [];
+  for (let b = start; b <= bar; b += harmony.progression.barsPerChord) {
+    voicing = voiceLead(
+      chordAt(harmony.progression, b),
+      harmony.key,
+      previous,
+      register[0],
+      register[1],
+    );
+    previous = voicing;
+  }
+  return voicing;
 }
 
 /** Every lane's events for one bar. */

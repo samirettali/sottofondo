@@ -6,6 +6,8 @@ import { GENRES, defaultGenre, genreList } from "../src/genre/index.ts";
 import { acid } from "../src/genre/acid.ts";
 import { techno } from "../src/genre/techno.ts";
 import { compositeCycleSteps, track } from "../src/core/time.ts";
+import { lanesOf } from "../src/score.ts";
+import { parseChord } from "../src/harmony/chords.ts";
 import { defaultVoice, realise } from "../src/pattern/gen.ts";
 import { chooseNoteSet, defaultNoteVoice, realiseNotes } from "../src/pattern/notes.ts";
 
@@ -26,8 +28,9 @@ test("every genre is internally well formed", () => {
     assert.ok(genre.version >= 1, `${genre.id} version`);
     assert.ok(genre.refs.length > 0, `${genre.id} cites no reference tracks`);
 
-    const names = genre.drums.map((d) => d.name);
-    if (genre.bass !== undefined) names.push(genre.bass.name);
+    // Derived rather than rebuilt by hand, so adding a lane kind cannot leave this check
+    // silently behind.
+    const names = lanesOf(genre).map((l) => l.name);
     assert.equal(new Set(names).size, names.length, `${genre.id} has duplicate voice names`);
 
     // A send that names a voice which does not exist is a silent no-op, so catch it here.
@@ -42,6 +45,28 @@ test("every genre is internally well formed", () => {
       assert.ok(d.density >= 0 && d.density <= 1, `${genre.id}/${d.name} density`);
       // The literature is consistent that random microtiming does not add groove.
       assert.ok((d.jitterMs ?? 0) <= 8, `${genre.id}/${d.name} jitter is too large`);
+    }
+
+    // Every chord symbol in every pool must parse, or a typo becomes a runtime throw
+    // several bars into playback.
+    for (const p of genre.tonality?.harmony.pool ?? []) {
+      assert.ok(p.chords.length > 0, `${genre.id} has an empty progression`);
+      assert.ok(p.barsPerChord > 0, `${genre.id} progression with no duration`);
+      for (const symbol of p.chords) {
+        assert.doesNotThrow(() => parseChord(symbol), `${genre.id}: ${symbol}`);
+      }
+    }
+
+    // A genre with chords needs a tonality to draw them from, and vice versa.
+    if (genre.chords !== undefined) {
+      assert.ok(genre.tonality !== undefined, `${genre.id} has chords but no tonality`);
+    }
+    if (genre.tonality !== undefined) {
+      const total = genre.tonality.scales.reduce((a, s) => a + s.weight, 0);
+      assert.ok(total > 0, `${genre.id} scale weights sum to zero`);
+      for (const k of genre.tonality.keyPrefs ?? []) {
+        assert.ok(k >= 0 && k < 12, `${genre.id} key preference ${k}`);
+      }
     }
   }
 });
