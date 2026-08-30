@@ -23,7 +23,11 @@ These cannot be retrofitted cheaply. Build them first and build them right.
       `AudioContext` times, per-voice cursors
 - [x] Move the ticker into a `Worker` so a hidden tab does not stop the sequencer
 - [x] `AudioContext` created lazily inside the first user gesture (autoplay policy)
-- [ ] Seed in the URL hash, `?g=<genre>&s=<hex>`, read on load
+- [x] Seed in the URL, `?s=<hex>`, read on load
+- [ ] Add `?g=<genre>` once presets exist
+- [ ] **Version the recipe** — `engineVersion + genreVersion + seed`, so changing a
+      generator does not silently repoint every saved seed at different music
+      (borrowed from Diaspar, see `docs/DESIGN.md`)
 
 ## 2. Pattern layer
 
@@ -48,13 +52,16 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 
 - [x] `src/audio/master.ts` — sum → tanh waveshaper → 20 Hz highpass → compressor glue
 - [x] Waveshaper curve indexed `/(n-1)`, normalised to unity (MDN's is neither)
-- [ ] `src/audio/voice.ts` — subtractive voice, ADSR helpers with the anchor/cancel
-      discipline, always `stop()` (the commonest leak)
+- [x] `src/audio/env.ts` — ADSR helpers with the anchor/cancel discipline, seeded noise
+      buffer, always `stop()` (the commonest leak)
+- [x] `src/audio/drums.ts` — synthesised 808/909 kit: kick, snare, clap, closed and open
+      hat, rim, cowbell
+- [x] `src/app.ts` — engine wiring the clock to the kit; audible end to end
+- [ ] `src/audio/voice.ts` — subtractive voice for pitched parts
 - [ ] `src/audio/303.ts` — env mod in **cents into `filter.detune`**, accent shortens the
       envelope, slide as a `setTargetAtTime` time constant
 - [ ] 303 accent state machine (the 1 µF cap: consecutive accents sweep higher)
 - [ ] Slide starts on the step **after** the marked one
-- [ ] `src/audio/drums.ts` — synthesised 808/909 kit, values from the service notes
 - [ ] `src/audio/fx.ts` — feedback delay with a lowpass in the loop, tempo-synced
 - [ ] Reverb: AudioWorklet FDN (`ConvolverNode` cannot modulate at all); generated IR as
       the fallback while `addModule()` resolves

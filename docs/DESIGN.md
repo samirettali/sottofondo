@@ -1,5 +1,16 @@
 # Multi-genre generative music toy — research and design
 
+> **Prior work in this repo's own neighbourhood.** `~/dev/diaspar` (worktree
+> `~/dev/diaspar-initial`) is an existing local-first procedural music instrument with
+> techno, ambient, boom-bap and synthwave profiles, path-addressed determinism, saved
+> recipes and an autopilot. It reaches the same conclusions this research does about
+> determinism and about applying changes on musical boundaries, and it adds one this
+> research missed: **a recipe carries `engineVersion` and `profileVersion` alongside the
+> seed**, so improving a generator does not silently repoint every saved seed at
+> different music. Worth reading before going much further, and worth deciding whether
+> this is a fresh start or a fork of it. Stack differs: Diaspar is React + Tone.js, this
+> is zero-dependency.
+
 Extends the idea of vitling's *Endless Acid Banger* (EAB) to arbitrary genres, with
 tuneable parameters and a reproducible seed.
 
