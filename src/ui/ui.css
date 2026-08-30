@@ -86,6 +86,37 @@ input[type="text"],
   width: 12ch;
 }
 
+.favourites {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chip {
+  display: inline-flex;
+}
+
+.chip button {
+  border-radius: 0;
+  padding: 0.3em 0.6em;
+  font-size: 0.9em;
+}
+
+.chip button:first-child {
+  border-radius: 2px 0 0 2px;
+  border-right: none;
+}
+
+.chip .drop {
+  border-radius: 0 2px 2px 0;
+  color: var(--dim);
+}
+
+.chip .drop:hover {
+  color: #f87171;
+  border-color: #f87171;
+}
+
 .globals {
   display: grid;
   gap: 0.35rem;

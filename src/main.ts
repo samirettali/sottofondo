@@ -57,6 +57,7 @@ function load(genreId: string, seed: number): void {
   teardown = buildUi(app, engine, {
     onGenre: (id) => load(id, seed),
     onSeed: (next) => load(genreId, next),
+    onLoad: (g, s) => load(g, s),
   });
 }
 

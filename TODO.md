@@ -135,11 +135,13 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
 - [x] Genre picker, seed field, "new seed" button
 - [x] Sliders: BPM, swing, volume, per-voice density; per-voice mute
 - [x] Every lane drawn one bar wide, so a polymetric lane visibly drifts
-- [ ] Copy-link button
-- [ ] Sliders for the 303: cutoff, resonance, env mod, decay
-- [ ] Sliders for FX: delay wet and feedback, sidechain depth
+- [x] Copy-link button
+- [x] Sliders for the 303: cutoff (logarithmic), resonance, env mod, decay
+- [x] Sliders for FX: delay wet and feedback
+- [x] Show the composite cycle length ("repeats every 7 bars")
+- [x] Show the section and energy
+- [ ] Sidechain depth slider
 - [ ] Genre morph: crossfade the numeric fields of two `GenreDef`s
-- [ ] Show the composite cycle length ("repeats in 7 bars") when voices are polymetric
 
 ## 9. Verification
 

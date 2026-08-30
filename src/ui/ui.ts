@@ -1,5 +1,13 @@
 import type { Engine } from "../app.ts";
 import { genreList } from "../genre/index.ts";
+import {
+  addFavourite,
+  favouriteLabel,
+  isFavourited,
+  loadFavourites,
+  removeFavourite,
+  type Favourite,
+} from "./favourites.ts";
 import { formatSeed, parseSeed } from "../core/rng.ts";
 import { swingRatio } from "../core/time.ts";
 
@@ -15,6 +23,8 @@ import { swingRatio } from "../core/time.ts";
 export interface UiCallbacks {
   onGenre(id: string): void;
   onSeed(seed: number): void;
+  /** Load a saved seed, which may belong to a different genre. */
+  onLoad(genre: string, seed: number): void;
 }
 
 export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () => void {
@@ -62,7 +72,45 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
     );
   });
 
-  header.append(transport, genre, seed, reroll, copy);
+  const star = button("", "save this seed", () => {
+    const saved = isFavourited(engine.genre.id, engine.seed);
+    const list = saved
+      ? removeFavourite(engine.genre.id, engine.seed)
+      : addFavourite(engine.genre.id, engine.seed);
+    renderFavourites(list);
+    markStar(!saved);
+  });
+  const markStar = (saved: boolean) => {
+    star.textContent = saved ? "★" : "☆";
+    star.setAttribute("aria-pressed", String(saved));
+  };
+  markStar(isFavourited(engine.genre.id, engine.seed));
+
+  header.append(transport, genre, seed, reroll, copy, star);
+
+  const saved = el("div", "favourites");
+  const renderFavourites = (list: readonly Favourite[]) => {
+    saved.textContent = "";
+    if (list.length === 0) {
+      saved.hidden = true;
+      return;
+    }
+    saved.hidden = false;
+    for (const f of list) {
+      const chip = el("span", "chip");
+      const load = button(favouriteLabel(f), `load ${favouriteLabel(f)}`, () =>
+        cb.onLoad(f.genre, f.seed),
+      );
+      const drop = button("×", `forget ${favouriteLabel(f)}`, () => {
+        renderFavourites(removeFavourite(f.genre, f.seed));
+        markStar(isFavourited(engine.genre.id, engine.seed));
+      });
+      drop.classList.add("drop");
+      chip.append(load, drop);
+      saved.append(chip);
+    }
+  };
+  renderFavourites(loadFavourites());
 
   const globals = el("div", "globals");
   const bpm = slider("bpm", engine.genre.clock.bpm.min, engine.genre.clock.bpm.max, 1, engine.tempo, (v) => {
@@ -158,7 +206,7 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
 
   const status = el("p", "status");
 
-  root.append(header, globals, lanes, energyBar, tweaks, scope, status);
+  root.append(header, saved, globals, lanes, energyBar, tweaks, scope, status);
 
   // Drawing runs on requestAnimationFrame and reads the engine; it never writes to it,
   // and it never touches the audio clock for anything but display.
