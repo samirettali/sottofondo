@@ -5,6 +5,8 @@ import { METRIC_16, metricFromGrouping, metricWeight } from "../src/pattern/metr
 import { balkan } from "../src/genre/balkan.ts";
 import { defaultLaneStates, lanesOf, scoreLane, stepsPerBeat } from "../src/score.ts";
 import { genreList } from "../src/genre/index.ts";
+import { Clock } from "../src/core/clock.ts";
+import { track } from "../src/core/time.ts";
 
 const KOPANITSA = [4, 4, 6, 4, 4]; // 2+2+3+2+2 eighths on a sixteenth grid
 
@@ -95,6 +97,38 @@ test("the odd metre plays, and its accents land on the beat heads", () => {
   assert.ok(accents > 0, "nothing was accented");
   // Five of twenty-two steps are heads, so chance alone would put 23% of accents there.
   assert.ok(accentsOnHead / accents > 0.5, `only ${accentsOnHead}/${accents} accents on heads`);
+});
+
+test("an odd bar is scheduled at the right times", () => {
+  // The part most at risk from an additive metre: bars are no longer a whole number of
+  // beats, so anything that assumed four would put every bar line in the wrong place.
+  const events: number[] = [];
+  let now = 0;
+  // Held in an object because narrowing cannot see that the ticker assigns it.
+  const pending: { fire: (() => void) | null } = { fire: null };
+  const ticker = {
+    start(onTick: () => void) {
+      pending.fire = onTick;
+    },
+    stop() {
+      pending.fire = null;
+    },
+  };
+
+  const clock = new Clock(() => now, [track(22)], { stepsPerBeat: 4, ticker, lookahead: 0.2 });
+  clock.onStep((e) => events.push(e.time));
+  clock.start(120); // a beat is half a second, so a step is 0.125 s
+  for (let i = 0; i < 60; i++) {
+    now += 0.05;
+    pending.fire?.();
+  }
+
+  // Twenty-two steps of a sixteenth is five and a half beats: 2.75 s at this tempo.
+  const barLength = events[22]! - events[0]!;
+  assert.ok(Math.abs(barLength - 2.75) < 1e-9, `a bar took ${barLength}s`);
+  for (let i = 1; i < events.length; i++) {
+    assert.ok(Math.abs(events[i]! - events[i - 1]! - 0.125) < 1e-9, `step ${i} is misplaced`);
+  }
 });
 
 test("the bar really is eleven eighths, not a rounded 4/4", () => {
