@@ -2,9 +2,11 @@ import { createKit, type DrumVoice, type Kit } from "./audio/drums.ts";
 import {
   createDelay,
   createDucker,
+  createEnergyFilter,
   createTexture,
   type Delay,
   type Ducker,
+  type EnergyFilter,
   type Texture,
 } from "./audio/fx.ts";
 import { createMaster, type Master } from "./audio/master.ts";
@@ -84,6 +86,9 @@ export class Engine {
   readonly delay: Delay;
   readonly ducker: Ducker;
   readonly texture: Texture;
+  readonly energyFilter: EnergyFilter;
+  /** The last bar the energy curve was applied for, so it is applied once per bar. */
+  private appliedBar = -1;
 
   private readonly voices: RuntimeVoice[] = [];
   private readonly bass: RuntimeBass | null = null;
@@ -105,7 +110,10 @@ export class Engine {
     // The texture chain sits in front of the master bus, so wow and bit reduction apply
     // to the whole mix rather than to one voice — which is what a tape or a record does.
     this.texture = createTexture(ctx, this.master.input, genre.fx.texture ?? {});
-    const bus = this.texture.input;
+    // The energy filter sits in front of the texture chain, so the sweep is filtered
+    // audio rather than filtered vinyl noise.
+    this.energyFilter = createEnergyFilter(ctx, this.texture.input, genre.fx.energyFilter);
+    const bus = this.energyFilter.input;
     this.ducker = createDucker(ctx, bus, genre.fx.sidechain.db, genre.fx.sidechain.releaseMs);
     this.delay = createDelay(ctx, bus, genre.fx.delay, this.bpm);
     this.kit = createKit(ctx, bus);
@@ -188,6 +196,7 @@ export class Engine {
     this.stop();
     this.bass?.synth.dispose();
     this.chords?.synth.dispose();
+    this.energyFilter.dispose();
     this.texture.dispose();
     this.master.dispose();
   }
@@ -319,9 +328,40 @@ export class Engine {
   }
 
   private step(e: StepEvent): void {
+    this.applyEnergy(e);
     if (e.voice === this.bassLane) this.bassStep(e);
     else if (e.voice === this.chordLane) this.chordStep(e);
     else this.drumStep(e);
+  }
+
+  /**
+   * Move everything the energy curve drives, once per bar, at the bar's own time.
+   *
+   * Scheduled at the event's time rather than at `currentTime`, so the sweep lands with
+   * the music rather than whenever the scheduler happened to wake up. Once per bar
+   * because that is how often the curve moves; per step would be thousands of redundant
+   * automation events on a param list that is scanned linearly.
+   */
+  private applyEnergy(e: StepEvent): void {
+    const bar = Math.floor(e.step / this.genre.clock.stepsPerBar);
+    if (bar === this.appliedBar) return;
+    this.appliedBar = bar;
+
+    const energy = energyAt(this.genre, bar);
+    this.energyFilter.setEnergy(energy, e.time);
+
+    const swing = (base: number, octaves: number): number =>
+      base * 2 ** ((energy - 0.5) * 2 * octaves);
+
+    const bassSwing = this.bass?.def.filterSwing ?? 0;
+    if (this.bass !== null && bassSwing > 0) {
+      this.bass.synth.set({ cutoff: swing(this.bass.def.synth.cutoff, bassSwing) }, e.time);
+    }
+    const chordSwing = this.chords?.def.filterSwing ?? 0;
+    if (this.chords !== null && chordSwing > 0) {
+      const base = this.chords.def.synth.cutoff ?? 1800;
+      this.chords.synth.set({ cutoff: swing(base, chordSwing) }, e.time);
+    }
   }
 
   private chordStep(e: StepEvent): void {

@@ -1,4 +1,4 @@
-import type { NoteValue, TextureOptions } from "../audio/fx.ts";
+import type { EnergyFilterOptions, NoteValue, TextureOptions } from "../audio/fx.ts";
 import type { PolyParams } from "../audio/poly.ts";
 import type { ThreeOhParams } from "../audio/threeoh.ts";
 import type { SectionDef } from "../arrange/energy.ts";
@@ -89,6 +89,8 @@ export interface BassDef {
   readonly minEnergy?: number;
   readonly maxEnergy?: number;
   readonly densitySwing?: number;
+  /** Octaves the energy curve may move this voice's own cutoff, either way from centre. */
+  readonly filterSwing?: number;
 }
 
 export interface ChordsDef {
@@ -107,6 +109,7 @@ export interface ChordsDef {
   readonly minEnergy?: number;
   readonly maxEnergy?: number;
   readonly densitySwing?: number;
+  readonly filterSwing?: number;
 }
 
 /**
@@ -164,6 +167,8 @@ export interface GenreDef {
     };
     /** Vinyl noise, tape wow and bit reduction, applied to the whole mix. */
     readonly texture?: TextureOptions;
+    /** A filter on the whole mix, swept by the energy curve. */
+    readonly energyFilter?: EnergyFilterOptions;
   };
 
   readonly arrangement: {

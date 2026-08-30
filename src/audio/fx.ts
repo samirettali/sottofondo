@@ -169,6 +169,75 @@ export function bitCrushCurve(bits: number, n = 4096): Float32Array<ArrayBuffer>
   return curve;
 }
 
+export interface EnergyFilterOptions {
+  readonly type: "lowpass" | "highpass";
+  /**
+   * Cutoff at energy 0 and at energy 1, in Hz. `hi` may be *below* `lo`: a highpass that
+   * gets out of the way as the energy rises descends, and that is the usual shape for
+   * one.
+   */
+  readonly lo: number;
+  readonly hi: number;
+  readonly resonance?: number;
+}
+
+export interface EnergyFilter {
+  readonly input: GainNode;
+  /** Move the cutoff to match an energy in [0, 1]. */
+  setEnergy(energy: number, at?: number): void;
+  dispose(): void;
+}
+
+/**
+ * A filter on the whole mix, driven by the energy curve.
+ *
+ * The rest of what a build sounds like. Lanes arriving and density rising account for
+ * most of it, but not the sense of a lid coming off — that is the filter, and it has to
+ * move with the same curve or the two read as unrelated.
+ *
+ * The sweep is exponential because pitch and cutoff are heard logarithmically; a linear
+ * cutoff ramp sounds wrong at both ends.
+ */
+export function createEnergyFilter(
+  ctx: BaseAudioContext,
+  out: AudioNode,
+  options: EnergyFilterOptions | undefined,
+): EnergyFilter {
+  const input = ctx.createGain();
+  if (options === undefined) {
+    input.connect(out);
+    return {
+      input,
+      setEnergy() {},
+      dispose() {
+        input.disconnect();
+      },
+    };
+  }
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = options.type;
+  filter.frequency.value = options.lo;
+  filter.Q.value = options.resonance ?? 0.7;
+  input.connect(filter).connect(out);
+
+  return {
+    input,
+    setEnergy(energy, at = ctx.currentTime) {
+      const t = Math.max(0, Math.min(1, energy));
+      const target = options.lo * (options.hi / options.lo) ** t;
+      anchor(filter.frequency, at);
+      // Ramp over a beat rather than stepping: the curve moves per bar, and a step at a
+      // bar line is audible as a click in the filter.
+      filter.frequency.exponentialRampToValueAtTime(Math.max(20, target), at + 0.25);
+    },
+    dispose() {
+      input.disconnect();
+      filter.disconnect();
+    },
+  };
+}
+
 export interface TextureOptions {
   /** Continuous vinyl noise level in dBFS. Around −28 is audible but not intrusive. */
   readonly vinylDb?: number;

@@ -183,6 +183,12 @@ export const dnb: GenreDef = {
     },
     // Drum & bass does not pump. A couple of dB keeps the sub out of the kick's way.
     sidechain: { db: 2, releaseMs: 60, targets: ["sub"] },
+    // A highpass rather than a lowpass, and it runs the other way: the breakdown is thin
+    // and airy, the drop returns the bottom end. Taking the low end away and giving it
+    // back is the loudest gesture the genre has.
+    // Note the values descend: `lo` is the cutoff at energy zero. The highpass is high
+    // in the breakdown and drops out of the way for the drop.
+    energyFilter: { type: "highpass", lo: 260, hi: 20, resonance: 0.7 },
   },
 
   arrangement: {

@@ -107,6 +107,7 @@ export const techno: GenreDef = {
     muteP: 0.15,
     minEnergy: 0.45,
     densitySwing: 0.15,
+    filterSwing: 1,
   },
 
   fx: {
@@ -119,6 +120,9 @@ export const techno: GenreDef = {
     },
     // Detroit does not pump, but a couple of dB gives the kick room.
     sidechain: { db: 2, releaseMs: 120, targets: ["bass"] },
+    // Techno's energy is in the filter, since nothing else about it changes much. A
+    // narrower range than house: this is a long slow opening, not a drop.
+    energyFilter: { type: "lowpass", lo: 1200, hi: 16000, resonance: 0.7 },
   },
 
   arrangement: {

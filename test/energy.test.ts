@@ -148,6 +148,18 @@ test("every genre's form is well formed", () => {
   }
 });
 
+test("energy filters are configured in the direction they claim", () => {
+  for (const genre of genreList()) {
+    const f = genre.fx.energyFilter;
+    if (f === undefined) continue;
+    assert.ok(f.lo > 0 && f.hi > 0, `${genre.id} has a non-positive cutoff`);
+    assert.notEqual(f.lo, f.hi, `${genre.id}'s filter does not move`);
+    // A lowpass opens as energy rises; a highpass gets out of the way, so it descends.
+    if (f.type === "lowpass") assert.ok(f.hi > f.lo, `${genre.id}'s lowpass closes as it lifts`);
+    else assert.ok(f.hi < f.lo, `${genre.id}'s highpass rises as it lifts`);
+  }
+});
+
 test("a lane is never left with nothing to play in every section", () => {
   for (const genre of genreList()) {
     const states = defaultLaneStates(genre);

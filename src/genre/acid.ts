@@ -102,6 +102,9 @@ export const acid: GenreDef = {
     slideP: 0.1,
     synth: { cutoff: 400, resonance: 15, envMod: 4000, decay: 0.5 },
     muteP: 0,
+    // The 303's cutoff is the whole show, so the curve moves it more than a full octave
+    // either way. This is the closest thing here to the reference's wandering knobs.
+    filterSwing: 1.2,
   },
 
   fx: {

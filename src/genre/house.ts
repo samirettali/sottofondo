@@ -123,6 +123,7 @@ export const house: GenreDef = {
     swingDepth: 1,
     muteP: 0.15,
     minEnergy: 0.3,
+    filterSwing: 0.7,
   },
 
   chords: {
@@ -146,6 +147,7 @@ export const house: GenreDef = {
     muteP: 0.3,
     // Chords carry the breakdown, so they stay in when everything else has gone.
     minEnergy: 0.1,
+    filterSwing: 1,
   },
 
   tonality: {
@@ -184,6 +186,10 @@ export const house: GenreDef = {
     },
     // House pumps, and this is where it comes from. 5 dB with a 100 ms release.
     sidechain: { db: 5, releaseMs: 100, targets: ["bass", "chords"] },
+    // A lid that comes off as the track lifts. Nearly closed in the breakdown, wide open
+    // at the peak — the range is deliberately wide, since house breakdowns filter rather
+    // than strip.
+    energyFilter: { type: "lowpass", lo: 700, hi: 18000, resonance: 0.9 },
   },
 
   arrangement: {

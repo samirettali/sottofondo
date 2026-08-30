@@ -174,6 +174,9 @@ export const lofi: GenreDef = {
       sends: ["rhodes"],
     },
     sidechain: { db: 0, releaseMs: 120, targets: [] }, // no pumping
+    // A gentle lid, and no lower than 2 kHz: the genre is already dark, and closing it
+    // further just sounds broken.
+    energyFilter: { type: "lowpass", lo: 2200, hi: 9000, resonance: 0.6 },
     texture: {
       vinylDb: -30,
       wowHz: 0.45,
@@ -189,5 +192,13 @@ export const lofi: GenreDef = {
     newNotesEvery: 32,
     newNotesP: 0.3,
     muteEvery: 8,
+    // Barely a form. The genre is a loop that thins out and comes back, not a track that
+    // builds — so the range is narrow and there is no drop anywhere in it.
+    sections: [
+      { name: "loop", bars: 16, energy: 0.5 },
+      { name: "open", bars: 16, energy: 0.62 },
+      { name: "strip", bars: 8, energy: 0.28 },
+      { name: "loop", bars: 16, energy: 0.55 },
+    ],
   },
 };
