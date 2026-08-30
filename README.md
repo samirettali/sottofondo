@@ -14,7 +14,7 @@ npm run dev
 ```
 
 Then `?g=<genre>&s=<seed>` — for example `?g=acid&s=cafe1234`. The URL is written as you
-change things, so a piece is always a link.
+change things, so a piece is always a link, and `☆` keeps one in a local shortlist.
 
 ```sh
 npm run check   # typecheck

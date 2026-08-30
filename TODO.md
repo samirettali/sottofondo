@@ -161,4 +161,4 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
 - [ ] Trap, ambient, synthwave, dub techno, bossa, jazz, chiptune, Detroit/minimal
 - [ ] Break slicing (`slice`/`splice`/`chop` semantics, choke groups, 1–3 ms slice fades)
 - [ ] WAV export, offline render (must be bit-identical to live playback)
-- [ ] Save a seed to a local favourites list
+- [x] Save a seed to a local favourites list
