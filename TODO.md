@@ -46,8 +46,8 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 
 ## 3. Synthesis
 
-- [ ] `src/audio/master.ts` — sum → tanh waveshaper → 20 Hz highpass → compressor glue
-- [ ] Waveshaper curve indexed `/(n-1)`, normalised to unity (MDN's is neither)
+- [x] `src/audio/master.ts` — sum → tanh waveshaper → 20 Hz highpass → compressor glue
+- [x] Waveshaper curve indexed `/(n-1)`, normalised to unity (MDN's is neither)
 - [ ] `src/audio/voice.ts` — subtractive voice, ADSR helpers with the anchor/cancel
       discipline, always `stop()` (the commonest leak)
 - [ ] `src/audio/303.ts` — env mod in **cents into `filter.detune`**, accent shortens the
