@@ -31,8 +31,9 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 - [x] Verify against Toussaint's table — all 23 published entries, plus maximal-evenness
       and onset-count properties over every `(k, n)` with n ≤ 32
 - [x] `(k, n, rotation)` triples as the stored form, with a named-rhythm table
-- [ ] `src/pattern/clave.ts` — the six 5-in-16 timelines (son, rumba, bossa, shiko,
-      soukous, gahu). Son is **not** `E(5,16)`
+- [x] `src/pattern/clave.ts` — the six 5-in-16 timelines (son, rumba, bossa, shiko,
+      soukous, gahu), 3-2/2-3 sides, Arom's rhythmic oddity. Son is **not** `E(5,16)`,
+      and is not even a rotation of it
 - [ ] `src/pattern/metric.ts` — 16-entry metric-weight table
 - [ ] `src/pattern/gen.ts` — the `PatternGen` tagged union: `stepClassP`, `mask`,
       `euclid`, `clave`, `none` (the rest land with their genres)
