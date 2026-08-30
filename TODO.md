@@ -62,18 +62,23 @@ These cannot be retrofitted cheaply. Build them first and build them right.
       envelope, slide as a `setTargetAtTime` time constant
 - [ ] 303 accent state machine (the 1 µF cap: consecutive accents sweep higher)
 - [ ] Slide starts on the step **after** the marked one
-- [ ] `src/audio/fx.ts` — feedback delay with a lowpass in the loop, tempo-synced
+- [x] `src/audio/fx.ts` — feedback delay with a lowpass in the loop, tempo-synced
 - [ ] Reverb: AudioWorklet FDN (`ConvolverNode` cannot modulate at all); generated IR as
       the fallback while `addModule()` resolves
-- [ ] Ducking as a scheduled gain envelope off the kick times (side-chaining is not in
+- [x] Ducking as a scheduled gain envelope off the kick times (side-chaining is not in
       the spec, and a scheduled envelope sounds better anyway)
+- [x] `src/audio/threeoh.ts` — 303 voice with a stateful accent
 
 ## 4. Genres as data
 
-- [ ] `src/genre/schema.ts` — the `GenreDef` type from `docs/DESIGN.md`
+- [x] `src/genre/schema.ts` — the `GenreDef` type, cut down to what the engine can
+      actually play; it grows as the engine learns more
+- [x] `src/genre/acid.ts` — ported from Endless Acid Banger as the A/B reference, with
+      tests pinning the bags, register, accent and slide odds, autopilot cadence and the
+      5.8-onsets-per-bar note density
+- [x] `src/genre/index.ts` — the registry
 - [ ] Unitless preset values, expanded by the engine (`2^(2*(p-0.5))`, cutoff as a MIDI
       note number so it transposes musically)
-- [ ] `acid.json` — ported **verbatim** from Endless Acid Banger, as the A/B reference
 - [ ] `house.json`
 - [ ] `dnb.json`
 - [ ] `lofi.json`

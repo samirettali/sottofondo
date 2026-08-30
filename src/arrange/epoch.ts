@@ -86,6 +86,11 @@ export function isMuted(
   muteP: number,
 ): boolean {
   if (muteP <= 0 || every <= 0) return false;
+  // The first block always plays in full. Independent coins mean three of four voices
+  // can come up muted at once, and a piece whose opening bars are two thirds absent
+  // sounds broken rather than sparse — an arrangement states its material before it
+  // starts taking pieces away.
+  if (bar < every) return false;
   const block = Math.floor(bar / every);
   return valueAt(seed, block, voiceIndex, MUTE_SALT) < muteP;
 }

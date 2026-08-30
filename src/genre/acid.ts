@@ -93,7 +93,9 @@ export const acid: GenreDef = {
     ],
     rootRange: [28, 42], // E1 to F#2
     gen: { type: "stepClassP" },
-    density: 0.55,
+    // At density 0.5 a step fires with exactly its metric weight, which sums to 5.6
+    // onsets per bar — the reference's gate probabilities work out at 5.8.
+    density: 0.5,
     chaos: 0.1,
     accentP: 0.3,
     slideP: 0.1,

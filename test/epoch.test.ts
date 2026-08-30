@@ -73,8 +73,18 @@ test("a pattern keyed on the epoch repeats; keyed on the bar it never does", () 
   assert.ok(byEpoch.size <= 2, `epochs gave ${byEpoch.size} distinct patterns in 16 bars`);
 });
 
+test("the first block always plays in full", () => {
+  for (let voice = 0; voice < 6; voice++) {
+    for (let bar = 0; bar < 8; bar++) {
+      assert.equal(isMuted(6, bar, voice, 8, 1), false, `voice ${voice} bar ${bar}`);
+    }
+  }
+  // And muting resumes immediately after it.
+  assert.equal(isMuted(6, 8, 0, 8, 1), true);
+});
+
 test("mutes hold for a whole block, not a bar", () => {
-  for (let block = 0; block < 20; block++) {
+  for (let block = 1; block < 20; block++) {
     const expected = isMuted(6, block * 8, 1, 8, 0.5);
     for (let i = 0; i < 8; i++) {
       assert.equal(isMuted(6, block * 8 + i, 1, 8, 0.5), expected, `block ${block}`);
@@ -85,7 +95,7 @@ test("mutes hold for a whole block, not a bar", () => {
 test("mute probability is honoured, and voices mute independently", () => {
   const rate = (voiceIndex: number, p: number) => {
     let muted = 0;
-    for (let block = 0; block < 400; block++) {
+    for (let block = 1; block <= 400; block++) {
       if (isMuted(8, block * 8, voiceIndex, 8, p)) muted++;
     }
     return muted / 400;
@@ -95,7 +105,7 @@ test("mute probability is honoured, and voices mute independently", () => {
   assert.ok(Math.abs(rate(1, 0.2) - 0.2) < 0.06);
   // Independence: the kick at 0.2 and a hat at 0.2 should not agree every time.
   let agree = 0;
-  for (let block = 0; block < 200; block++) {
+  for (let block = 1; block <= 200; block++) {
     if (isMuted(8, block * 8, 0, 8, 0.5) === isMuted(8, block * 8, 1, 8, 0.5)) agree++;
   }
   assert.ok(agree < 190, "voices mute in lockstep");

@@ -19,6 +19,10 @@ import { shapedWeight } from "./metric.ts";
  * so one control covers "sparse intro" through "everything at once" without a second
  * table anywhere.
  *
+ * Useful calibration for `stepClassP`: a step fires with probability `w + 2d - 1`, so at
+ * **density 0.5 the firing probability is exactly the metric weight**. On the 16-step
+ * curve that sums to 5.6 onsets per bar, which is where the presets are anchored.
+ *
  * Chaos is rolled **once per bar per voice**, not per step. Per-step noise sounds
  * sprinkled; a whole bar of busier hats sounds like a decision. That coherence is most
  * of what separates musical probabilistic sequencing from a random gate.
@@ -142,16 +146,25 @@ export function barChaos(voice: VoicePattern, seed: number, bar: number, voiceIn
   return (valueAt(seed, bar, voiceIndex, SALT.chaos) - 0.5) * voice.chaos;
 }
 
-/** Gate a bar of strengths into hits. */
+/**
+ * Gate a bar of strengths into hits.
+ *
+ * Two keys, because the arrangement runs two clocks. `patternKey` is the epoch: it moves
+ * rarely, so the pattern repeats long enough to be learnt. `barKey` is the bar: it moves
+ * every time, so the chaos offset breathes from bar to bar without the pattern beneath it
+ * changing. Passing one key for both — the natural thing to write — silently ties them
+ * together and gives a new pattern every bar.
+ */
 export function realise(
   voice: VoicePattern,
   len: number,
   seed: number,
-  bar: number,
+  patternKey: number,
   voiceIndex: number,
+  barKey: number = patternKey,
 ): Hit[] {
-  const s = strengths(voice, len, seed, bar, voiceIndex);
-  const offset = voice.density + barChaos(voice, seed, bar, voiceIndex);
+  const s = strengths(voice, len, seed, patternKey, voiceIndex);
+  const offset = voice.density + barChaos(voice, seed, barKey, voiceIndex);
   const hits: Hit[] = [];
   for (let i = 0; i < len; i++) {
     const strength = s[i] ?? 0;

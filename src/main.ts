@@ -1,23 +1,28 @@
 import { Engine } from "./app.ts";
 import { formatSeed, parseSeed } from "./core/rng.ts";
+import { GENRES, defaultGenre } from "./genre/index.ts";
 
 /**
  * Entry point.
  *
- * The seed lives in the URL so a piece is a link. The AudioContext is built inside the
- * gesture handler: one constructed before a user gesture starts suspended and stays that
- * way.
+ * Genre and seed live in the URL, so a piece is a link. The AudioContext is built inside
+ * the gesture handler: one constructed before a user gesture starts suspended and stays
+ * that way.
  */
 
-function seedFromUrl(): number {
+function readUrl(): { genreId: string; seed: number } {
   const params = new URLSearchParams(location.search);
+  const g = params.get("g");
   const s = params.get("s");
-  if (s !== null) return parseSeed(s);
-  return parseSeed(String(Date.now()));
+  return {
+    genreId: g !== null && g in GENRES ? g : defaultGenre.id,
+    seed: s !== null ? parseSeed(s) : parseSeed(String(Date.now())),
+  };
 }
 
-function writeSeedToUrl(seed: number): void {
+function writeUrl(genreId: string, seed: number): void {
   const url = new URL(location.href);
+  url.searchParams.set("g", genreId);
   url.searchParams.set("s", formatSeed(seed));
   history.replaceState(null, "", url);
 }
@@ -31,15 +36,18 @@ startButton?.addEventListener("click", async () => {
   if (engine === null) {
     const ctx = new AudioContext();
     await ctx.resume();
-    const seed = seedFromUrl();
-    writeSeedToUrl(seed);
-    engine = new Engine(ctx, seed);
+    const { genreId, seed } = readUrl();
+    const genre = GENRES[genreId] ?? defaultGenre;
+    writeUrl(genre.id, seed);
+
+    engine = new Engine(ctx, genre, seed);
     if (import.meta.env.DEV) Object.assign(window, { engine });
     engine.start();
+
     startButton.textContent = "stop";
     const label = document.createElement("p");
-    label.id = "seed";
-    label.textContent = `seed ${engine.seedLabel} · ${engine.state.bpm} bpm`;
+    label.id = "status";
+    label.textContent = `${genre.name} · seed ${engine.seedLabel} · ${engine.tempo} bpm`;
     app?.append(label);
     return;
   }
