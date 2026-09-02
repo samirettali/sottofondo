@@ -48,8 +48,15 @@ export function createMaster(ctx: BaseAudioContext, destination?: AudioNode): Ma
   const input = ctx.createGain();
   input.gain.value = 0.5;
 
+  // Headroom before the shaper. Seven lanes summed reach well past full scale on a
+  // kick, and driven straight into the curve every genre came out pinned at the same
+  // RMS — flat, and harsh on transients. The shaper is a safety net; the trim keeps the
+  // mix off it except on peaks.
+  const trim = ctx.createGain();
+  trim.gain.value = 0.55;
+
   const shaper = ctx.createWaveShaper();
-  shaper.curve = tanhCurve(1.6);
+  shaper.curve = tanhCurve(1.15);
   shaper.oversample = "2x";
 
   // Oversampling latency is unspecified, so a parallel dry path around the shaper would
@@ -59,16 +66,17 @@ export function createMaster(ctx: BaseAudioContext, destination?: AudioNode): Ma
   dc.frequency.value = 20;
 
   const glue = ctx.createDynamicsCompressor();
-  glue.threshold.value = -12;
-  glue.knee.value = 6;
-  glue.ratio.value = 4;
+  // Glue, not a squash: a high threshold and a soft ratio so it only touches peaks.
+  glue.threshold.value = -6;
+  glue.knee.value = 8;
+  glue.ratio.value = 2.5;
   glue.attack.value = 0.005;
   glue.release.value = 0.12;
 
   const analyser = ctx.createAnalyser();
   analyser.fftSize = 2048;
 
-  input.connect(shaper);
+  input.connect(trim).connect(shaper);
   shaper.connect(dc);
   dc.connect(glue);
   glue.connect(analyser);
@@ -86,6 +94,7 @@ export function createMaster(ctx: BaseAudioContext, destination?: AudioNode): Ma
     },
     dispose() {
       input.disconnect();
+      trim.disconnect();
       shaper.disconnect();
       dc.disconnect();
       glue.disconnect();
