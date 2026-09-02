@@ -63,8 +63,9 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 - [ ] 303 accent state machine (the 1 µF cap: consecutive accents sweep higher)
 - [ ] Slide starts on the step **after** the marked one
 - [x] `src/audio/fx.ts` — feedback delay with a lowpass in the loop, tempo-synced
-- [ ] Reverb: AudioWorklet FDN (`ConvolverNode` cannot modulate at all); generated IR as
-      the fallback while `addModule()` resolves
+- [x] Reverb: AudioWorklet FDN, 8 lines, Householder loop, per-lane sends
+- [x] Master gain staging: trim before the shaper, gentler drive, glue not squash
+- [x] Kit styles: 808, 909, acoustic, folk — one parameter set per genre
 - [x] Ducking as a scheduled gain envelope off the kick times (side-chaining is not in
       the spec, and a scheduled envelope sounds better anyway)
 - [x] `src/audio/threeoh.ts` — 303 voice with a stateful accent
@@ -100,14 +101,17 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
 - [x] `src/audio/poly.ts` — polyphonic chord voice
 - [ ] Rootless A/B voicings, drop-2, quartal (needed for jazz and lo-fi)
 - [ ] Available-tension table
-- [ ] Use `tonality.scales` — the field is read but the scale is not yet used to
-      constrain the bass, which still draws from interval bags
+- [x] The bass follows the current chord's root (it used to pick its own key — the main
+      reason house and the 11/8 preset sounded wrong)
+- [x] `tonality.scales` is read by the lead. The bass still draws from interval bags
+      above the chord root
 
 ## 6. Melody
 
-- [ ] `src/melody/walk.ts` — weight stacking: `stepPrior × narmour × chordTone × contour
-      × gravity × cadenceFunnel`
-- [ ] Arch contour as the default (~40% of folksongs)
+- [x] `src/melody/walk.ts` — weight stacking: `stepPrior × narmour × chordTone × contour
+      × gravity`; no cadence funnel yet
+- [x] Arch contour as the default (~40% of folksongs)
+- [x] `lead` lane kind, used by the 11/8 preset
 - [ ] Motif transforms in degree space, with an identity budget
 - [ ] Bass strategies: `onKick`, `offKick`, `sustain`, `free`, `walk`
 

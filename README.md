@@ -43,5 +43,5 @@ generation algorithms, and where each constant comes from. `TODO.md` is what is 
 
 ## Status
 
-Local and unfinished. Five genres: acid techno, minimal techno, deep house, liquid drum
-& bass, lo-fi hip hop.
+Local and unfinished. Six genres: acid techno, minimal techno, deep house, liquid drum
+& bass, lo-fi hip hop, and an 11/8 kopanitsa that exists to keep the schema honest.
