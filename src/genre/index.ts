@@ -1,13 +1,18 @@
 import { acid } from "./acid.ts";
 import { ambient } from "./ambient.ts";
 import { balkan } from "./balkan.ts";
+import { blues } from "./blues.ts";
 import { cumbia } from "./cumbia.ts";
 import { dubtechno } from "./dubtechno.ts";
 import { gnawa } from "./gnawa.ts";
+import { gypsy } from "./gypsy.ts";
 import { hindustani } from "./hindustani.ts";
+import { jazz } from "./jazz.ts";
 import { powwow } from "./powwow.ts";
+import { progressive } from "./progressive.ts";
 import { psytrance } from "./psytrance.ts";
 import { reggaeton } from "./reggaeton.ts";
+import { turkish } from "./turkish.ts";
 import { synthwave } from "./synthwave.ts";
 import { dnb } from "./dnb.ts";
 import { house } from "./house.ts";
@@ -38,6 +43,11 @@ export const GENRES: Readonly<Record<string, GenreDef>> = {
   [cumbia.id]: cumbia,
   [hindustani.id]: hindustani,
   [powwow.id]: powwow,
+  [progressive.id]: progressive,
+  [jazz.id]: jazz,
+  [blues.id]: blues,
+  [turkish.id]: turkish,
+  [gypsy.id]: gypsy,
 };
 
 export const defaultGenre: GenreDef = acid;

@@ -25,6 +25,10 @@ export const SCALES = {
   bhairav: [0, 1, 4, 5, 7, 8, 11],
   /** Raga Kirwani: harmonic minor by another name, kept separate so a preset can say which. */
   kirwani: [0, 2, 3, 5, 7, 8, 11],
+  /** Makam Hicaz, the Phrygian dominant: flat second, major third — the sound of Anatolia and the Balkans. */
+  hicaz: [0, 1, 4, 5, 7, 8, 10],
+  /** Hungarian minor: harmonic minor with a raised fourth. The gypsy scale. */
+  hungarianMinor: [0, 2, 3, 6, 7, 8, 11],
 } as const satisfies Record<string, readonly number[]>;
 
 export type ScaleName = keyof typeof SCALES;

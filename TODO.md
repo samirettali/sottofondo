@@ -171,7 +171,11 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
       with a big room and a very short decay
 - [x] Psytrance, dub techno, reggaeton, cumbia, raga in teental, powwow — all six cost
       no engine code, only two raga scales
-- [ ] Trap (hat rolls need sub-step onsets), bossa, jazz, chiptune
+- [x] Progressive house, jazz, blues, 9/8 karşılama, Balkan brass — two more scales
+      (Hicaz, Hungarian minor), no engine code
+- [ ] Walking bass with a chromatic approach into the next chord root — needs a
+      one-chord lookahead in the score. Jazz walks chord tones and steps meanwhile
+- [ ] Trap (hat rolls need sub-step onsets), bossa, chiptune
 - [ ] Break slicing (`slice`/`splice`/`chop` semantics, choke groups, 1–3 ms slice fades)
 - [ ] WAV export, offline render (must be bit-identical to live playback)
 - [x] Save a seed to a local favourites list
