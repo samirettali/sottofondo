@@ -32,16 +32,17 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
   root.classList.add("rack");
 
   const header = el("header", "bar");
-  const genre = el("select", "genre") as HTMLSelectElement;
-  for (const g of genreList()) {
-    const option = document.createElement("option");
-    option.value = g.id;
-    option.textContent = g.name;
-    option.selected = g.id === engine.genre.id;
-    genre.append(option);
-  }
+  // A row of buttons rather than a <select>: nine entries in a native popup scroll and
+  // clip, and a genre is something to see all of at once.
+  const genre = el("div", "genres");
+  genre.setAttribute("role", "radiogroup");
   genre.setAttribute("aria-label", "genre");
-  genre.addEventListener("change", () => cb.onGenre(genre.value));
+  for (const g of genreList()) {
+    const b = button(g.name, g.name, () => cb.onGenre(g.id));
+    b.setAttribute("role", "radio");
+    b.setAttribute("aria-checked", String(g.id === engine.genre.id));
+    genre.append(b);
+  }
 
   const seed = el("input", "seed") as HTMLInputElement;
   seed.value = engine.seedLabel;
@@ -86,7 +87,7 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
   };
   markStar(isFavourited(engine.genre.id, engine.seed));
 
-  header.append(transport, genre, seed, reroll, copy, star);
+  header.append(transport, seed, reroll, copy, star);
 
   const saved = el("div", "favourites");
   const renderFavourites = (list: readonly Favourite[]) => {
@@ -206,7 +207,7 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
 
   const status = el("p", "status");
 
-  root.append(header, saved, globals, lanes, energyBar, tweaks, scope, status);
+  root.append(header, genre, saved, globals, lanes, energyBar, tweaks, scope, status);
 
   // Drawing runs on requestAnimationFrame and reads the engine; it never writes to it,
   // and it never touches the audio clock for anything but display.
