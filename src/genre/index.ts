@@ -2,6 +2,7 @@ import { acid } from "./acid.ts";
 import { ambient } from "./ambient.ts";
 import { balkan } from "./balkan.ts";
 import { blues } from "./blues.ts";
+import { chiptune } from "./chiptune.ts";
 import { cumbia } from "./cumbia.ts";
 import { dubtechno } from "./dubtechno.ts";
 import { gnawa } from "./gnawa.ts";
@@ -48,6 +49,7 @@ export const GENRES: Readonly<Record<string, GenreDef>> = {
   [blues.id]: blues,
   [turkish.id]: turkish,
   [gypsy.id]: gypsy,
+  [chiptune.id]: chiptune,
 };
 
 export const defaultGenre: GenreDef = acid;
