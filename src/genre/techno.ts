@@ -29,6 +29,8 @@ export const techno: GenreDef = {
   ],
   version: 1,
 
+  kit: "909",
+
   clock: {
     // Beatport medians put techno at 126 and minimal at 127.5, with a standard deviation
     // of 1.6 — this is an effectively fixed-tempo genre, so the band is narrow.

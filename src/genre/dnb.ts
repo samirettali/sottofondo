@@ -35,6 +35,8 @@ export const dnb: GenreDef = {
   ],
   version: 2, // v2: the sub follows the chord root
 
+  kit: "909",
+
   clock: {
     bpm: { min: 168, max: 178, default: 174 },
     stepsPerBar: 16,

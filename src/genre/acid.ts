@@ -29,6 +29,8 @@ export const acid: GenreDef = {
   ],
   version: 1,
 
+  kit: "909", // the reference's drums are 909 samples
+
   clock: {
     bpm: { min: 130, max: 145, default: 138 },
     stepsPerBar: 16,

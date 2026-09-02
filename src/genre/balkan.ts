@@ -30,6 +30,8 @@ export const balkan: GenreDef = {
   ],
   version: 2, // v2: the bass follows the chord root
 
+  kit: "folk", // tupan and tapan, not an 808 playing a wedding
+
   clock: {
     // Quarter-note tempo. Kopanitsa is fast: the eighth runs near 300 a minute.
     bpm: { min: 120, max: 160, default: 138 },
@@ -86,7 +88,7 @@ export const balkan: GenreDef = {
     },
     {
       name: "def",
-      kitVoice: "cowbell",
+      kitVoice: "frame",
       // A frame drum on a seven-step cycle against the bar's twenty-two: coprime, so the
       // two do not realign for seven bars.
       gen: { type: "euclid", k: 3, n: 7 },

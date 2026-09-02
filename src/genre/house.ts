@@ -32,6 +32,8 @@ export const house: GenreDef = {
   ],
   version: 2, // v2: the bass follows the chord root; it used to pick its own key
 
+  kit: "909",
+
   clock: {
     bpm: { min: 118, max: 126, default: 122 },
     stepsPerBar: 16,

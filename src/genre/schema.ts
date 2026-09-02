@@ -1,3 +1,4 @@
+import type { KitStyleName } from "../audio/drums.ts";
 import type { EnergyFilterOptions, NoteValue, TextureOptions } from "../audio/fx.ts";
 import type { PolyParams } from "../audio/poly.ts";
 import type { ReverbOptions } from "../audio/reverb.ts";
@@ -31,7 +32,9 @@ export type KitVoiceName =
   | "closedHat"
   | "openHat"
   | "rim"
-  | "cowbell";
+  | "cowbell"
+  | "tom"
+  | "frame";
 
 export interface DrumVoiceDef {
   /** Shown in the UI. */
@@ -162,6 +165,8 @@ export interface GenreDef {
     readonly swingSubdiv: 8 | 16;
   };
 
+  /** Which parameter set the drum voices read. Defaults to the 808. */
+  readonly kit?: KitStyleName;
   readonly drums: readonly DrumVoiceDef[];
   readonly bass?: BassDef;
   readonly chords?: ChordsDef;

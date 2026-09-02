@@ -138,7 +138,11 @@ export class Engine {
       if (reverbed && this.reverb !== null) fan.connect(this.reverb.input);
       return fan;
     };
-    this.kit = createKit(ctx, fanOut(bus, genre.drums.some((d) => sentToReverb(d.name))));
+    this.kit = createKit(
+      ctx,
+      fanOut(bus, genre.drums.some((d) => sentToReverb(d.name))),
+      genre.kit ?? "808",
+    );
 
     for (const def of genre.drums) {
       this.voices.push({

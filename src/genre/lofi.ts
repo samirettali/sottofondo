@@ -31,6 +31,8 @@ export const lofi: GenreDef = {
   ],
   version: 2, // v2: the bass follows the chord root
 
+  kit: "acoustic", // a soft kit: this genre samples drummers, not drum machines
+
   clock: {
     bpm: { min: 76, max: 92, default: 84 },
     stepsPerBar: 16,
