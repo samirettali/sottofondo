@@ -29,7 +29,8 @@ test("lanes are declared in the engine's order: drums, bass, chords", () => {
     const expected =
       genre.drums.length +
       (genre.bass === undefined ? 0 : 1) +
-      (genre.chords === undefined ? 0 : 1);
+      (genre.chords === undefined ? 0 : 1) +
+      (genre.lead === undefined ? 0 : 1);
     assert.equal(lanes.length, expected, genre.id);
     lanes.forEach((lane, i) => assert.equal(lane.index, i));
 
@@ -46,7 +47,7 @@ test("lanes are declared in the engine's order: drums, bass, chords", () => {
 });
 
 function byKind(a: string, b: string): number {
-  const order = { drum: 0, bass: 1, chords: 2 } as Record<string, number>;
+  const order = { drum: 0, bass: 1, chords: 2, lead: 3 } as Record<string, number>;
   return (order[a] ?? 0) - (order[b] ?? 0);
 }
 

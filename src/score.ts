@@ -4,6 +4,9 @@ import { fillBonus } from "./arrange/fill.ts";
 import { floorMod } from "./core/time.ts";
 import { voiceLead } from "./harmony/chords.ts";
 import { chordAt, chooseKey, chooseProgression, type Progression } from "./harmony/progression.ts";
+import { rngFor, weighted } from "./core/rng.ts";
+import { scaleOf } from "./harmony/scales.ts";
+import { walkBar } from "./melody/walk.ts";
 import { defaultVoice, realise } from "./pattern/gen.ts";
 import { metricFromGrouping } from "./pattern/metric.ts";
 import { chooseNoteSet, defaultNoteVoice, realiseNotes } from "./pattern/notes.ts";
@@ -42,7 +45,7 @@ export interface LaneState {
   readonly userMuted: boolean;
 }
 
-export type LaneKind = "drum" | "bass" | "chords";
+export type LaneKind = "drum" | "bass" | "chords" | "lead";
 
 export interface Lane {
   readonly index: number;
@@ -79,6 +82,14 @@ export function lanesOf(genre: GenreDef): Lane[] {
       kind: "chords",
     });
   }
+  if (genre.lead !== undefined) {
+    lanes.push({
+      index: lanes.length,
+      name: genre.lead.name,
+      len: genre.lead.len ?? genre.clock.stepsPerBar,
+      kind: "lead",
+    });
+  }
   return lanes;
 }
 
@@ -89,6 +100,9 @@ export function defaultLaneStates(genre: GenreDef): LaneState[] {
   }
   if (genre.chords !== undefined) {
     states.push({ density: genre.chords.density, userMuted: false });
+  }
+  if (genre.lead !== undefined) {
+    states.push({ density: genre.lead.density, userMuted: false });
   }
   return states;
 }
@@ -104,7 +118,8 @@ function defOf(genre: GenreDef, laneIndex: number): LaneEnergy | undefined {
   const lane = lanesOf(genre)[laneIndex];
   if (lane === undefined) return undefined;
   if (lane.kind === "drum") return genre.drums[laneIndex];
-  return lane.kind === "bass" ? genre.bass : genre.chords;
+  if (lane.kind === "bass") return genre.bass;
+  return lane.kind === "chords" ? genre.chords : genre.lead;
 }
 
 /**
@@ -252,6 +267,7 @@ export function scoreLane(
 
   const lane = lanesOf(genre)[laneIndex];
   if (lane?.kind === "chords") return scoreChords(genre, laneIndex, seed, bar, state);
+  if (lane?.kind === "lead") return scoreLead(genre, laneIndex, seed, bar, state);
 
   const bass = genre.bass;
   if (bass === undefined) return [];
@@ -362,6 +378,98 @@ function voicingAt(
     previous = voicing;
   }
   return voicing;
+}
+
+/**
+ * The scale in force at a bar, drawn from the genre's weighted list on the note epoch.
+ * The first use of `tonality.scales`; until the lead existed nothing read it.
+ */
+export function scaleAt(genre: GenreDef, seed: number, bar: number): readonly number[] | null {
+  const tonality = genre.tonality;
+  if (tonality === undefined || tonality.scales.length === 0) return null;
+  const epoch = epochAt(seed, bar, specs(genre).notes);
+  const rng = rngFor(seed, epoch, 0, SCALE_SALT);
+  const name = weighted(
+    rng,
+    tonality.scales.map((s) => [s.name, s.weight] as const),
+  );
+  return scaleOf(name);
+}
+
+const SCALE_SALT = 31;
+
+/**
+ * One bar of melody.
+ *
+ * Gating reuses the pattern generator, so density and the metric curve behave as they do
+ * for a hat; the walk supplies pitch. Chord tones pull on the beats, which is where the
+ * line has to agree with the harmony, and it passes freely between them.
+ */
+function scoreLead(
+  genre: GenreDef,
+  laneIndex: number,
+  seed: number,
+  bar: number,
+  state: LaneState,
+): LaneEvent[] {
+  const def = genre.lead;
+  const harmony = harmonyAt(genre, seed, bar);
+  const scale = scaleAt(genre, seed, bar);
+  if (def === undefined || harmony === null || scale === null) return [];
+
+  const len = def.len ?? genre.clock.stepsPerBar;
+  const voice = defaultVoice(def.gen, {
+    density: effectiveDensity(genre, laneIndex, bar, state.density),
+    chaos: def.chaos ?? 0,
+    ...withMetric(genre, len),
+  });
+  const epoch = epochAt(seed, bar, specs(genre).pattern);
+  const hits = realise(voice, len, seed, epoch, laneIndex, bar);
+  if (hits.length === 0) return [];
+
+  const chord = chordAt(harmony.progression, bar);
+  const chordPcs = chord.intervals.map((i) => ((harmony.key + chord.root + i) % 12 + 12) % 12);
+  const perBeat = stepsPerBeat(genre);
+  const grouping = genre.clock.grouping;
+  const heads = new Set<number>();
+  if (grouping !== undefined) {
+    let at = 0;
+    for (const g of grouping) {
+      heads.add(at);
+      at += g;
+    }
+  }
+  const strong = hits.map((h) =>
+    grouping === undefined ? h.step % perBeat === 0 : heads.has(h.step),
+  );
+
+  const pitches = walkBar(
+    hits.map((h) => h.step),
+    strong,
+    len,
+    {
+      scale,
+      key: harmony.key,
+      lo: def.register[0],
+      hi: def.register[1],
+      leapiness: def.leapiness,
+      contourStrength: def.contour,
+      chordPcs,
+      chordPull: def.chordPull,
+    },
+    seed,
+    bar,
+    laneIndex,
+  );
+
+  return hits.map((hit, i) => ({
+    lane: laneIndex,
+    name: def.name,
+    patternStep: hit.step,
+    velocity: hit.velocity,
+    accent: hit.accent,
+    midi: pitches[i] ?? def.register[0],
+  }));
 }
 
 /** Every lane's events for one bar. */

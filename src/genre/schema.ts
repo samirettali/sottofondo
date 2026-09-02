@@ -120,6 +120,31 @@ export interface ChordsDef {
 }
 
 /**
+ * A melodic line: a walk over the scale in force, pulled towards chord tones on the beats.
+ */
+export interface LeadDef {
+  readonly name: string;
+  readonly gen: PatternGen;
+  readonly len?: number;
+  readonly density: number;
+  readonly chaos?: number;
+  readonly register: readonly [number, number];
+  /** Scales the odds of anything larger than a step. */
+  readonly leapiness: number;
+  /** How closely the line traces an arch across the bar. 0 is free. */
+  readonly contour: number;
+  /** How hard chord tones pull on the beats. */
+  readonly chordPull: number;
+  readonly synth: Partial<PolyParams>;
+  readonly swingDepth?: number;
+  readonly nudgeMs?: number;
+  readonly muteP?: number;
+  readonly minEnergy?: number;
+  readonly maxEnergy?: number;
+  readonly densitySwing?: number;
+}
+
+/**
  * A genre's tonal content: what key, what scale, what chords.
  *
  * Optional, and genuinely so — acid and minimal techno have none, and that is not an
@@ -170,6 +195,7 @@ export interface GenreDef {
   readonly drums: readonly DrumVoiceDef[];
   readonly bass?: BassDef;
   readonly chords?: ChordsDef;
+  readonly lead?: LeadDef;
   readonly tonality?: TonalityDef;
 
   readonly fx: {

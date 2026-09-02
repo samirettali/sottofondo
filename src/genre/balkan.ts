@@ -143,6 +143,32 @@ export const balkan: GenreDef = {
     minEnergy: 0.3,
   },
 
+  lead: {
+    name: "gaida",
+    // Kopanitsa is the melody. Busy — near-continuous eighths — and full of steps, the
+    // way a bagpipe or clarinet line runs, with leaps as the exception.
+    gen: { type: "stepClassP" },
+    density: 0.62,
+    chaos: 0.12,
+    register: [67, 86], // G4 to D6
+    leapiness: 0.5,
+    contour: 1.6,
+    chordPull: 1.2,
+    synth: {
+      voices: 2,
+      detune: 5,
+      wave: "sawtooth",
+      attack: 0.008,
+      decay: 0.22,
+      cutoff: 3400,
+      resonance: 2.2,
+      envMod: 600,
+    },
+    muteP: 0.15,
+    minEnergy: 0.4,
+    densitySwing: 0.2,
+  },
+
   tonality: {
     scales: [
       { name: "phrygian", weight: 0.4 },
@@ -177,7 +203,7 @@ export const balkan: GenreDef = {
     sidechain: { db: 0, releaseMs: 100, targets: [] },
     energyFilter: { type: "lowpass", lo: 900, hi: 14000, resonance: 0.7 },
     // A hall: this is wedding-tent music, and dry it sounds like a drum machine.
-    reverb: { size: 0.7, decay: 2.6, damp: 0.4, wet: 0.24, preDelayMs: 25, sends: ["accordion", "rim", "tapan slap"] },
+    reverb: { size: 0.7, decay: 2.6, damp: 0.4, wet: 0.24, preDelayMs: 25, sends: ["accordion", "gaida", "rim", "tapan slap"] },
   },
 
   arrangement: {

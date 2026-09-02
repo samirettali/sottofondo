@@ -19,7 +19,7 @@ import { Clock, type StepEvent } from "./core/clock.ts";
 import { formatSeed } from "./core/rng.ts";
 import { compositeCycleSteps, floorMod, swingOffsetBeats, track } from "./core/time.ts";
 import { lanesOf, patternIndexAt, scoreLane, stepsPerBeat, type LaneState } from "./score.ts";
-import type { BassDef, ChordsDef, DrumVoiceDef, GenreDef } from "./genre/schema.ts";
+import type { BassDef, ChordsDef, DrumVoiceDef, GenreDef, LeadDef } from "./genre/schema.ts";
 
 /**
  * The engine: a genre definition in, sound out.
@@ -66,6 +66,14 @@ interface RuntimeChords {
   cutoffBase: number;
 }
 
+interface RuntimeLead {
+  readonly def: LeadDef;
+  readonly len: number;
+  readonly synth: Poly;
+  density: number;
+  userMuted: boolean;
+}
+
 /** What a display needs to know about one lane. */
 export interface VoiceView {
   readonly name: string;
@@ -102,6 +110,7 @@ export class Engine {
   private readonly voices: RuntimeVoice[] = [];
   private readonly bass: RuntimeBass | null = null;
   private readonly chords: RuntimeChords | null = null;
+  private readonly lead: RuntimeLead | null = null;
   private bpm: number;
   private swing: number;
 
@@ -189,9 +198,21 @@ export class Engine {
       };
     }
 
+    if (genre.lead !== undefined) {
+      const def = genre.lead;
+      this.lead = {
+        def,
+        len: def.len ?? genre.clock.stepsPerBar,
+        synth: createPoly(ctx, destination(def.name), def.synth),
+        density: def.density,
+        userMuted: false,
+      };
+    }
+
     const lanes = this.voices.map((v) => track(v.len));
     if (this.bass !== null) lanes.push(track(this.bass.len));
     if (this.chords !== null) lanes.push(track(this.chords.len));
+    if (this.lead !== null) lanes.push(track(this.lead.len));
     this.clock = new Clock(() => ctx.currentTime, lanes, {
       stepsPerBeat: stepsPerBeat(genre),
     });
@@ -206,6 +227,11 @@ export class Engine {
   private get chordLane(): number {
     if (this.chords === null) return -1;
     return this.voices.length + (this.bass === null ? 0 : 1);
+  }
+
+  private get leadLane(): number {
+    if (this.lead === null) return -1;
+    return this.voices.length + (this.bass === null ? 0 : 1) + (this.chords === null ? 0 : 1);
   }
 
   start(): void {
@@ -227,6 +253,7 @@ export class Engine {
     this.stop();
     this.bass?.synth.dispose();
     this.chords?.synth.dispose();
+    this.lead?.synth.dispose();
     this.reverb?.dispose();
     this.energyFilter.dispose();
     this.texture.dispose();
@@ -254,6 +281,7 @@ export class Engine {
   setUserMute(index: number, muted: boolean): void {
     if (index === this.bassLane && this.bass !== null) this.bass.userMuted = muted;
     else if (index === this.chordLane && this.chords !== null) this.chords.userMuted = muted;
+    else if (index === this.leadLane && this.lead !== null) this.lead.userMuted = muted;
     else {
       const v = this.voices[index];
       if (v !== undefined) v.userMuted = muted;
@@ -264,6 +292,7 @@ export class Engine {
     const clamped = Math.max(0, Math.min(1, density));
     if (index === this.bassLane && this.bass !== null) this.bass.density = clamped;
     else if (index === this.chordLane && this.chords !== null) this.chords.density = clamped;
+    else if (index === this.leadLane && this.lead !== null) this.lead.density = clamped;
     else {
       const v = this.voices[index];
       if (v !== undefined) v.density = clamped;
@@ -365,6 +394,9 @@ export class Engine {
     if (index === this.chordLane && this.chords !== null) {
       return { density: this.chords.density, userMuted: this.chords.userMuted };
     }
+    if (index === this.leadLane && this.lead !== null) {
+      return { density: this.lead.density, userMuted: this.lead.userMuted };
+    }
     const v = this.voices[index];
     return v === undefined
       ? { density: 0, userMuted: true }
@@ -375,6 +407,7 @@ export class Engine {
     this.applyEnergy(e);
     if (e.voice === this.bassLane) this.bassStep(e);
     else if (e.voice === this.chordLane) this.chordStep(e);
+    else if (e.voice === this.leadLane) this.leadStep(e);
     else this.drumStep(e);
   }
 
@@ -468,6 +501,24 @@ export class Engine {
 
     const at = this.displace(e, stepInBar, chords.def.swingDepth ?? 0, chords.def.nudgeMs ?? 0);
     chords.synth.play(at, hit.notes, hit.velocity);
+    this.onHit(e.voice, stepInBar, hit.velocity, at);
+  }
+
+  private leadStep(e: StepEvent): void {
+    const lead = this.lead;
+    if (lead === null) return;
+
+    const patternStep = floorMod(e.step, lead.len);
+    const stepInBar = floorMod(e.step, this.genre.clock.stepsPerBar);
+    const bar = Math.floor(e.step / this.genre.clock.stepsPerBar);
+
+    const hit = scoreLane(this.genre, e.voice, this.seed, bar, this.laneState(e.voice)).find(
+      (ev) => ev.patternStep === patternStep,
+    );
+    if (hit?.midi === undefined) return;
+
+    const at = this.displace(e, stepInBar, lead.def.swingDepth ?? 0, lead.def.nudgeMs ?? 0);
+    lead.synth.play(at, [hit.midi], hit.velocity);
     this.onHit(e.voice, stepInBar, hit.velocity, at);
   }
 
