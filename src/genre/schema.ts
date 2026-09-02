@@ -1,5 +1,6 @@
 import type { EnergyFilterOptions, NoteValue, TextureOptions } from "../audio/fx.ts";
 import type { PolyParams } from "../audio/poly.ts";
+import type { ReverbOptions } from "../audio/reverb.ts";
 import type { ThreeOhParams } from "../audio/threeoh.ts";
 import type { SectionDef } from "../arrange/energy.ts";
 import type { FillDef } from "../arrange/fill.ts";
@@ -184,6 +185,8 @@ export interface GenreDef {
     readonly texture?: TextureOptions;
     /** A filter on the whole mix, swept by the energy curve. */
     readonly energyFilter?: EnergyFilterOptions;
+    /** A room, as a send. Lanes named in `sends` go to it as well as to their bus. */
+    readonly reverb?: ReverbOptions;
   };
 
   readonly arrangement: {

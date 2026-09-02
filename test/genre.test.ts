@@ -55,6 +55,15 @@ test("every genre is internally well formed", () => {
     for (const target of genre.fx.sidechain.targets) {
       assert.ok(names.includes(target), `${genre.id} ducks unknown voice "${target}"`);
     }
+    const reverb = genre.fx.reverb;
+    if (reverb !== undefined) {
+      for (const send of reverb.sends) {
+        assert.ok(names.includes(send), `${genre.id} reverbs unknown voice "${send}"`);
+      }
+      assert.ok(reverb.size >= 0 && reverb.size <= 1, `${genre.id} reverb size`);
+      assert.ok(reverb.decay > 0 && reverb.decay <= 20, `${genre.id} reverb decay`);
+      assert.ok(reverb.wet >= 0 && reverb.wet <= 1, `${genre.id} reverb wet`);
+    }
 
     for (const d of genre.drums) {
       assert.ok(d.density >= 0 && d.density <= 1, `${genre.id}/${d.name} density`);

@@ -178,6 +178,9 @@ export const lofi: GenreDef = {
     // A gentle lid, and no lower than 2 kHz: the genre is already dark, and closing it
     // further just sounds broken.
     energyFilter: { type: "lowpass", lo: 2200, hi: 9000, resonance: 0.6 },
+    // A small, dark room. Peterson's point about "Fall In Love": the snare sounds late
+    // because the reverb holds it at full level, not because it is late.
+    reverb: { size: 0.3, decay: 1.4, damp: 0.7, wet: 0.2, preDelayMs: 12, sends: ["rhodes", "snare"] },
     texture: {
       vinylDb: -30,
       wowHz: 0.45,

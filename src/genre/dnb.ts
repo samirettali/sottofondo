@@ -192,6 +192,8 @@ export const dnb: GenreDef = {
     // Note the values descend: `lo` is the cutoff at energy zero. The highpass is high
     // in the breakdown and drops out of the way for the drop.
     energyFilter: { type: "highpass", lo: 260, hi: 20, resonance: 0.7 },
+    // Liquid is the pad in a large room. The drums stay dry so the break keeps its edge.
+    reverb: { size: 0.8, decay: 3.2, damp: 0.5, wet: 0.3, preDelayMs: 30, sends: ["pad"] },
   },
 
   arrangement: {

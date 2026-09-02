@@ -195,6 +195,9 @@ export const house: GenreDef = {
     // at the peak — the range is deliberately wide, since house breakdowns filter rather
     // than strip.
     energyFilter: { type: "lowpass", lo: 700, hi: 18000, resonance: 0.9 },
+    // A plate-ish room on the stabs and clap. Deep house lives in this space; without it
+    // the chords were dry synth sitting on top of the kit.
+    reverb: { size: 0.55, decay: 2.2, damp: 0.45, wet: 0.28, preDelayMs: 20, sends: ["chords", "clap", "open hat"] },
   },
 
   arrangement: {

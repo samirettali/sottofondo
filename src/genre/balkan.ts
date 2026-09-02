@@ -174,6 +174,8 @@ export const balkan: GenreDef = {
     },
     sidechain: { db: 0, releaseMs: 100, targets: [] },
     energyFilter: { type: "lowpass", lo: 900, hi: 14000, resonance: 0.7 },
+    // A hall: this is wedding-tent music, and dry it sounds like a drum machine.
+    reverb: { size: 0.7, decay: 2.6, damp: 0.4, wet: 0.24, preDelayMs: 25, sends: ["accordion", "rim", "tapan slap"] },
   },
 
   arrangement: {

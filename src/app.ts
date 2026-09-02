@@ -11,6 +11,7 @@ import {
 } from "./audio/fx.ts";
 import { createMaster, type Master } from "./audio/master.ts";
 import { createPoly, type Poly } from "./audio/poly.ts";
+import { createReverb, type Reverb } from "./audio/reverb.ts";
 import { createThreeOh, midiToFrequency, type ThreeOh } from "./audio/threeoh.ts";
 import { energyAt, sectionAt } from "./arrange/energy.ts";
 import { isMuted } from "./arrange/epoch.ts";
@@ -94,6 +95,7 @@ export class Engine {
   readonly ducker: Ducker;
   readonly texture: Texture;
   readonly energyFilter: EnergyFilter;
+  readonly reverb: Reverb | null;
   /** The last bar the energy curve was applied for, so it is applied once per bar. */
   private appliedBar = -1;
 
@@ -123,7 +125,20 @@ export class Engine {
     const bus = this.energyFilter.input;
     this.ducker = createDucker(ctx, bus, genre.fx.sidechain.db, genre.fx.sidechain.releaseMs);
     this.delay = createDelay(ctx, bus, genre.fx.delay, this.bpm);
-    this.kit = createKit(ctx, bus);
+    this.reverb = genre.fx.reverb === undefined ? null : createReverb(ctx, bus, genre.fx.reverb);
+
+    // A lane's output fans out: always to its bus, and to the reverb when the preset
+    // names it. The kit shares one output, so the drums go to the room as a group when
+    // any drum lane is named.
+    const sentToReverb = (name: string): boolean =>
+      this.reverb !== null && (genre.fx.reverb?.sends.includes(name) ?? false);
+    const fanOut = (to: AudioNode, reverbed: boolean): AudioNode => {
+      const fan = ctx.createGain();
+      fan.connect(to);
+      if (reverbed && this.reverb !== null) fan.connect(this.reverb.input);
+      return fan;
+    };
+    this.kit = createKit(ctx, fanOut(bus, genre.drums.some((d) => sentToReverb(d.name))));
 
     for (const def of genre.drums) {
       this.voices.push({
@@ -140,7 +155,10 @@ export class Engine {
     // to the ducked bus. This is the one piece of routing a preset chooses, and it
     // chooses by name from a fixed pair of destinations rather than describing a graph.
     const destination = (name: string): AudioNode =>
-      genre.fx.delay.sends.includes(name) ? this.delay.input : this.ducker.output;
+      fanOut(
+        genre.fx.delay.sends.includes(name) ? this.delay.input : this.ducker.output,
+        sentToReverb(name),
+      );
 
     if (genre.bass !== undefined) {
       const def = genre.bass;
@@ -205,6 +223,7 @@ export class Engine {
     this.stop();
     this.bass?.synth.dispose();
     this.chords?.synth.dispose();
+    this.reverb?.dispose();
     this.energyFilter.dispose();
     this.texture.dispose();
     this.master.dispose();
