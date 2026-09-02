@@ -176,8 +176,8 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
 - [ ] Walking bass with a chromatic approach into the next chord root — needs a
       one-chord lookahead in the score. Jazz walks chord tones and steps meanwhile
 - [x] Chiptune — square, triangle, noise, an arpeggio for chords, an echo lane, no room
-- [ ] Chiptune's other half: 4-bit volume quantisation and a variable pulse duty cycle.
-      Both are synth code, not preset data
+- [x] Chiptune's other half: `velocityBits` quantises every velocity in the score, and
+      `duty` on a poly voice builds a band-limited pulse from its Fourier series
 - [ ] Trap (hat rolls need sub-step onsets), bossa
 - [ ] Break slicing (`slice`/`splice`/`chop` semantics, choke groups, 1–3 ms slice fades)
 - [ ] WAV export, offline render (must be bit-identical to live playback)

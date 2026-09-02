@@ -16,6 +16,11 @@ export interface PolyParams {
   /** Detune spread in cents across those oscillators. */
   readonly detune: number;
   readonly wave: OscillatorType;
+  /**
+   * Pulse width, 0..1, for a pulse wave instead of `wave`. The NES offers 12.5%, 25%
+   * and 50%; 50% is a plain square, and the narrower ones are the thin, reedy leads.
+   */
+  readonly duty?: number;
   readonly attack: number;
   readonly decay: number;
   readonly cutoff: number;
@@ -29,6 +34,41 @@ export interface Poly {
   set(params: Partial<PolyParams>, at?: number): void;
   readonly params: PolyParams;
   dispose(): void;
+}
+
+/**
+ * Fourier coefficients of a pulse wave with the given duty, DC removed.
+ *
+ * A pulse of width d has cosine coefficients (2 / kπ) sin(kπd). The node band-limits
+ * automatically per playback frequency, so supplying many harmonics is safe; 64 is well
+ * past what a NES's 4-bit DAC resolved.
+ */
+export function pulseCoefficients(duty: number, harmonics = 64): { real: Float32Array<ArrayBuffer>; imag: Float32Array<ArrayBuffer> } {
+  const d = Math.max(0.02, Math.min(0.98, duty));
+  const real = new Float32Array(harmonics + 1);
+  const imag = new Float32Array(harmonics + 1);
+  for (let k = 1; k <= harmonics; k++) {
+    real[k] = (2 / (k * Math.PI)) * Math.sin(k * Math.PI * d);
+  }
+  return { real, imag };
+}
+
+const pulseCache = new WeakMap<BaseAudioContext, Map<number, PeriodicWave>>();
+
+function pulseWave(ctx: BaseAudioContext, duty: number): PeriodicWave {
+  let byDuty = pulseCache.get(ctx);
+  if (byDuty === undefined) {
+    byDuty = new Map();
+    pulseCache.set(ctx, byDuty);
+  }
+  const key = Math.round(duty * 1000) / 1000;
+  let wave = byDuty.get(key);
+  if (wave === undefined) {
+    const { real, imag } = pulseCoefficients(key);
+    wave = ctx.createPeriodicWave(real, imag, { disableNormalization: false });
+    byDuty.set(key, wave);
+  }
+  return wave;
 }
 
 export function createPoly(
@@ -76,7 +116,8 @@ export function createPoly(
 
         for (let i = 0; i < params.voices; i++) {
           const osc = ctx.createOscillator();
-          osc.type = params.wave;
+          if (params.duty !== undefined) osc.setPeriodicWave(pulseWave(ctx, params.duty));
+          else osc.type = params.wave;
           osc.frequency.value = midiToFrequency(note);
           // Spread symmetrically about the note, so the chord does not drift sharp.
           const spread = params.voices === 1 ? 0 : (i / (params.voices - 1) - 0.5) * 2;

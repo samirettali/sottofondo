@@ -192,6 +192,11 @@ export interface GenreDef {
 
   /** Which parameter set the drum voices read. Defaults to the 808. */
   readonly kit?: KitStyleName;
+  /**
+   * Quantise every velocity to this many bits. A NES has four, so sixteen levels; the
+   * steps are audible and are part of the sound. Omit for continuous velocity.
+   */
+  readonly velocityBits?: number;
   readonly drums: readonly DrumVoiceDef[];
   readonly bass?: BassDef;
   readonly chords?: ChordsDef;

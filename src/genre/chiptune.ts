@@ -25,6 +25,7 @@ export const chiptune: GenreDef = {
   version: 1,
 
   kit: "909", // noise hats, a short kick: the closest of the four to a noise channel
+  velocityBits: 4, // sixteen levels, as the hardware had
 
   clock: {
     bpm: { min: 130, max: 180, default: 152 },
@@ -109,6 +110,7 @@ export const chiptune: GenreDef = {
       voices: 1,
       detune: 0,
       wave: "square",
+      duty: 0.125, // thinner than the lead, so the echo sits behind it
       attack: 0.002,
       decay: 0.08,
       cutoff: 6000,
@@ -134,6 +136,7 @@ export const chiptune: GenreDef = {
       voices: 1,
       detune: 0,
       wave: "square",
+      duty: 0.25, // the classic NES lead width
       attack: 0.002,
       decay: 0.11,
       cutoff: 8000,

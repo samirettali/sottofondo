@@ -230,8 +230,34 @@ export function harmonyAt(
   };
 }
 
+/**
+ * Quantise a velocity to `bits` levels, never rounding a sounding note to silence.
+ *
+ * A NES has sixteen; the steps are audible and are the point. Applied in the score
+ * rather than the synth so the display shows the levels that will actually sound.
+ */
+export function quantiseVelocity(velocity: number, bits: number | undefined): number {
+  if (bits === undefined || bits <= 0 || bits >= 16) return velocity;
+  const levels = 2 ** Math.floor(bits) - 1;
+  const q = Math.round(velocity * levels) / levels;
+  return velocity > 0 ? Math.max(1 / levels, q) : 0;
+}
+
 /** One lane's events for one bar. */
 export function scoreLane(
+  genre: GenreDef,
+  laneIndex: number,
+  seed: number,
+  bar: number,
+  state: LaneState,
+): LaneEvent[] {
+  const events = scoreLaneRaw(genre, laneIndex, seed, bar, state);
+  const bits = genre.velocityBits;
+  if (bits === undefined) return events;
+  return events.map((e) => ({ ...e, velocity: quantiseVelocity(e.velocity, bits) }));
+}
+
+function scoreLaneRaw(
   genre: GenreDef,
   laneIndex: number,
   seed: number,

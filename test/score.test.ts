@@ -11,6 +11,7 @@ import {
   harmonyAt,
   lanesOf,
   patternIndexAt,
+  quantiseVelocity,
   rootInRange,
   scoreBar,
   scoreLane,
@@ -203,6 +204,31 @@ test("a chord root is placed nearest the centre of the register, not at its floo
     const n = rootInRange(pc, 33, 45);
     assert.ok(n >= 33 && n <= 45, `${pc} -> ${n}`);
     assert.equal(((n - pc) % 12 + 12) % 12, 0);
+  }
+});
+
+test("velocity quantisation lands on the grid and never silences a note", () => {
+  // Four bits: fifteen steps above zero.
+  for (const v of [0.01, 0.1, 0.33, 0.5, 0.77, 1]) {
+    const q = quantiseVelocity(v, 4);
+    assert.ok(q > 0, `${v} became silent`);
+    assert.ok(Math.abs(q * 15 - Math.round(q * 15)) < 1e-9, `${v} -> ${q} is off the grid`);
+    assert.ok(Math.abs(q - v) <= 1 / 15 + 1e-9, `${v} -> ${q} moved too far`);
+  }
+  assert.equal(quantiseVelocity(0, 4), 0);
+  assert.equal(quantiseVelocity(0.3141, undefined), 0.3141);
+  assert.equal(quantiseVelocity(0.3141, 16), 0.3141);
+});
+
+test("a genre with velocityBits scores only quantised velocities", () => {
+  const genre = genreList().find((g) => g.velocityBits !== undefined);
+  assert.ok(genre !== undefined, "no genre declares velocityBits");
+  const levels = 2 ** genre.velocityBits! - 1;
+  const states = defaultLaneStates(genre);
+  for (let bar = 0; bar < 40; bar++) {
+    for (const e of scoreBar(genre, 3, bar, states)) {
+      assert.ok(Math.abs(e.velocity * levels - Math.round(e.velocity * levels)) < 1e-9, `${e.name} ${e.velocity}`);
+    }
   }
 });
 
