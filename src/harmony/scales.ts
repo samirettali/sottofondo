@@ -21,6 +21,10 @@ export const SCALES = {
   majorPentatonic: [0, 2, 4, 7, 9],
   minorPentatonic: [0, 3, 5, 7, 10],
   blues: [0, 3, 5, 6, 7, 10],
+  /** Raga Bhairav: the double-harmonic scale, flat second and sixth with major third and seventh. */
+  bhairav: [0, 1, 4, 5, 7, 8, 11],
+  /** Raga Kirwani: harmonic minor by another name, kept separate so a preset can say which. */
+  kirwani: [0, 2, 3, 5, 7, 8, 11],
 } as const satisfies Record<string, readonly number[]>;
 
 export type ScaleName = keyof typeof SCALES;

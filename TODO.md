@@ -169,7 +169,9 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
 - [x] Tempo driven by the energy curve (`tempoSwing`), for the gnawa climb
 - [ ] A true gated reverb: an envelope on the send, triggered per hit. Synthwave fakes it
       with a big room and a very short decay
-- [ ] Trap (hat rolls need sub-step onsets), dub techno, bossa, jazz, chiptune
+- [x] Psytrance, dub techno, reggaeton, cumbia, raga in teental, powwow — all six cost
+      no engine code, only two raga scales
+- [ ] Trap (hat rolls need sub-step onsets), bossa, jazz, chiptune
 - [ ] Break slicing (`slice`/`splice`/`chop` semantics, choke groups, 1–3 ms slice fades)
 - [ ] WAV export, offline render (must be bit-identical to live playback)
 - [x] Save a seed to a local favourites list
