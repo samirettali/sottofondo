@@ -150,6 +150,7 @@ export const lofi: GenreDef = {
       { name: "minor", weight: 0.35 },
       { name: "mixolydian", weight: 0.2 },
       { name: "lydian", weight: 0.1 },
+      { name: "major", weight: 0.3 }, // for the major progressions in the pool
     ],
     harmony: {
       pool: [

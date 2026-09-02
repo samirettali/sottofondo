@@ -388,10 +388,30 @@ export function scaleAt(genre: GenreDef, seed: number, bar: number): readonly nu
   const tonality = genre.tonality;
   if (tonality === undefined || tonality.scales.length === 0) return null;
   const epoch = epochAt(seed, bar, specs(genre).notes);
+
+  // The scale must fit the progression, or the lead plays a natural seventh over a bVII
+  // and a natural second over a bII. Only the scales that cover every chord tone are
+  // candidates; if none does, the ones that miss fewest. The weights decide among those.
+  const harmony = harmonyAt(genre, seed, bar);
+  const chordPcs = new Set<number>();
+  if (harmony !== null) {
+    for (const chord of harmony.progression.chords) {
+      for (const i of chord.intervals) chordPcs.add(((chord.root + i) % 12 + 12) % 12);
+    }
+  }
+  const covered = tonality.scales.map((s) => {
+    const pcs = new Set(scaleOf(s.name).map((i) => i % 12));
+    let hits = 0;
+    for (const pc of chordPcs) if (pcs.has(pc)) hits++;
+    return { s, hits };
+  });
+  const best = Math.max(...covered.map((c) => c.hits));
+  const candidates = covered.filter((c) => c.hits === best).map((c) => c.s);
+
   const rng = rngFor(seed, epoch, 0, SCALE_SALT);
   const name = weighted(
     rng,
-    tonality.scales.map((s) => [s.name, s.weight] as const),
+    candidates.map((s) => [s.name, s.weight] as const),
   );
   return scaleOf(name);
 }

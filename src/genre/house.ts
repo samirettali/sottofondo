@@ -162,6 +162,9 @@ export const house: GenreDef = {
       { name: "minor", weight: 0.5 },
       { name: "dorian", weight: 0.4 },
       { name: "mixolydian", weight: 0.1 },
+      // Only ever chosen when the progression is major: the scale has to cover the
+      // chords, and ii7-V7-Imaj7 has no minor scale that does.
+      { name: "major", weight: 0.3 },
     ],
     // A, D, F, G minor — where house tends to sit.
     keyPrefs: [9, 2, 5, 7],

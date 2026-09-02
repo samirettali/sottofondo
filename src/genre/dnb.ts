@@ -161,6 +161,7 @@ export const dnb: GenreDef = {
       { name: "dorian", weight: 0.4 },
       { name: "minor", weight: 0.4 },
       { name: "mixolydian", weight: 0.2 },
+      { name: "major", weight: 0.3 }, // for the major progressions in the pool
     ],
     keyPrefs: [5, 7, 9, 0], // F, G, A, C
     harmony: {

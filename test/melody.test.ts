@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { SCALES } from "../src/harmony/scales.ts";
 import { stepPrior, walkBar, type WalkOptions } from "../src/melody/walk.ts";
 import { balkan } from "../src/genre/balkan.ts";
+import { genreList } from "../src/genre/index.ts";
 import { defaultLaneStates, harmonyAt, lanesOf, scaleAt, scoreLane } from "../src/score.ts";
 import { chordAt } from "../src/harmony/progression.ts";
 
@@ -130,6 +131,32 @@ test("the 11/8 preset's lead plays in its scale and register, on the chord where
     void chordAt(harmony.progression, bar);
   }
   assert.ok(notes > 200, `only ${notes} lead notes in 80 bars`);
+});
+
+// The clash the user heard: a harmonic-minor lead over a bVII chord, a natural second
+// over a bII. The scale is now chosen to cover the progression.
+test("in every genre, the chosen scale covers the progression as well as any listed scale can", () => {
+  // "As well as any can" rather than "completely": a secondary dominant such as VI7 is
+  // chromatic by nature and no diatonic scale holds it. That wants a scale per chord,
+  // which is not built yet; what must hold now is that no better choice was available.
+  for (const genre of genreList()) {
+    if (genre.tonality === undefined) continue;
+    for (let bar = 0; bar < 640; bar += 7) {
+      const scale = scaleAt(genre, 21, bar);
+      const harmony = harmonyAt(genre, 21, bar);
+      assert.ok(scale !== null && harmony !== null);
+      const chordPcs = new Set<number>();
+      for (const chord of harmony.progression.chords) {
+        for (const i of chord.intervals) chordPcs.add(((chord.root + i) % 12 + 12) % 12);
+      }
+      const coverage = (s: readonly number[]) => {
+        const pcs = new Set(s.map((i) => i % 12));
+        return [...chordPcs].filter((pc) => pcs.has(pc)).length;
+      };
+      const best = Math.max(...genre.tonality.scales.map((s) => coverage(SCALES[s.name])));
+      assert.equal(coverage(scale), best, `${genre.id} bar ${bar}: a better-fitting scale was listed`);
+    }
+  }
 });
 
 test("scaleAt draws from the genre's list and holds within a note epoch", () => {

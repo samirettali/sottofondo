@@ -112,6 +112,9 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
       × gravity`; no cadence funnel yet
 - [x] Arch contour as the default (~40% of folksongs)
 - [x] `lead` lane kind, used by the 11/8 preset
+- [x] The scale is chosen to cover the progression, not drawn independently of it
+- [ ] A scale per chord, so a secondary dominant (VI7, III7) gets its own Mixolydian
+      instead of the lead sliding past its chromatic third
 - [ ] Motif transforms in degree space, with an identity budget
 - [ ] Bass strategies: `onKick`, `offKick`, `sustain`, `free`, `walk`
 

@@ -124,17 +124,19 @@ export const balkan: GenreDef = {
 
   chords: {
     name: "accordion",
-    // On the beat heads: this music's harmony marks the metre rather than floating over it.
-    gen: { type: "mask", steps: [0, 8, 18] },
-    density: 0.5,
-    chaos: 0.15,
-    register: [55, 79],
+    // A wedding-band accordion pumps: short chords on every beat head, marking the metre
+    // rather than floating over it. Sustained stabs on three of the five beats sat
+    // against the bass and read as late; the pump lands with the tupan.
+    gen: { type: "mask", steps: [0, 4, 8, 14, 18] },
+    density: 0.6,
+    chaos: 0.08,
+    register: [55, 76],
     synth: {
       voices: 2,
-      detune: 8,
+      detune: 6,
       wave: "sawtooth",
-      attack: 0.02,
-      decay: 0.45,
+      attack: 0.006,
+      decay: 0.16,
       cutoff: 2400,
       resonance: 1,
       envMod: 800,
