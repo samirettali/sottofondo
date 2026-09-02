@@ -19,7 +19,7 @@ for (const [id, genre] of Object.entries(GENRES)) {
   let now = 0;
   const ticker = manualTicker();
   const engine = new Engine(ctx, genre, 1, { now: () => now, ticker });
-  await engine.reverb?.ready;
+  await engine.ready;
   const hits = new Map<number, number>();
   engine.onHit = (lane) => hits.set(lane, (hits.get(lane) ?? 0) + 1);
   engine.start();

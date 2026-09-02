@@ -1,6 +1,6 @@
 import type { KitStyleName } from "../audio/drums.ts";
 import type { EnergyFilterOptions, NoteValue, TextureOptions } from "../audio/fx.ts";
-import type { PolyParams } from "../audio/poly.ts";
+import type { PolyParams, TimbreName } from "../audio/poly.ts";
 import type { ReverbOptions } from "../audio/reverb.ts";
 import type { ThreeOhParams } from "../audio/threeoh.ts";
 import type { SectionDef } from "../arrange/energy.ts";
@@ -80,6 +80,15 @@ export interface DrumVoiceDef {
 export interface BassDef {
   readonly name: string;
   readonly wave: OscillatorType;
+  /**
+   * Which voice plays the line. Omitted, or `subtractive`, is the 303 — the acid bass
+   * every electronic preset here wants. Anything else routes the same pattern through
+   * the polyphonic engine instead, which is how an upright bass, a guembri or a tuba
+   * gets to be the bass without the pattern code knowing.
+   */
+  readonly timbre?: TimbreName;
+  /** Extra voice parameters, when `timbre` is not the 303. */
+  readonly poly?: Partial<PolyParams>;
   /** Interval bags, where repetition is the weighting. */
   readonly bags: readonly PitchBag[];
   readonly rootRange: readonly [number, number];

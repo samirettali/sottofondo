@@ -52,6 +52,28 @@ export function attackDecay(
   p.setValueAtTime(0, at + attack + decay);
 }
 
+/**
+ * Attack, hold, release: the shape of anything blown or bowed.
+ *
+ * A horn and an accordion hold their level for as long as the player keeps going, so a
+ * percussive decay is the wrong envelope for them however the timbre is made — it is
+ * half of why a sustained instrument synthesised with attack-decay reads as a synth.
+ */
+export function attackHoldRelease(
+  p: AudioParam,
+  at: number,
+  peak: number,
+  attack: number,
+  hold: number,
+  release: number,
+): void {
+  anchor(p, at, 0);
+  p.linearRampToValueAtTime(peak, at + attack);
+  p.setValueAtTime(peak, at + attack + hold);
+  p.exponentialRampToValueAtTime(EPS, at + attack + hold + Math.max(0.001, release));
+  p.setValueAtTime(0, at + attack + hold + Math.max(0.001, release));
+}
+
 /** Exponential pitch sweep, the shape every synthesised drum is built on. */
 export function pitchDrop(
   p: AudioParam,

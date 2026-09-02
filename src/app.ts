@@ -10,7 +10,7 @@ import {
   type Texture,
 } from "./audio/fx.ts";
 import { createMaster, type Master } from "./audio/master.ts";
-import { createPoly, type Poly } from "./audio/poly.ts";
+import { createPoly, createPolyBass, type Poly } from "./audio/poly.ts";
 import { createReverb, type Reverb } from "./audio/reverb.ts";
 import { createThreeOh, midiToFrequency, type ThreeOh } from "./audio/threeoh.ts";
 import { energyAt, sectionAt } from "./arrange/energy.ts";
@@ -115,6 +115,12 @@ export class Engine {
   readonly reverb: Reverb | null;
   /** The last bar the energy curve was applied for, so it is applied once per bar. */
   private appliedBar = -1;
+  /**
+   * Everything with a worklet behind it. A note scheduled before its processor has
+   * loaded is silent, which live playback can absorb in the first bar and an offline
+   * render cannot absorb at all.
+   */
+  private readonly readies: Promise<void>[] = [];
 
   private readonly voices: RuntimeVoice[] = [];
   private readonly bass: RuntimeBass | null = null;
@@ -185,10 +191,21 @@ export class Engine {
 
     if (genre.bass !== undefined) {
       const def = genre.bass;
+      // The 303 unless the preset asks for an instrument: same slot, same pattern, same
+      // gate, a different thing making the sound.
+      const bassSynth =
+        def.timbre === undefined || def.timbre === "subtractive"
+          ? createThreeOh(ctx, destination(def.name), def.wave, def.synth)
+          : createPolyBass(ctx, destination(def.name), {
+              ...def.synth,
+              timbre: def.timbre,
+              ...def.poly,
+            });
+      if ("ready" in bassSynth) this.readies.push(bassSynth.ready as Promise<void>);
       this.bass = {
         def,
         len: def.len ?? genre.clock.stepsPerBar,
-        synth: createThreeOh(ctx, destination(def.name), def.wave, def.synth),
+        synth: bassSynth,
         density: def.density,
         userMuted: false,
         cutoffBase: def.synth.cutoff,
@@ -198,10 +215,12 @@ export class Engine {
 
     if (genre.chords !== undefined) {
       const def = genre.chords;
+      const synth = createPoly(ctx, destination(def.name), def.synth);
+      this.readies.push(synth.ready);
       this.chords = {
         def,
         len: def.len ?? genre.clock.stepsPerBar,
-        synth: createPoly(ctx, destination(def.name), def.synth),
+        synth,
         density: def.density,
         userMuted: false,
         cutoffBase: def.synth.cutoff ?? 1800,
@@ -210,10 +229,12 @@ export class Engine {
 
     if (genre.lead !== undefined) {
       const def = genre.lead;
+      const synth = createPoly(ctx, destination(def.name), def.synth);
+      this.readies.push(synth.ready);
       this.lead = {
         def,
         len: def.len ?? genre.clock.stepsPerBar,
-        synth: createPoly(ctx, destination(def.name), def.synth),
+        synth,
         density: def.density,
         userMuted: false,
       };
@@ -243,6 +264,18 @@ export class Engine {
   private get leadLane(): number {
     if (this.lead === null) return -1;
     return this.voices.length + (this.bass === null ? 0 : 1) + (this.chords === null ? 0 : 1);
+  }
+
+  /**
+   * Resolves once every worklet-backed voice can make a sound.
+   *
+   * Live playback may ignore it — the processors load in a few milliseconds and the
+   * first bar is an intro. An offline render must await it: the whole piece is scheduled
+   * before a sample exists, so a string that is not loaded yet is a string that never
+   * plays a note.
+   */
+  get ready(): Promise<void> {
+    return Promise.all([this.reverb?.ready, ...this.readies]).then(() => undefined);
   }
 
   start(): void {
