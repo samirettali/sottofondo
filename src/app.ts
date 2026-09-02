@@ -16,6 +16,7 @@ import { createThreeOh, midiToFrequency, type ThreeOh } from "./audio/threeoh.ts
 import { energyAt, sectionAt } from "./arrange/energy.ts";
 import { isMuted } from "./arrange/epoch.ts";
 import { Clock, type StepEvent } from "./core/clock.ts";
+import type { Ticker } from "./core/ticker.ts";
 import { formatSeed } from "./core/rng.ts";
 import { compositeCycleSteps, floorMod, swingOffsetBeats, track } from "./core/time.ts";
 import { lanesOf, patternIndexAt, scoreLane, stepsPerBeat, type LaneState } from "./score.ts";
@@ -90,10 +91,18 @@ export interface VoiceView {
 export interface EngineOptions {
   /** Overrides the genre's default tempo. */
   bpm?: number;
+  /**
+   * The clock's time source. Defaults to `ctx.currentTime`, which an offline render has
+   * to replace: an `OfflineAudioContext` does not advance until it is rendering, and by
+   * then the graph is frozen.
+   */
+  now?: () => number;
+  /** The scheduler's wake-up source. An offline render drives it by hand. */
+  ticker?: Ticker;
 }
 
 export class Engine {
-  readonly ctx: AudioContext;
+  readonly ctx: BaseAudioContext;
   readonly master: Master;
   readonly kit: Kit;
   readonly clock: Clock;
@@ -117,7 +126,7 @@ export class Engine {
   /** Called for every hit actually scheduled, so a display can follow along. */
   onHit: (voiceIndex: number, step: number, velocity: number, time: number) => void = () => {};
 
-  constructor(ctx: AudioContext, genre: GenreDef, seed: number, opts: EngineOptions = {}) {
+  constructor(ctx: BaseAudioContext, genre: GenreDef, seed: number, opts: EngineOptions = {}) {
     this.ctx = ctx;
     this.genre = genre;
     this.seed = seed;
@@ -214,8 +223,9 @@ export class Engine {
     if (this.bass !== null) lanes.push(track(this.bass.len));
     if (this.chords !== null) lanes.push(track(this.chords.len));
     if (this.lead !== null) lanes.push(track(this.lead.len));
-    this.clock = new Clock(() => ctx.currentTime, lanes, {
+    this.clock = new Clock(opts.now ?? (() => ctx.currentTime), lanes, {
       stepsPerBeat: stepsPerBeat(genre),
+      ...(opts.ticker === undefined ? {} : { ticker: opts.ticker }),
     });
     this.clock.onStep((e) => this.step(e));
   }
