@@ -122,6 +122,7 @@ export class Engine {
     this.genre = genre;
     this.seed = seed;
     this.bpm = opts.bpm ?? genre.clock.bpm.default;
+    this.bpmBase = this.bpm;
     this.swing = genre.clock.swing;
 
     this.master = createMaster(ctx);
@@ -260,7 +261,16 @@ export class Engine {
     this.master.dispose();
   }
 
+  /** The tempo the user set; the energy curve swings around it. */
+  private bpmBase = 0;
+
   setBpm(bpm: number): void {
+    this.bpmBase = bpm;
+    this.applyTempo(bpm);
+  }
+
+  private applyTempo(bpm: number): void {
+    if (Math.abs(bpm - this.bpm) < 0.05) return;
     this.bpm = bpm;
     this.clock.setBpm(bpm);
     this.delay.setTempo(bpm);
@@ -426,6 +436,16 @@ export class Engine {
 
     const energy = energyAt(this.genre, bar);
     this.energyFilter.setEnergy(energy, e.time);
+
+    // Tempo follows the curve where the genre asks. Clamped to the genre's band, and
+    // applied from the user's base rather than the current value, so the slider is a
+    // centre and not a value the curve keeps overwriting.
+    const tempoSwing = this.genre.arrangement.tempoSwing ?? 0;
+    if (tempoSwing > 0) {
+      const { min, max } = this.genre.clock.bpm;
+      const target = this.bpmBase * (1 + (energy - 0.5) * 2 * tempoSwing);
+      this.applyTempo(Math.max(min, Math.min(max, target)));
+    }
 
     const swing = (base: number, octaves: number): number =>
       base * 2 ** ((energy - 0.5) * 2 * octaves);

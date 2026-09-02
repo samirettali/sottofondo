@@ -234,5 +234,10 @@ export interface GenreDef {
      * driven only by the mute re-rolls above.
      */
     readonly sections?: readonly SectionDef[];
+    /**
+     * How far the energy curve may move the tempo, as a fraction of the base either way.
+     * A gnawa song accelerates for its whole length; nothing in 4/4 dance music does.
+     */
+    readonly tempoSwing?: number;
   };
 }

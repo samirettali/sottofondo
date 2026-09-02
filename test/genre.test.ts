@@ -39,7 +39,11 @@ test("every genre is internally well formed", () => {
         `${genre.id}'s grouping does not add up to its bar`,
       );
     }
-    assert.ok(genre.drums.length > 0, `${genre.id} has no drums`);
+    // No drums is allowed — ambient has none — but a genre must have *something*.
+    assert.ok(
+      genre.drums.length > 0 || genre.bass !== undefined || genre.chords !== undefined,
+      `${genre.id} has no voices at all`,
+    );
     assert.ok(genre.version >= 1, `${genre.id} version`);
     assert.ok(genre.refs.length > 0, `${genre.id} cites no reference tracks`);
 

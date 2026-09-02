@@ -143,7 +143,7 @@ test("every genre's form is well formed", () => {
       }
     }
     // A form that never varies is not a form.
-    const levels = sections.map((s) => s.energy);
+    const levels = sections.flatMap((s) => [s.energy, s.energyTo ?? s.energy]);
     assert.ok(Math.max(...levels) - Math.min(...levels) > 0.3, `${genre.id} form is flat`);
   }
 });
