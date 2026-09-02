@@ -30,7 +30,7 @@ export const house: GenreDef = {
     "Moodymann — Shades of Jae",
     "MK — Burning",
   ],
-  version: 1,
+  version: 2, // v2: the bass follows the chord root; it used to pick its own key
 
   clock: {
     bpm: { min: 118, max: 126, default: 122 },
@@ -115,10 +115,11 @@ export const house: GenreDef = {
       [0, 0, 3, 7, 10],
     ],
     rootRange: [33, 45], // A1 to A2
-    // Offbeat eighths: the bounce against the kick that defines the genre.
-    gen: { type: "mask", steps: [2, 6, 10, 14] },
-    density: 0.55,
-    chaos: 0.15,
+    // Off the kick, but not the same four steps every bar: an inverted curve keeps it
+    // between the beats and varies it, and it no longer doubles the chord stabs.
+    gen: { type: "stepClassP", invert: true },
+    density: 0.24,
+    chaos: 0.1,
     accentP: 0.25,
     slideP: 0.05,
     // Round and short. A sub with the filter mostly closed, not a squelch.
@@ -131,10 +132,11 @@ export const house: GenreDef = {
 
   chords: {
     name: "chords",
-    // Stabs on the offbeat eighths, interlocking with the bass.
-    gen: { type: "mask", steps: [2, 6, 10, 14] },
-    density: 0.5,
-    chaos: 0.2,
+    // Two stabs a bar, on the "and" of one and of three. Four was every offbeat, and with
+    // the bass on the same four it was a machine, not a groove.
+    gen: { type: "mask", steps: [2, 10] },
+    density: 0.55,
+    chaos: 0.15,
     register: [55, 79], // G3 to G5, where a Rhodes-ish stab sits
     synth: {
       voices: 3,

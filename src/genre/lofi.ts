@@ -29,7 +29,7 @@ export const lofi: GenreDef = {
     "Gang Starr — Mass Appeal",
     "Pete Rock & CL Smooth — T.R.O.Y.",
   ],
-  version: 1,
+  version: 2, // v2: the bass follows the chord root
 
   clock: {
     bpm: { min: 76, max: 92, default: 84 },

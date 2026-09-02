@@ -28,7 +28,7 @@ export const balkan: GenreDef = {
     "Bulgarian State Radio & Television Female Vocal Choir — Kalimankou Denkou",
     "Trakiya Folk Ensemble — Trakijska Kopanica",
   ],
-  version: 1,
+  version: 2, // v2: the bass follows the chord root
 
   clock: {
     // Quarter-note tempo. Kopanitsa is fast: the eighth runs near 300 a minute.

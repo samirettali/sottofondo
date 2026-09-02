@@ -8,12 +8,15 @@ import { acid } from "../src/genre/acid.ts";
 import { techno } from "../src/genre/techno.ts";
 import {
   defaultLaneStates,
+  harmonyAt,
   lanesOf,
   patternIndexAt,
+  rootInRange,
   scoreBar,
   scoreLane,
   type LaneState,
 } from "../src/score.ts";
+import { chordAt } from "../src/harmony/progression.ts";
 
 const stringify = (events: ReturnType<typeof scoreBar>) =>
   events
@@ -168,6 +171,37 @@ test("scored velocities are in range and pitches are sane", () => {
         }
       }
     }
+  }
+});
+
+// The bug behind "deep house sounds wrong": bass and chords each picked their own key.
+test("the bass plays from the current chord's root wherever there is harmony", () => {
+  for (const genre of genreList()) {
+    if (genre.tonality === undefined || genre.bass === undefined) continue;
+    const bass = lanesOf(genre).findIndex((l) => l.kind === "bass");
+    const states = defaultLaneStates(genre);
+    for (let bar = 0; bar < 200; bar++) {
+      const harmony = harmonyAt(genre, 5, bar);
+      assert.ok(harmony !== null);
+      const chordRoot = (harmony.key + chordAt(harmony.progression, bar).root) % 12;
+      for (const e of scoreLane(genre, bass, 5, bar, { ...states[bass]!, userMuted: false })) {
+        const interval = (((e.midi ?? 0) - chordRoot) % 12 + 12) % 12;
+        const allowed = genre.bass.bags.some((bag) => bag.some((i) => ((i % 12) + 12) % 12 === interval));
+        assert.ok(allowed, `${genre.id} bar ${bar}: midi ${e.midi} is ${interval} above the chord root`);
+      }
+    }
+  }
+});
+
+test("a chord root is placed nearest the centre of the register, not at its floor", () => {
+  assert.equal(rootInRange(0, 33, 45), 36);
+  assert.equal(rootInRange(9, 33, 45), 33); // 33 and 45 are equidistant from 39; the lower wins
+  assert.equal(rootInRange(7, 33, 45), 43);
+  assert.equal(rootInRange(2, 33, 45), 38);
+  for (let pc = 0; pc < 12; pc++) {
+    const n = rootInRange(pc, 33, 45);
+    assert.ok(n >= 33 && n <= 45, `${pc} -> ${n}`);
+    assert.equal(((n - pc) % 12 + 12) % 12, 0);
   }
 });
 

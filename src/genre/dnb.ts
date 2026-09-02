@@ -33,7 +33,7 @@ export const dnb: GenreDef = {
     "Goldie — Inner City Life",
     "High Contrast — Global Love",
   ],
-  version: 1,
+  version: 2, // v2: the sub follows the chord root
 
   clock: {
     bpm: { min: 168, max: 178, default: 174 },

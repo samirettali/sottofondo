@@ -123,6 +123,28 @@ export function effectiveDensity(
   return densityAt(base, energyAt(genre, bar), def?.densitySwing ?? 0);
 }
 
+/**
+ * A pitch class placed in a register, nearest its centre.
+ *
+ * Nearest-to-centre rather than lowest-that-fits: a progression whose roots straddle the
+ * bottom of the range would otherwise leap an octave between adjacent chords.
+ */
+export function rootInRange(pitchClass: number, lo: number, hi: number): number {
+  const pc = ((pitchClass % 12) + 12) % 12;
+  const centre = (lo + hi) / 2;
+  let best = pc;
+  let bestDistance = Infinity;
+  for (let n = pc; n <= hi + 12; n += 12) {
+    if (n < lo) continue;
+    const d = Math.abs(n - centre);
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = n;
+    }
+  }
+  return best;
+}
+
 /** Steps per beat, stated by the genre or assumed to be sixteenths in 4/4. */
 export function stepsPerBeat(genre: GenreDef): number {
   return genre.clock.stepsPerBeat ?? genre.clock.stepsPerBar / 4;
@@ -234,13 +256,28 @@ export function scoreLane(
   const bass = genre.bass;
   if (bass === undefined) return [];
   const len = bass.len ?? genre.clock.stepsPerBar;
-  const noteSet = chooseNoteSet(
+  const chosen = chooseNoteSet(
     bass.bags,
     bass.rootRange,
     seed,
     epochAt(seed, bar, notes),
     laneIndex,
   );
+  // With a tonality, the bass root is the current chord's root — the bag supplies the
+  // intervals above it, the harmony supplies where it sits. Without one (acid, techno)
+  // the bass is the whole tonal content and keeps its own root.
+  const harmony = harmonyAt(genre, seed, bar);
+  const noteSet =
+    harmony === null
+      ? chosen
+      : {
+          bag: chosen.bag,
+          root: rootInRange(
+            harmony.key + chordAt(harmony.progression, bar).root,
+            bass.rootRange[0],
+            bass.rootRange[1],
+          ),
+        };
   const voice = defaultNoteVoice({
     gen: bass.gen,
     density: effectiveDensity(genre, laneIndex, bar, state.density),
