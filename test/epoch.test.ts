@@ -73,42 +73,60 @@ test("a pattern keyed on the epoch repeats; keyed on the bar it never does", () 
   assert.ok(byEpoch.size <= 2, `epochs gave ${byEpoch.size} distinct patterns in 16 bars`);
 });
 
+const ALWAYS = Array.from({ length: 6 }, () => 1);
+
 test("the first block always plays in full", () => {
   for (let voice = 0; voice < 6; voice++) {
     for (let bar = 0; bar < 8; bar++) {
-      assert.equal(isMuted(6, bar, voice, 8, 1), false, `voice ${voice} bar ${bar}`);
+      assert.equal(isMuted(6, bar, voice, 8, ALWAYS), false, `voice ${voice} bar ${bar}`);
     }
   }
-  // And muting resumes immediately after it.
-  assert.equal(isMuted(6, 8, 0, 8, 1), true);
+  // And muting resumes immediately after it — for as many lanes as the cap allows.
+  const after = ALWAYS.map((_, voice) => isMuted(6, 8, voice, 8, ALWAYS));
+  assert.equal(after.filter(Boolean).length, 2);
 });
 
 test("mutes hold for a whole block, not a bar", () => {
   for (let block = 1; block < 20; block++) {
-    const expected = isMuted(6, block * 8, 1, 8, 0.5);
+    const expected = isMuted(6, block * 8, 1, 8, [0.5]);
     for (let i = 0; i < 8; i++) {
-      assert.equal(isMuted(6, block * 8 + i, 1, 8, 0.5), expected, `block ${block}`);
+      assert.equal(isMuted(6, block * 8 + i, 1, 8, [0.5]), expected, `block ${block}`);
     }
   }
 });
 
 test("mute probability is honoured, and voices mute independently", () => {
+  // One lane at a time, so the cap never has anything to bite on and the rate is the
+  // preset's own probability.
   const rate = (voiceIndex: number, p: number) => {
+    const probs = Array.from({ length: voiceIndex + 1 }, (_, i) => (i === voiceIndex ? p : 0));
     let muted = 0;
     for (let block = 1; block <= 400; block++) {
-      if (isMuted(8, block * 8, voiceIndex, 8, p)) muted++;
+      if (isMuted(8, block * 8, voiceIndex, 8, probs)) muted++;
     }
     return muted / 400;
   };
   assert.equal(rate(0, 0), 0);
   assert.ok(Math.abs(rate(0, 0.5) - 0.5) < 0.06);
   assert.ok(Math.abs(rate(1, 0.2) - 0.2) < 0.06);
-  // Independence: the kick at 0.2 and a hat at 0.2 should not agree every time.
+  // Independence: two lanes at the same probability should not agree every time.
+  const probs = Array.from({ length: 6 }, () => 0.5);
   let agree = 0;
   for (let block = 1; block <= 200; block++) {
-    if (isMuted(8, block * 8, 0, 8, 0.5) === isMuted(8, block * 8, 1, 8, 0.5)) agree++;
+    if (isMuted(8, block * 8, 0, 8, probs) === isMuted(8, block * 8, 1, 8, probs)) agree++;
   }
   assert.ok(agree < 190, "voices mute in lockstep");
+});
+
+test("no more than a third of the lanes are muted at once", () => {
+  // Nine lanes that would all rather be silent: the cap is what stops a block coming up
+  // as a hole rather than as an arrangement.
+  const probs = Array.from({ length: 9 }, () => 1);
+  for (let block = 1; block <= 200; block++) {
+    const bar = block * 8;
+    const muted = probs.filter((_, voice) => isMuted(3, bar, voice, 8, probs)).length;
+    assert.ok(muted <= 3, `block ${block} muted ${muted} of 9`);
+  }
 });
 
 test("variation strength marks phrase ends, in two tiers", () => {

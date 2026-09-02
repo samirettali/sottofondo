@@ -27,7 +27,7 @@ export const acid: GenreDef = {
     "Josh Wink — Higher State of Consciousness",
     "Emmanuel Top — Turkish Bazar",
   ],
-  version: 1,
+  version: 2, // v2: a shorter, louder opening
 
   kit: "909", // the reference's drums are 909 samples
 
@@ -133,7 +133,7 @@ export const acid: GenreDef = {
     // that suits acid, where the interest is in the filter rather than the structure.
     // This adds a shallow arc without turning it into a dance-floor build.
     sections: [
-      { name: "intro", bars: 16, energy: 0.4 },
+      { name: "intro", bars: 8, energy: 0.5 },
       { name: "rise", bars: 32, energy: 0.55, energyTo: 0.85 },
       { name: "peak", bars: 32, energy: 0.9 },
       { name: "strip", bars: 16, energy: 0.45 },

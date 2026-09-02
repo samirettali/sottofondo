@@ -21,7 +21,7 @@ export const synthwave: GenreDef = {
     "Ryan Paris — Dolce Vita",
     "Com Truise — Brokendate",
   ],
-  version: 1,
+  version: 2, // v2: a louder opening
 
   kit: "808",
 
@@ -192,7 +192,7 @@ export const synthwave: GenreDef = {
     newNotesP: 0.3,
     muteEvery: 8,
     sections: [
-      { name: "intro", bars: 8, energy: 0.2 },
+      { name: "intro", bars: 8, energy: 0.42 },
       { name: "verse", bars: 16, energy: 0.5 },
       { name: "chorus", bars: 16, energy: 0.85 },
       { name: "verse", bars: 16, energy: 0.55 },

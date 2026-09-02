@@ -22,7 +22,7 @@ export const hindustani: GenreDef = {
     "Nikhil Banerjee — Raga Bhairavi",
     "Hariprasad Chaurasia — Raga Yaman",
   ],
-  version: 1,
+  version: 2, // v2: sitar and tanpura are plucked strings, and the alap is shorter
 
   kit: "folk",
 
@@ -79,14 +79,12 @@ export const hindustani: GenreDef = {
     density: 0.6,
     register: [48, 67],
     synth: {
-      voices: 3,
-      detune: 4,
-      wave: "sawtooth",
-      attack: 0.3,
-      decay: 3,
-      cutoff: 1400,
-      resonance: 0.6,
-      envMod: 200,
+      // A tanpura is plucked as well, and the long ringing tail is the whole drone —
+      // four strings sounded slowly, never damped.
+      timbre: "pluck",
+      cutoff: 2600,
+      level: 0.8,
+      pluck: { damp: 0.28, decay: 6, colour: 0.55 },
     },
     muteP: 0,
     minEnergy: 0,
@@ -103,14 +101,12 @@ export const hindustani: GenreDef = {
     contour: 1.4,
     chordPull: 1,
     synth: {
-      voices: 2,
-      detune: 3,
-      wave: "sawtooth",
-      attack: 0.006,
-      decay: 0.6,
-      cutoff: 2800,
-      resonance: 3,
-      envMod: 900,
+      // The jawari — the sloping bridge that makes a sitar buzz — is a long, bright
+      // string with very little damping. Karplus-Strong gets there; a filtered saw
+      // never did.
+      timbre: "pluck",
+      cutoff: 4200,
+      pluck: { damp: 0.34, decay: 2.6, colour: 0.85 },
     },
     muteP: 0.2,
     minEnergy: 0.25,
@@ -155,7 +151,7 @@ export const hindustani: GenreDef = {
     // Alap into gat: the drone alone, the melody enters, the tabla enters, the tempo
     // lifts through the drut.
     sections: [
-      { name: "alap", bars: 16, energy: 0.1, energyTo: 0.25 },
+      { name: "alap", bars: 8, energy: 0.3, energyTo: 0.45 },
       { name: "gat", bars: 32, energy: 0.4, energyTo: 0.6 },
       { name: "drut", bars: 32, energy: 0.7, energyTo: 1 },
       { name: "tihai", bars: 8, energy: 1 },

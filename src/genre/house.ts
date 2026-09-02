@@ -30,7 +30,7 @@ export const house: GenreDef = {
     "Moodymann — Shades of Jae",
     "MK — Burning",
   ],
-  version: 2, // v2: the bass follows the chord root; it used to pick its own key
+  version: 3, // v3: a shorter opening; v2: the bass follows the chord root
 
   kit: "909",
 
@@ -215,7 +215,7 @@ export const house: GenreDef = {
     // DJ-friendly: a long intro of drums only, a breakdown that takes the kick away,
     // and everything in multiples of eight.
     sections: [
-      { name: "intro", bars: 16, energy: 0.3 },
+      { name: "intro", bars: 8, energy: 0.45 },
       { name: "build", bars: 16, energy: 0.35, energyTo: 0.75 },
       { name: "main", bars: 32, energy: 0.85 },
       { name: "breakdown", bars: 16, energy: 0.15 },

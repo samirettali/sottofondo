@@ -83,16 +83,37 @@ export function isMuted(
   bar: number,
   voiceIndex: number,
   every: number,
-  muteP: number,
+  muteProbs: readonly number[],
 ): boolean {
+  const muteP = muteProbs[voiceIndex] ?? 0;
   if (muteP <= 0 || every <= 0) return false;
-  // The first block always plays in full. Independent coins mean three of four voices
-  // can come up muted at once, and a piece whose opening bars are two thirds absent
-  // sounds broken rather than sparse — an arrangement states its material before it
+  // The first block always plays in full: an arrangement states its material before it
   // starts taking pieces away.
   if (bar < every) return false;
   const block = Math.floor(bar / every);
-  return valueAt(seed, block, voiceIndex, MUTE_SALT) < muteP;
+  if (valueAt(seed, block, voiceIndex, MUTE_SALT) >= muteP) return false;
+
+  // The coins are independent, so without a cap they land together: a block can come up
+  // with the kick, the hats and the bass all out at once, which is not a sparse
+  // arrangement but a hole. Blind listeners handed thirty seconds of one described an
+  // acid preset as "ambient drone, no percussion".
+  //
+  // At most a third of the lanes may be out in any one block, and when more come up the
+  // ones that keep the mute are those whose coin fell furthest — the quietest lanes in
+  // the preset's own terms, since a lane with a high `muteP` clears the bar more easily.
+  const cap = Math.max(1, Math.floor(muteProbs.length / 3));
+  let ahead = 0;
+  const own = valueAt(seed, block, voiceIndex, MUTE_SALT);
+  for (let i = 0; i < muteProbs.length; i++) {
+    if (i === voiceIndex) continue;
+    const p = muteProbs[i] ?? 0;
+    if (p <= 0) continue;
+    const coin = valueAt(seed, block, i, MUTE_SALT);
+    if (coin >= p) continue;
+    // Ties broken by index, so the answer does not depend on evaluation order.
+    if (coin < own || (coin === own && i < voiceIndex)) ahead++;
+  }
+  return ahead < cap;
 }
 
 const MUTE_SALT = 0x11de;

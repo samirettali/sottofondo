@@ -28,7 +28,7 @@ export const balkan: GenreDef = {
     "Bulgarian State Radio & Television Female Vocal Choir — Kalimankou Denkou",
     "Trakiya Folk Ensemble — Trakijska Kopanica",
   ],
-  version: 2, // v2: the bass follows the chord root
+  version: 3, // v3: accordion and gaida are reeds, the bass is plucked
 
   kit: "folk", // tupan and tapan, not an 808 playing a wedding
 
@@ -103,6 +103,9 @@ export const balkan: GenreDef = {
   bass: {
     name: "bass",
     wave: "sawtooth",
+    // A wedding band's bass is plucked, not filtered.
+    timbre: "pluck",
+    poly: { cutoff: 1200, pluck: { damp: 0.55, decay: 1.8, colour: 0.32 } },
     // Root and fifth, with the flat second above — the Phrygian colour the mode turns on.
     bags: [
       [0, 0, 0, 7],
@@ -132,14 +135,15 @@ export const balkan: GenreDef = {
     chaos: 0.08,
     register: [55, 76],
     synth: {
-      voices: 2,
-      detune: 6,
-      wave: "sawtooth",
-      attack: 0.006,
-      decay: 0.16,
-      cutoff: 2400,
-      resonance: 1,
-      envMod: 800,
+      // Free reeds, a few cents apart, with no filter movement whatsoever.
+      timbre: "reed",
+      voices: 3,
+      detune: 14,
+      attack: 0.045,
+      sustain: 0.18,
+      decay: 0.1,
+      cutoff: 2600,
+      vibrato: 5,
     },
     muteP: 0.3,
     minEnergy: 0.3,
@@ -157,14 +161,19 @@ export const balkan: GenreDef = {
     contour: 1.6,
     chordPull: 1.2,
     synth: {
+      // A gaida is a reed too, and a bagpipe never stops sounding: the hold is longer
+      // than the gap between notes on purpose, so the line runs together the way a
+      // chanter does.
+      timbre: "reed",
       voices: 2,
-      detune: 5,
-      wave: "sawtooth",
-      attack: 0.008,
-      decay: 0.22,
+      detune: 8,
+      attack: 0.02,
+      sustain: 0.22,
+      decay: 0.08,
       cutoff: 3400,
-      resonance: 2.2,
-      envMod: 600,
+      resonance: 1.4,
+      vibrato: 10,
+      vibratoHz: 5.5,
     },
     muteP: 0.15,
     minEnergy: 0.4,
@@ -215,7 +224,7 @@ export const balkan: GenreDef = {
     newNotesP: 0.3,
     muteEvery: 8,
     sections: [
-      { name: "intro", bars: 8, energy: 0.3 },
+      { name: "intro", bars: 8, energy: 0.45 },
       { name: "dance", bars: 16, energy: 0.5, energyTo: 0.8 },
       { name: "fast", bars: 32, energy: 0.9 },
       { name: "breath", bars: 8, energy: 0.35 },

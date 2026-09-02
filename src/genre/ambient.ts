@@ -22,7 +22,7 @@ export const ambient: GenreDef = {
     "Aphex Twin — Selected Ambient Works Volume II",
     "Tim Hecker — Ravedeath, 1972",
   ],
-  version: 1,
+  version: 2, // v2: a shorter opening
 
   kit: "acoustic",
 
@@ -141,7 +141,7 @@ export const ambient: GenreDef = {
     newNotesP: 0.2,
     muteEvery: 16,
     sections: [
-      { name: "still", bars: 32, energy: 0.25, energyTo: 0.4 },
+      { name: "still", bars: 16, energy: 0.35, energyTo: 0.5 },
       { name: "swell", bars: 32, energy: 0.45, energyTo: 0.6 },
       { name: "still", bars: 32, energy: 0.5, energyTo: 0.25 },
     ],

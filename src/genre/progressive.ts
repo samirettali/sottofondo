@@ -17,7 +17,7 @@ export const progressive: GenreDef = {
     "Deadmau5 — Strobe",
     "Guy J — Lamur",
   ],
-  version: 1,
+  version: 2, // v2: the opening had no drums in it for a minute
 
   kit: "909",
 
@@ -190,7 +190,7 @@ export const progressive: GenreDef = {
     newNotesP: 0.2,
     muteEvery: 16,
     sections: [
-      { name: "intro", bars: 32, energy: 0.15, energyTo: 0.35 },
+      { name: "intro", bars: 8, energy: 0.45, energyTo: 0.6 },
       { name: "build", bars: 32, energy: 0.4, energyTo: 0.8 },
       { name: "peak", bars: 32, energy: 0.9 },
       { name: "breakdown", bars: 32, energy: 0.2, energyTo: 0.3 },

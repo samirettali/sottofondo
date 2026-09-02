@@ -26,7 +26,7 @@ export const gnawa: GenreDef = {
     "Maalem Mustapha Baqbou",
     "Nass El Ghiwane — Ya Sah (for the chaabi side)",
   ],
-  version: 1,
+  version: 2, // v2: the guembri is a plucked string, and the opening states the genre
 
   kit: "folk",
 
@@ -98,7 +98,12 @@ export const gnawa: GenreDef = {
 
   bass: {
     name: "guembri",
-    wave: "square", // a plucked, thumpy string: square with the filter mostly shut
+    wave: "square",
+    // A guembri is three gut strings over a camel-skin box, plucked and slapped. A
+    // filtered square was the nearest a subtractive voice could get; a real delay line
+    // is the instrument.
+    timbre: "pluck",
+    poly: { cutoff: 900, level: 1.1, pluck: { damp: 0.6, decay: 1.4, colour: 0.4 } },
     // Minor pentatonic above the root, root-heavy. The guembri also slaps the skin, which
     // the accent stands in for.
     bags: [
@@ -131,14 +136,19 @@ export const gnawa: GenreDef = {
     contour: 1.8,
     chordPull: 0.8,
     synth: {
-      voices: 1,
-      detune: 0,
+      // The nearest this engine gets to a called phrase: held, with a wide slow vibrato
+      // and no filter movement. A sung line does not decay in the middle of a word.
+      timbre: "reed",
+      voices: 2,
+      detune: 9,
       wave: "triangle",
-      attack: 0.03,
-      decay: 0.5,
-      cutoff: 1800,
-      resonance: 1,
-      envMod: 300,
+      attack: 0.07,
+      sustain: 0.35,
+      decay: 0.22,
+      cutoff: 1700,
+      resonance: 0.8,
+      vibrato: 20,
+      vibratoHz: 5,
     },
     muteP: 0.3,
     minEnergy: 0.35,
@@ -182,7 +192,7 @@ export const gnawa: GenreDef = {
     muteEvery: 8,
     // One long climb. There is no drop in a lila, only more.
     sections: [
-      { name: "open", bars: 16, energy: 0.2, energyTo: 0.35 },
+      { name: "open", bars: 8, energy: 0.4, energyTo: 0.55 },
       { name: "call", bars: 32, energy: 0.4, energyTo: 0.65 },
       { name: "gather", bars: 32, energy: 0.7, energyTo: 0.9 },
       { name: "trance", bars: 32, energy: 1 },

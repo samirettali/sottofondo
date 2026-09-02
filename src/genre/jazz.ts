@@ -22,7 +22,7 @@ export const jazz: GenreDef = {
     "Wes Montgomery — Four on Six",
     "Art Blakey — Moanin'",
   ],
-  version: 1,
+  version: 2, // v2: pizzicato bass, an FM piano and a blown horn
 
   kit: "acoustic",
 
@@ -99,6 +99,11 @@ export const jazz: GenreDef = {
     accentP: 0.15,
     slideP: 0.08,
     synth: { cutoff: 300, resonance: 1.5, envMod: 400, decay: 0.42 },
+    // A walking bass is pizzicato: gut under a finger, with the body of the instrument
+    // ringing after it. A filtered triangle is a synth bass playing walking notes, which
+    // is what a blind listener heard.
+    timbre: "pluck",
+    poly: { cutoff: 1000, level: 1.1, pluck: { damp: 0.58, decay: 2.4, colour: 0.26 } },
     muteP: 0.05,
     minEnergy: 0.15,
   },
@@ -111,14 +116,15 @@ export const jazz: GenreDef = {
     chaos: 0.2,
     register: [55, 76],
     synth: {
-      voices: 2,
-      detune: 3,
-      wave: "triangle",
-      attack: 0.004,
-      decay: 0.7,
-      cutoff: 3200,
-      resonance: 0.6,
-      envMod: 400,
+      // Struck, not swept. Two operators at the octave with a fast index decay is the
+      // electric piano every jazz-adjacent record has on it, and the nearest thing to a
+      // hammer this engine can make.
+      timbre: "fm",
+      fmRatio: 1,
+      fmIndex: 1.6,
+      fmDecay: 0.35,
+      decay: 1.4,
+      level: 0.85,
     },
     swingDepth: 1,
     muteP: 0.2,
@@ -136,14 +142,19 @@ export const jazz: GenreDef = {
     contour: 1.3,
     chordPull: 1.2,
     synth: {
+      // A tenor: slower to speak than a trumpet, darker, and with the breath holding
+      // the note up rather than letting it fall away.
+      timbre: "brass",
       voices: 1,
       detune: 0,
-      wave: "sawtooth",
-      attack: 0.03,
-      decay: 0.4,
-      cutoff: 2200,
-      resonance: 1.2,
-      envMod: 500,
+      attack: 0.055,
+      sustain: 0.14,
+      decay: 0.3,
+      cutoff: 1200,
+      envMod: 2000,
+      formant: 820,
+      vibrato: 12,
+      vibratoHz: 5,
     },
     swingDepth: 1,
     muteP: 0.35,

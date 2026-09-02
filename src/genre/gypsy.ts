@@ -21,7 +21,7 @@ export const gypsy: GenreDef = {
     "Kočani Orkestar — L'Orient Est Rouge",
     "Taraf de Haïdouks — Dumbala Dumba",
   ],
-  version: 1,
+  version: 2, // v2: the band is brass rather than saws
 
   kit: "acoustic",
 
@@ -78,6 +78,20 @@ export const gypsy: GenreDef = {
   bass: {
     name: "tuba",
     wave: "sawtooth",
+    // A tuba, not a 303 playing tuba notes. The formant is the whole difference: a
+    // trumpet's peak sits above a kilohertz, a tuba's around 300, and a low brass line
+    // given the trumpet's peak comes back as a bass drum.
+    timbre: "brass",
+    poly: {
+      cutoff: 850,
+      envMod: 1500,
+      formant: 320,
+      attack: 0.045,
+      sustain: 0.16,
+      decay: 0.22,
+      vibrato: 6,
+      level: 1,
+    },
     // Root and fifth, oompah: the octave for the helicon's answer.
     bags: [
       [0, 7, 0, 7],
@@ -104,14 +118,18 @@ export const gypsy: GenreDef = {
     chaos: 0.1,
     register: [55, 76],
     synth: {
+      timbre: "brass",
       voices: 3,
-      detune: 16,
-      wave: "sawtooth",
-      attack: 0.01,
+      detune: 14,
+      // Short and hard, but still blown: the section punches the offbeat and stops.
+      attack: 0.028,
+      sustain: 0.05,
       decay: 0.14,
-      cutoff: 2600,
-      resonance: 1.5,
-      envMod: 1200,
+      cutoff: 1400,
+      resonance: 1.4,
+      envMod: 2400,
+      formant: 1050,
+      vibrato: 8,
     },
     muteP: 0.15,
     minEnergy: 0.3,
@@ -129,14 +147,17 @@ export const gypsy: GenreDef = {
     contour: 1.6,
     chordPull: 1,
     synth: {
+      timbre: "brass",
       voices: 2,
       detune: 6,
-      wave: "sawtooth",
-      attack: 0.008,
-      decay: 0.2,
-      cutoff: 3600,
-      resonance: 2,
-      envMod: 1000,
+      attack: 0.04,
+      sustain: 0.08,
+      decay: 0.18,
+      cutoff: 1600,
+      resonance: 1.6,
+      envMod: 2600,
+      formant: 1250,
+      vibrato: 16,
     },
     muteP: 0.15,
     minEnergy: 0.35,
@@ -182,7 +203,7 @@ export const gypsy: GenreDef = {
     newNotesP: 0.3,
     muteEvery: 8,
     sections: [
-      { name: "intro", bars: 8, energy: 0.35 },
+      { name: "intro", bars: 8, energy: 0.5 },
       { name: "tune", bars: 16, energy: 0.65 },
       { name: "solo", bars: 16, energy: 0.8, energyTo: 0.95 },
       { name: "tune", bars: 16, energy: 0.75 },

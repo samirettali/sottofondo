@@ -19,7 +19,14 @@ import { Clock, type StepEvent } from "./core/clock.ts";
 import type { Ticker } from "./core/ticker.ts";
 import { formatSeed } from "./core/rng.ts";
 import { compositeCycleSteps, floorMod, swingOffsetBeats, track } from "./core/time.ts";
-import { lanesOf, patternIndexAt, scoreLane, stepsPerBeat, type LaneState } from "./score.ts";
+import {
+  lanesOf,
+  muteProbsOf,
+  patternIndexAt,
+  scoreLane,
+  stepsPerBeat,
+  type LaneState,
+} from "./score.ts";
 import type { BassDef, ChordsDef, DrumVoiceDef, GenreDef, LeadDef } from "./genre/schema.ts";
 
 /**
@@ -402,6 +409,7 @@ export class Engine {
   views(bar = this.currentBar): VoiceView[] {
     const out: VoiceView[] = [];
     const muteEvery = this.genre.arrangement.muteEvery;
+    const muteProbs = muteProbsOf(this.genre);
     const perBar = this.genre.clock.stepsPerBar;
 
     /**
@@ -426,13 +434,12 @@ export class Engine {
       })) {
         own[ev.patternStep] = ev.velocity;
       }
-      const def = this.genre.drums[lane.index] ?? this.genre.bass;
       out.push({
         name: lane.name,
         len: lane.len,
         density: state.density,
         userMuted: state.userMuted,
-        autoMuted: isMuted(this.seed, bar, lane.index, muteEvery, def?.muteP ?? 0),
+        autoMuted: isMuted(this.seed, bar, lane.index, muteEvery, muteProbs),
         steps: spread(own, lane.len),
       });
     });

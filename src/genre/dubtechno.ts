@@ -20,7 +20,7 @@ export const dubtechno: GenreDef = {
     "Rhythm & Sound — Never Tell You",
     "Deepchord presents Echospace — The Coldest Season",
   ],
-  version: 1,
+  version: 2, // v2: a shorter opening
 
   kit: "909",
 
@@ -148,7 +148,7 @@ export const dubtechno: GenreDef = {
     newNotesP: 0.15,
     muteEvery: 16,
     sections: [
-      { name: "in", bars: 32, energy: 0.3, energyTo: 0.5 },
+      { name: "in", bars: 8, energy: 0.45, energyTo: 0.6 },
       { name: "deep", bars: 64, energy: 0.6, energyTo: 0.85 },
       { name: "thin", bars: 32, energy: 0.35 },
       { name: "deep", bars: 64, energy: 0.7, energyTo: 0.95 },

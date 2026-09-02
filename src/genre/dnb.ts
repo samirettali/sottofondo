@@ -33,7 +33,7 @@ export const dnb: GenreDef = {
     "Goldie — Inner City Life",
     "High Contrast — Global Love",
   ],
-  version: 2, // v2: the sub follows the chord root
+  version: 3, // v3: a shorter opening
 
   kit: "909",
 
@@ -209,7 +209,7 @@ export const dnb: GenreDef = {
     // The genre's own shape: a drums-only DJ intro, a build, a 32-bar drop, and a
     // breakdown that removes the drums entirely rather than filtering them.
     sections: [
-      { name: "intro", bars: 16, energy: 0.35 },
+      { name: "intro", bars: 8, energy: 0.5 },
       { name: "build", bars: 16, energy: 0.4, energyTo: 0.85 },
       { name: "drop", bars: 32, energy: 0.9 },
       { name: "breakdown", bars: 32, energy: 0.12 },

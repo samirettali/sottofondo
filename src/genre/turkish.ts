@@ -21,7 +21,7 @@ export const turkish: GenreDef = {
     "Burhan Öçal — Oriental Percussion",
     "Ahmet Aslan — Veyv i Ali",
   ],
-  version: 1,
+  version: 2, // v2: kanun and saz are plucked, and the taksim no longer swallows the band
 
   kit: "folk",
 
@@ -73,8 +73,8 @@ export const turkish: GenreDef = {
       gen: { type: "mask", steps: [8, 12] },
       density: 0.55,
       vel: { base: 0.5, accent: 0.65, ghost: 0.3 },
-      muteP: 0.4,
-      minEnergy: 0.55,
+      muteP: 0.25,
+      minEnergy: 0.35,
     },
     {
       name: "zil",
@@ -103,6 +103,9 @@ export const turkish: GenreDef = {
     accentP: 0.25,
     slideP: 0.05,
     synth: { cutoff: 320, resonance: 4, envMod: 1200, decay: 0.24 },
+    // A bass guitar in the band, not an acid line.
+    timbre: "pluck",
+    poly: { cutoff: 1100, pluck: { damp: 0.56, decay: 1.6, colour: 0.3 } },
     muteP: 0.15,
     minEnergy: 0.3,
   },
@@ -114,14 +117,10 @@ export const turkish: GenreDef = {
     chaos: 0.1,
     register: [55, 76],
     synth: {
-      voices: 2,
-      detune: 5,
-      wave: "triangle",
-      attack: 0.006,
-      decay: 0.35,
-      cutoff: 2800,
-      resonance: 0.8,
-      envMod: 500,
+      // A kanun is seventy-odd strings under the fingers: bright, short, plucked.
+      timbre: "pluck",
+      cutoff: 5200,
+      pluck: { damp: 0.3, decay: 1.3, colour: 0.9 },
     },
     muteP: 0.3,
     minEnergy: 0.35,
@@ -137,14 +136,11 @@ export const turkish: GenreDef = {
     contour: 1.5,
     chordPull: 1,
     synth: {
-      voices: 2,
-      detune: 4,
-      wave: "sawtooth",
-      attack: 0.005,
-      decay: 0.3,
-      cutoff: 3200,
-      resonance: 2.5,
-      envMod: 700,
+      // A saz is a long-necked lute with wire strings: less bright than the kanun and
+      // ringing much longer.
+      timbre: "pluck",
+      cutoff: 3800,
+      pluck: { damp: 0.4, decay: 2.2, colour: 0.7 },
     },
     muteP: 0.15,
     minEnergy: 0.3,
@@ -191,7 +187,7 @@ export const turkish: GenreDef = {
     newNotesP: 0.3,
     muteEvery: 8,
     sections: [
-      { name: "taksim", bars: 8, energy: 0.2 },
+      { name: "taksim", bars: 8, energy: 0.45 },
       { name: "dance", bars: 16, energy: 0.5, energyTo: 0.75 },
       { name: "fast", bars: 32, energy: 0.9 },
       { name: "breath", bars: 8, energy: 0.35 },

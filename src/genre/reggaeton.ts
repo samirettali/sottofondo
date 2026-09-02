@@ -20,7 +20,7 @@ export const reggaeton: GenreDef = {
     "Bad Bunny — Safaera",
     "Shabba Ranks — Dem Bow",
   ],
-  version: 1,
+  version: 2, // v2: the tresillo is in from the start
 
   kit: "808",
 
@@ -79,8 +79,10 @@ export const reggaeton: GenreDef = {
       gen: { type: "clave", name: "tresillo" },
       density: 0.5,
       vel: { base: 0.3, accent: 0.4, ghost: 0.15 },
-      muteP: 0.5,
-      minEnergy: 0.55,
+      // The tresillo is the genre. Holding it back for an ornament's worth of energy
+      // leaves the opening as a plain kick-and-snare pattern that could be anything.
+      muteP: 0.2,
+      minEnergy: 0.3,
     },
   ],
 
@@ -184,7 +186,7 @@ export const reggaeton: GenreDef = {
     newNotesP: 0.25,
     muteEvery: 8,
     sections: [
-      { name: "intro", bars: 8, energy: 0.3 },
+      { name: "intro", bars: 8, energy: 0.45 },
       { name: "verse", bars: 16, energy: 0.55 },
       { name: "hook", bars: 16, energy: 0.85 },
       { name: "verse", bars: 16, energy: 0.6 },

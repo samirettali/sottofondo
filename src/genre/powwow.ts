@@ -22,7 +22,7 @@ export const powwow: GenreDef = {
     "R. Carlos Nakai — Canyon Trilogy",
     "Joanne Shenandoah — Matriarch",
   ],
-  version: 1,
+  version: 2, // v2: the flute is held and blown rather than struck
 
   kit: "folk",
 
@@ -80,14 +80,20 @@ export const powwow: GenreDef = {
     contour: 2,
     chordPull: 1.5,
     synth: {
+      // A cedar flute is almost a pure tone with a slow breath on the front and a wide
+      // vibrato: nearly no harmonics, and nothing that moves except the pitch. Held,
+      // because a flute does not decay while the player still has air.
+      timbre: "reed",
       voices: 1,
       detune: 0,
       wave: "triangle",
-      attack: 0.06,
-      decay: 0.9,
-      cutoff: 2400,
-      resonance: 1.5,
-      envMod: 300,
+      attack: 0.09,
+      sustain: 0.45,
+      decay: 0.18,
+      cutoff: 2000,
+      resonance: 0.7,
+      vibrato: 22,
+      vibratoHz: 4.6,
     },
     muteP: 0.2,
     minEnergy: 0.2,
@@ -126,7 +132,7 @@ export const powwow: GenreDef = {
     newNotesP: 0.15,
     muteEvery: 16,
     sections: [
-      { name: "lead-in", bars: 8, energy: 0.2 },
+      { name: "lead-in", bars: 8, energy: 0.42 },
       { name: "song", bars: 32, energy: 0.5, energyTo: 0.7 },
       { name: "push", bars: 16, energy: 0.8, energyTo: 1 },
       { name: "song", bars: 32, energy: 0.6 },

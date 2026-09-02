@@ -27,7 +27,7 @@ export const techno: GenreDef = {
     "Plastikman — Spastik",
     "Model 500 — No UFO's",
   ],
-  version: 1,
+  version: 2, // v2: the bass used to be a minute away
 
   kit: "909",
 
@@ -140,7 +140,7 @@ export const techno: GenreDef = {
     // No drop. Techno arranges by accretion: energy climbs slowly, holds a long time,
     // dips once, and climbs again. The kick never leaves.
     sections: [
-      { name: "intro", bars: 32, energy: 0.3, energyTo: 0.5 },
+      { name: "intro", bars: 8, energy: 0.45, energyTo: 0.6 },
       { name: "layer", bars: 32, energy: 0.55, energyTo: 0.75 },
       { name: "peak", bars: 64, energy: 0.85 },
       { name: "strip", bars: 16, energy: 0.4 },

@@ -20,7 +20,7 @@ export const blues: GenreDef = {
     "Stevie Ray Vaughan — Pride and Joy",
     "John Lee Hooker — Boom Boom",
   ],
-  version: 1,
+  version: 2, // v2: plucked strings instead of filtered saws
 
   kit: "acoustic",
 
@@ -93,6 +93,8 @@ export const blues: GenreDef = {
     accentP: 0.15,
     slideP: 0.1,
     synth: { cutoff: 340, resonance: 1.5, envMod: 500, decay: 0.24 },
+    timbre: "pluck",
+    poly: { cutoff: 1050, level: 1.1, pluck: { damp: 0.55, decay: 1.6, colour: 0.3 } },
     swingDepth: 1,
     muteP: 0.05,
     minEnergy: 0.15,
@@ -106,14 +108,10 @@ export const blues: GenreDef = {
     chaos: 0.15,
     register: [52, 74],
     synth: {
-      voices: 2,
-      detune: 5,
-      wave: "sawtooth",
-      attack: 0.004,
-      decay: 0.28,
-      cutoff: 2000,
-      resonance: 1,
-      envMod: 500,
+      // Chunked strings, damped by the picking hand: short decay, dull excitation.
+      timbre: "pluck",
+      cutoff: 2600,
+      pluck: { damp: 0.52, decay: 0.55, colour: 0.6 },
     },
     swingDepth: 1,
     muteP: 0.25,
@@ -130,14 +128,12 @@ export const blues: GenreDef = {
     contour: 1.2,
     chordPull: 1,
     synth: {
-      voices: 1,
-      detune: 0,
-      wave: "sawtooth",
-      attack: 0.005,
-      decay: 0.5,
-      cutoff: 2600,
-      resonance: 2.5,
-      envMod: 900,
+      // The lead rings on where the comping is choked, which is what makes one guitar
+      // sound like two players.
+      timbre: "pluck",
+      cutoff: 3400,
+      level: 1.1,
+      pluck: { damp: 0.38, decay: 2, colour: 0.8 },
     },
     swingDepth: 1,
     muteP: 0.3,

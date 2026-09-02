@@ -17,7 +17,7 @@ export const psytrance: GenreDef = {
     "Hallucinogen — LSD",
     "Vini Vici — The Tribe",
   ],
-  version: 1,
+  version: 2, // v2: hats and lead are in from the start
 
   kit: "909",
 
@@ -161,7 +161,7 @@ export const psytrance: GenreDef = {
     newNotesP: 0.2,
     muteEvery: 8,
     sections: [
-      { name: "intro", bars: 16, energy: 0.25 },
+      { name: "intro", bars: 8, energy: 0.45 },
       { name: "build", bars: 16, energy: 0.4, energyTo: 0.85 },
       { name: "drop", bars: 32, energy: 0.9 },
       { name: "break", bars: 16, energy: 0.2 },

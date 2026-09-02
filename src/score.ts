@@ -192,6 +192,16 @@ function specs(genre: GenreDef): { pattern: EpochSpec; notes: EpochSpec } {
   };
 }
 
+/**
+ * Every lane's mute probability, in lane order.
+ *
+ * The mute roll is capped across the whole preset rather than taken per lane, so the
+ * decision needs all of them.
+ */
+export function muteProbsOf(genre: GenreDef): number[] {
+  return lanesOf(genre).map((lane) => defOf(genre, lane.index)?.muteP ?? 0);
+}
+
 /** Whether a lane sounds at all in this bar. */
 export function laneSilent(
   genre: GenreDef,
@@ -206,7 +216,7 @@ export function laneSilent(
   // roll is the variation *within* a section. Two different jobs, and a lane silenced by
   // the curve should not also be rolling dice.
   if (!laneIsIn(energyAt(genre, bar), def)) return true;
-  return isMuted(seed, bar, laneIndex, genre.arrangement.muteEvery, def?.muteP ?? 0);
+  return isMuted(seed, bar, laneIndex, genre.arrangement.muteEvery, muteProbsOf(genre));
 }
 
 /**
