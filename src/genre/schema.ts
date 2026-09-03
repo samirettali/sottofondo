@@ -34,7 +34,8 @@ export type KitVoiceName =
   | "rim"
   | "cowbell"
   | "tom"
-  | "frame";
+  | "frame"
+  | "clack";
 
 export interface DrumVoiceDef {
   /** Shown in the UI. */

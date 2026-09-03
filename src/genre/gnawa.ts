@@ -26,7 +26,8 @@ export const gnawa: GenreDef = {
     "Maalem Mustapha Baqbou",
     "Nass El Ghiwane — Ya Sah (for the chaabi side)",
   ],
-  version: 2, // v2: the guembri is a plucked string, and the opening states the genre
+  version: 3, // v3: the qraqeb are iron, not skin
+  // v2: the guembri is a plucked string, and the opening states the genre
 
   kit: "folk",
 
@@ -53,7 +54,7 @@ export const gnawa: GenreDef = {
     },
     {
       name: "qraqeb",
-      kitVoice: "frame",
+      kitVoice: "clack",
       // The hemiola: a three-feel across the two beats. Written out because a curve
       // cannot say it.
       gen: { type: "mask", steps: [0, 2, 3, 6, 8, 9] },
@@ -64,7 +65,7 @@ export const gnawa: GenreDef = {
     },
     {
       name: "qraqeb 2",
-      kitVoice: "frame",
+      kitVoice: "clack",
       // The second pair answers in the gaps.
       gen: { type: "stepClassP", invert: true },
       density: 0.22,

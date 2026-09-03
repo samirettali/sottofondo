@@ -21,7 +21,8 @@ export const turkish: GenreDef = {
     "Burhan Öçal — Oriental Percussion",
     "Ahmet Aslan — Veyv i Ali",
   ],
-  version: 2, // v2: kanun and saz are plucked, and the taksim no longer swallows the band
+  version: 3, // v3: the zils are finger cymbals
+  // v2: kanun and saz are plucked, and the taksim no longer swallows the band
 
   kit: "folk",
 
@@ -78,13 +79,14 @@ export const turkish: GenreDef = {
     },
     {
       name: "zil",
-      kitVoice: "rim",
+      // Finger cymbals are metal, not a rimshot.
+      kitVoice: "clack",
       gen: { type: "euclid", k: 5, n: 9 },
       len: 9,
       density: 0.45,
-      vel: { base: 0.2, accent: 0.28, ghost: 0.1 },
-      muteP: 0.5,
-      minEnergy: 0.6,
+      vel: { base: 0.28, accent: 0.4, ghost: 0.14 },
+      muteP: 0.35,
+      minEnergy: 0.4,
     },
   ],
 

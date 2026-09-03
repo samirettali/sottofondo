@@ -91,7 +91,7 @@ const STYLES: Record<KitStyleName, KitStyle> = {
     snare: { tones: [[185, 0.4], [270, 0.3]], toneDecay: 0.12, noiseHz: 1300, noiseQ: 0.7, noiseDecay: 0.2, noiseLevel: 0.5 },
     // The open hat is a ride: long, and with metal in it. A drummer's cymbal is the
     // loudest clue in the kit that a human is playing.
-    hat: { mode: "noise", closed: 0.06, open: 1.3, hp: 5200, bp: 7000, level: 0.22, shimmer: 0.4 },
+    hat: { mode: "noise", closed: 0.06, open: 0.75, hp: 5200, bp: 7000, level: 0.22, shimmer: 0.22 },
   },
   // Tupan and tapan: a deep skin drum and a slapped one, brushed hats.
   folk: {
@@ -112,6 +112,8 @@ export interface Kit {
   readonly tom: DrumVoice;
   /** A frame drum: a short, skin-coloured tap. */
   readonly frame: DrumVoice;
+  /** Struck metal in the hand: qraqeb, zills, finger cymbals. */
+  readonly clack: DrumVoice;
   /** Every voice, in a stable order, for indexing by voice number. */
   readonly voices: readonly DrumVoice[];
   readonly names: readonly string[];
@@ -125,6 +127,8 @@ const ACCENT_GAIN = 2.2; // within the 808's 2–4x range
 /** Inharmonic mode ratios for a struck plate, and the fundamental they sit on. */
 const RING_RATIOS = [1, 1.47, 2.09, 2.71, 3.33, 4.17, 5.43, 6.79, 8.21, 9.97] as const;
 const RING_HZ = 330;
+/** Where on the plate the stick landed. Cycled, not rolled: generation stays pure. */
+const RING_SPREAD = [1, 0.955, 1.061, 0.983, 1.032, 0.971, 1.047] as const;
 
 export function createKit(ctx: BaseAudioContext, out: AudioNode, styleName: KitStyleName = "808"): Kit {
   const style = STYLES[styleName];
@@ -224,6 +228,7 @@ export function createKit(ctx: BaseAudioContext, out: AudioNode, styleName: KitS
    * The ratios are not a series — a circular plate's modes are not harmonics, and using
    * harmonic ones gives a pitched bell rather than a cymbal.
    */
+  let ringCursor = 0;
   const ring = (at: number, gain: number, decay: number) => {
     // Highpassed rather than bandpassed, and built up from a low fundamental: a 20-inch
     // ride's modes start in the hundreds of hertz and reach a few kilohertz, so a bank
@@ -234,10 +239,15 @@ export function createKit(ctx: BaseAudioContext, out: AudioNode, styleName: KitS
     hp.frequency.value = 600;
     const vca = ctx.createGain();
     decayTo(vca.gain, at, gain, decay * 1.4);
+    // Every strike lands on a slightly different part of the plate. Without that the
+    // partials of overlapping hits sum into a pitch — a ride struck three times a second
+    // becomes a drone on its own fundamental, which is a synthesizer, not a cymbal.
+    const spread = RING_SPREAD[ringCursor % RING_SPREAD.length] ?? 1;
+    ringCursor++;
     for (const ratio of RING_RATIOS) {
       const osc = ctx.createOscillator();
       osc.type = "sine";
-      osc.frequency.value = RING_HZ * ratio;
+      osc.frequency.value = RING_HZ * spread * ratio;
       // The high modes die first, as they do on a real plate.
       const partial = ctx.createGain();
       decayTo(partial.gain, at, 1 / (1 + ratio * 0.6), decay * 1.4 * (1 / (1 + ratio * 0.25)));
@@ -338,6 +348,35 @@ export function createKit(ctx: BaseAudioContext, out: AudioNode, styleName: KitS
     },
   };
 
+  /**
+   * Struck metal in the hand: qraqeb, zills, spoons, claves' metal cousin.
+   *
+   * Not a frame drum and not a hi-hat. The gnawa qraqeb are iron castanets and the
+   * loudest thing in the room; played on the frame voice, which is a tap on skin, the
+   * whole genre came back from a blind listener as "muffled low-frequency heartbeat
+   * sounds, no musical instruments".
+   */
+  const clack: DrumVoice = {
+    play(at, velocity, accent) {
+      const g = level(velocity, accent);
+      const decay = accent ? 0.16 : 0.11;
+      burst(at, 0.5 * g, decay * 0.6, "bandpass", 3800, 1.2);
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass";
+      hp.frequency.value = 900;
+      const vca = ctx.createGain();
+      decayTo(vca.gain, at, 0.42 * g, decay);
+      for (const ratio of [1, 1.63, 2.31, 3.11]) {
+        const osc = ctx.createOscillator();
+        osc.type = "square";
+        osc.frequency.value = 1180 * ratio;
+        osc.connect(hp);
+        playFor(osc, at, decay + 0.02);
+      }
+      hp.connect(vca).connect(out);
+    },
+  };
+
   const frame: DrumVoice = {
     play(at, velocity, accent) {
       const g = level(velocity, accent);
@@ -353,7 +392,7 @@ export function createKit(ctx: BaseAudioContext, out: AudioNode, styleName: KitS
     },
   };
 
-  const names = ["kick", "snare", "clap", "closedHat", "openHat", "rim", "cowbell", "tom", "frame"];
-  const voices = [kick, snare, clap, closedHat, openHat, rim, cowbell, tom, frame];
-  return { kick, snare, clap, closedHat, openHat, rim, cowbell, tom, frame, voices, names };
+  const names = ["kick", "snare", "clap", "closedHat", "openHat", "rim", "cowbell", "tom", "frame", "clack"];
+  const voices = [kick, snare, clap, closedHat, openHat, rim, cowbell, tom, frame, clack];
+  return { kick, snare, clap, closedHat, openHat, rim, cowbell, tom, frame, clack, voices, names };
 }
