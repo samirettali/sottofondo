@@ -180,5 +180,9 @@ Only from house onward. Acid, minimal techno and dub techno have none by design.
       `duty` on a poly voice builds a band-limited pulse from its Fourier series
 - [ ] Trap (hat rolls need sub-step onsets), bossa
 - [ ] Break slicing (`slice`/`splice`/`chop` semantics, choke groups, 1–3 ms slice fades)
-- [ ] WAV export, offline render (must be bit-identical to live playback)
+- [x] Offline render — `tools/render.html`, a page a headless browser opens; the WAVs go
+      to a local sink. Not bit-identical to live playback and cannot be: Chrome's graph
+      rounds differently run to run, so two renders of one seed differ by about 4 LSB in
+      32768. That is −76 dB. Compare renders by sample magnitude, never by hash.
+- [ ] WAV export from the UI itself, with a button
 - [x] Save a seed to a local favourites list

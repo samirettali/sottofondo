@@ -34,6 +34,46 @@ is data rather than code.
   introduces routing. The test for the schema being finished is that a twelfth genre
   costs a file and no code.
 
+## Timbre is data too, and it decides the genre
+
+A voice picks a synthesis strategy by name — `subtractive`, `fm`, `pluck`, `brass`,
+`reed` — the same way it already picks a kit or a pattern generator. The strategies live
+in `src/audio/poly.ts` (`pluck` is a Karplus-Strong worklet in `src/audio/pluck.ts`), and
+a preset sets numbers, never a graph.
+
+This exists because the pattern was never the thing that failed. Balkan brass had the
+tuba on the beats and the horns between them and still came back from a blind listener as
+"synth-pop | chiptune"; jazz came back as "Eurodance". Everything acoustic was detuned
+saws through a lowpass. Changing the timbre and nothing else moved jazz from "Trap: 808
+sub-bass" to "Big Band Swing: trumpets, trombones, saxophones, piano, double bass".
+
+Two traps found the hard way, both of them one instrument standing in for another:
+
+- **A long ring on a repeated hit becomes a pitch.** A ride with fixed partials, struck
+  three times a second, sums into a drone on its own fundamental, and a drone is a
+  synthesizer. Each strike gets a different spread (`RING_SPREAD`, cycled — never rolled).
+- **Map a lane to what the instrument *is*.** The gnawa qraqeb are iron castanets and were
+  playing `frame`, which is a tap on skin; the whole genre read as a muffled pulse.
+
+## Listening tests
+
+`tools/render.html` renders every preset to a WAV, `tools/probe.html` reports the hits
+each lane schedules — the check that a silent-sounding preset is an arrangement problem
+and not a harness one. `tools/timbre.html` plays one phrase per timbre, bare.
+
+Handing those renders to a model with no context is a useful instrument and a badly
+behaved one:
+
+- **One clip per directory, named neutrally.** Given twenty clips in one directory the
+  agent sometimes reads a different file than the one asked about, which produces answers
+  that look like wild misjudgements. Isolating each clip changed the verdicts *and* fixed
+  the tempo readings.
+- **A leading prompt gets a leading answer.** "This is a short instrumental loop, name the
+  genre" makes it attach a dance genre to anything; the ambient preset, which has no
+  percussion at all, came back as "Disco, 120 BPM". Ask what it hears first, label second.
+- **One answer is a sample, not a measurement.** The same file has come back as "Gnawa,
+  guembri, qraqeb, 0.95" and as "minimal techno". Take several votes, or believe nothing.
+
 ## Conventions
 
 - Zero runtime dependencies. Vite and TypeScript are the only build-time ones.
