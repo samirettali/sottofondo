@@ -120,8 +120,11 @@ export const gypsy: GenreDef = {
     register: [55, 76],
     synth: {
       timbre: "brass",
-      voices: 3,
-      detune: 14,
+      // A fanfare is six to ten horns playing the same line and none of them in tune with
+      // each other. Three voices at fourteen cents is a synth patch; the width is what
+      // makes it a section rather than an instrument.
+      voices: 6,
+      detune: 26,
       // Short and hard, but still blown: the section punches the offbeat and stops.
       attack: 0.028,
       sustain: 0.05,
@@ -154,8 +157,9 @@ export const gypsy: GenreDef = {
     chordPull: 1,
     synth: {
       timbre: "brass",
-      voices: 2,
-      detune: 6,
+      // Two or three players in unison on the lead line, not one.
+      voices: 3,
+      detune: 12,
       attack: 0.04,
       sustain: 0.08,
       decay: 0.18,
