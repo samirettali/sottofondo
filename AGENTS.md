@@ -73,6 +73,17 @@ behaved one:
   percussion at all, came back as "Disco, 120 BPM". Ask what it hears first, label second.
 - **One answer is a sample, not a measurement.** The same file has come back as "Gnawa,
   guembri, qraqeb, 0.95" and as "minimal techno". Take several votes, or believe nothing.
+- **Never normalise the clips before comparing.** Rescaling them to a common loudness made
+  the fanfare lose every comparison it had just won; the renders come off one master chain
+  and are already comparable.
+
+The question that works is not "what genre is this" — that has an unbounded answer space
+and the judge confabulates in it — but "which of these two is more like X", best of three,
+with the correct answer alternating between A and B. Chance is 50%. As of the last full
+run every preset wins its own description: sixteen of them against their nearest
+confusable neighbour, and 49 of 63 votes overall. The five that lose to a neighbour lose
+because the judge picks the same member of the pair whichever way the question is asked,
+and each of them wins against a distant distractor.
 
 ## Conventions
 
