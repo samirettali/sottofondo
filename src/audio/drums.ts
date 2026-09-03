@@ -122,8 +122,9 @@ const HAT_PARTIALS = [800, 540, 522.7, 369.6, 304.4, 205.3] as const;
 
 const ACCENT_GAIN = 2.2; // within the 808's 2–4x range
 
-/** Inharmonic mode ratios for a struck plate. */
-const RING_RATIOS = [1, 1.47, 2.09, 2.71, 3.33, 4.17] as const;
+/** Inharmonic mode ratios for a struck plate, and the fundamental they sit on. */
+const RING_RATIOS = [1, 1.47, 2.09, 2.71, 3.33, 4.17, 5.43, 6.79, 8.21, 9.97] as const;
+const RING_HZ = 330;
 
 export function createKit(ctx: BaseAudioContext, out: AudioNode, styleName: KitStyleName = "808"): Kit {
   const style = STYLES[styleName];
@@ -224,20 +225,26 @@ export function createKit(ctx: BaseAudioContext, out: AudioNode, styleName: KitS
    * harmonic ones gives a pitched bell rather than a cymbal.
    */
   const ring = (at: number, gain: number, decay: number) => {
-    const bp = ctx.createBiquadFilter();
-    bp.type = "bandpass";
-    bp.frequency.value = style.hat.bp;
-    bp.Q.value = 0.5;
+    // Highpassed rather than bandpassed, and built up from a low fundamental: a 20-inch
+    // ride's modes start in the hundreds of hertz and reach a few kilohertz, so a bank
+    // built from the *hat's* highpass frequency upwards is a shrill electronic tinkle
+    // with no plate under it. That mistake made the jazz preset read as chiptune.
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 600;
     const vca = ctx.createGain();
     decayTo(vca.gain, at, gain, decay * 1.4);
     for (const ratio of RING_RATIOS) {
       const osc = ctx.createOscillator();
-      osc.type = "square";
-      osc.frequency.value = style.hat.hp * ratio;
-      osc.connect(bp);
+      osc.type = "sine";
+      osc.frequency.value = RING_HZ * ratio;
+      // The high modes die first, as they do on a real plate.
+      const partial = ctx.createGain();
+      decayTo(partial.gain, at, 1 / (1 + ratio * 0.6), decay * 1.4 * (1 / (1 + ratio * 0.25)));
+      osc.connect(partial).connect(hp);
       playFor(osc, at, decay * 1.4 + 0.05);
     }
-    bp.connect(vca).connect(out);
+    hp.connect(vca).connect(out);
   };
 
   /** The hat, in either voicing. */
