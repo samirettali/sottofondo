@@ -45,7 +45,8 @@ export const cumbia: GenreDef = {
     },
     {
       name: "alegre",
-      kitVoice: "tom",
+      // Hands on a skin, not a tom.
+      kitVoice: "slap",
       gen: { type: "mask", steps: [2, 4, 10, 12] },
       density: 0.55,
       vel: { base: 0.5, accent: 0.65, ghost: 0.3 },
@@ -55,7 +56,8 @@ export const cumbia: GenreDef = {
     },
     {
       name: "llamador",
-      kitVoice: "rim",
+      // The caller: a muted hand stroke on the offbeat, not a rimshot.
+      kitVoice: "frame",
       // The caller keeps the offbeat eighths, always.
       gen: { type: "mask", steps: [2, 6, 10, 14] },
       density: 0.55,
@@ -66,7 +68,9 @@ export const cumbia: GenreDef = {
     },
     {
       name: "guacharaca",
-      kitVoice: "closedHat",
+      // The loudest lane in the preset by a distance, and it was a closed hi-hat: a
+      // scraped ridge is what makes the pattern cumbia rather than sixteenths.
+      kitVoice: "scrape",
       // Scrape and return: every eighth, with the return lighter.
       gen: { type: "mask", steps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
       density: 0.55,
@@ -105,7 +109,7 @@ export const cumbia: GenreDef = {
     slideP: 0.05,
     synth: { cutoff: 360, resonance: 2, envMod: 700, decay: 0.3 },
     timbre: "pluck",
-    poly: { cutoff: 900, level: 1.1, pluck: { damp: 0.58, decay: 1.5, colour: 0.28 } },
+    poly: { cutoff: 900, level: 1.5, pluck: { damp: 0.58, decay: 1.5, colour: 0.28 } },
     swingDepth: 0.5,
     muteP: 0.1,
     minEnergy: 0.2,
@@ -128,6 +132,7 @@ export const cumbia: GenreDef = {
       decay: 0.09,
       cutoff: 2800,
       vibrato: 4,
+      level: 1.7,
     },
     swingDepth: 1,
     muteP: 0.3,
@@ -153,6 +158,7 @@ export const cumbia: GenreDef = {
       decay: 0.1,
       cutoff: 3200,
       vibrato: 7,
+      level: 1.7,
     },
     swingDepth: 1,
     muteP: 0.3,

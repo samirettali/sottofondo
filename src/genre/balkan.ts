@@ -66,7 +66,9 @@ export const balkan: GenreDef = {
     },
     {
       name: "tapan slap",
-      kitVoice: "snare",
+      // The switch on the thin head of a tapan. A snare's wires put a backbeat where the
+      // dance has none.
+      kitVoice: "slap",
       gen: { type: "stepClassP", invert: true },
       density: 0.16,
       chaos: 0.15,
@@ -105,7 +107,7 @@ export const balkan: GenreDef = {
     wave: "sawtooth",
     // A wedding band's bass is plucked, not filtered.
     timbre: "pluck",
-    poly: { cutoff: 1200, pluck: { damp: 0.55, decay: 1.8, colour: 0.32 } },
+    poly: { cutoff: 1200, level: 1.4, pluck: { damp: 0.55, decay: 1.8, colour: 0.32 } },
     // Root and fifth, with the flat second above — the Phrygian colour the mode turns on.
     bags: [
       [0, 0, 0, 7],
@@ -144,6 +146,7 @@ export const balkan: GenreDef = {
       decay: 0.1,
       cutoff: 2600,
       vibrato: 5,
+      level: 1.6,
     },
     muteP: 0.3,
     minEnergy: 0.3,
@@ -174,6 +177,7 @@ export const balkan: GenreDef = {
       resonance: 1.4,
       vibrato: 10,
       vibratoHz: 5.5,
+      level: 1.6,
     },
     muteP: 0.15,
     minEnergy: 0.4,

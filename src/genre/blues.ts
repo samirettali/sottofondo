@@ -111,6 +111,7 @@ export const blues: GenreDef = {
       // Chunked strings, damped by the picking hand: short decay, dull excitation.
       timbre: "pluck",
       cutoff: 2600,
+      level: 1.5,
       pluck: { damp: 0.52, decay: 0.55, colour: 0.6 },
     },
     swingDepth: 1,

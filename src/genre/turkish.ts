@@ -48,7 +48,8 @@ export const turkish: GenreDef = {
     },
     {
       name: "tek",
-      kitVoice: "frame",
+      // The sharp rim stroke of a darbuka.
+      kitVoice: "slap",
       // The high stroke in the gaps.
       gen: { type: "mask", steps: [2, 6, 10, 14, 16] },
       density: 0.58,
@@ -58,7 +59,7 @@ export const turkish: GenreDef = {
     },
     {
       name: "fills",
-      kitVoice: "frame",
+      kitVoice: "slap",
       gen: { type: "stepClassP", invert: true },
       density: 0.16,
       chaos: 0.2,
@@ -70,7 +71,8 @@ export const turkish: GenreDef = {
     },
     {
       name: "davul",
-      kitVoice: "snare",
+      // The thin head, struck with a switch. Not a backbeat snare.
+      kitVoice: "slap",
       gen: { type: "mask", steps: [8, 12] },
       density: 0.55,
       vel: { base: 0.5, accent: 0.65, ghost: 0.3 },
@@ -107,7 +109,7 @@ export const turkish: GenreDef = {
     synth: { cutoff: 320, resonance: 4, envMod: 1200, decay: 0.24 },
     // A bass guitar in the band, not an acid line.
     timbre: "pluck",
-    poly: { cutoff: 1100, pluck: { damp: 0.56, decay: 1.6, colour: 0.3 } },
+    poly: { cutoff: 1100, level: 1.4, pluck: { damp: 0.56, decay: 1.6, colour: 0.3 } },
     muteP: 0.15,
     minEnergy: 0.3,
   },
@@ -122,6 +124,7 @@ export const turkish: GenreDef = {
       // A kanun is seventy-odd strings under the fingers: bright, short, plucked.
       timbre: "pluck",
       cutoff: 5200,
+      level: 1.7,
       pluck: { damp: 0.3, decay: 1.3, colour: 0.9 },
     },
     muteP: 0.3,
@@ -142,6 +145,7 @@ export const turkish: GenreDef = {
       // ringing much longer.
       timbre: "pluck",
       cutoff: 3800,
+      level: 1.7,
       pluck: { damp: 0.4, decay: 2.2, colour: 0.7 },
     },
     muteP: 0.15,

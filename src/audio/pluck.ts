@@ -150,7 +150,11 @@ export function createPluckPool(
   const opts: PluckOptions = { damp: 0.5, decay: 2, colour: 0.6, strings: 6, ...options };
   const nodes: AudioWorkletNode[] = [];
   const level = ctx.createGain();
-  level.gain.value = 0.5;
+  // Unity. A delay line's output is already scaled by the pluck velocity, and the 0.5
+  // that used to sit here put every plucked instrument six decibels below the drums —
+  // enough that a blind listener describing the raga preset named the tabla and said
+  // there were no melodic instruments at all.
+  level.gain.value = 1;
   level.connect(out);
   let next = 0;
   let disposed = false;

@@ -38,18 +38,22 @@ export const hindustani: GenreDef = {
   drums: [
     {
       name: "bayan",
-      kitVoice: "kick",
+      // The heel slides on the head after the strike and the pitch bends up. That gliss
+      // is the tabla; a kick drum in its place is a hip-hop record.
+      kitVoice: "bend",
       // dha and dhin: every matra except the khali group.
       gen: { type: "mask", steps: [0, 1, 2, 3, 4, 5, 6, 7, 12, 13, 14, 15] },
       density: 0.55,
-      vel: { base: 0.6, accent: 0.9, ghost: 0.35 },
+      // A tabla sits under the melody, not on top of it: the bayan alone was twelve
+      // decibels louder than the sitar and the tanpura together.
+      vel: { base: 0.42, accent: 0.62, ghost: 0.24 },
       accentAt: 0.9,
       muteP: 0.05,
       minEnergy: 0.15,
     },
     {
       name: "dayan",
-      kitVoice: "frame",
+      kitVoice: "slap",
       // The ring: on every matra, loudest on sam, and alone through the khali.
       gen: { type: "mask", steps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
       density: 0.55,
@@ -83,7 +87,7 @@ export const hindustani: GenreDef = {
       // four strings sounded slowly, never damped.
       timbre: "pluck",
       cutoff: 2600,
-      level: 0.8,
+      level: 1.3,
       pluck: { damp: 0.28, decay: 6, colour: 0.55 },
     },
     muteP: 0,
@@ -106,6 +110,7 @@ export const hindustani: GenreDef = {
       // never did.
       timbre: "pluck",
       cutoff: 4200,
+      level: 1.6,
       pluck: { damp: 0.34, decay: 2.6, colour: 0.85 },
     },
     muteP: 0.2,

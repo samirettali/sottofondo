@@ -78,7 +78,8 @@ export const gnawa: GenreDef = {
     },
     {
       name: "bendir",
-      kitVoice: "snare",
+      // A frame drum with a gut snare across the head, played with the fingers.
+      kitVoice: "frame",
       gen: { type: "mask", steps: [3, 9] },
       density: 0.55,
       vel: { base: 0.4, accent: 0.55, ghost: 0.25 },
@@ -104,7 +105,7 @@ export const gnawa: GenreDef = {
     // filtered square was the nearest a subtractive voice could get; a real delay line
     // is the instrument.
     timbre: "pluck",
-    poly: { cutoff: 900, level: 1.1, pluck: { damp: 0.6, decay: 1.4, colour: 0.4 } },
+    poly: { cutoff: 900, level: 1.5, pluck: { damp: 0.6, decay: 1.4, colour: 0.4 } },
     // Minor pentatonic above the root, root-heavy. The guembri also slaps the skin, which
     // the accent stands in for.
     bags: [

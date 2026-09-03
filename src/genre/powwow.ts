@@ -60,7 +60,8 @@ export const powwow: GenreDef = {
     },
     {
       name: "rattle",
-      kitVoice: "frame",
+      // Shaken, not struck.
+      kitVoice: "scrape",
       gen: { type: "mask", steps: [0, 2, 4, 6, 8, 10, 12, 14] },
       density: 0.5,
       vel: { base: 0.2, accent: 0.3, ghost: 0.1 },
