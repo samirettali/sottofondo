@@ -20,7 +20,8 @@ export const reggaeton: GenreDef = {
     "Bad Bunny — Safaera",
     "Shabba Ranks — Dem Bow",
   ],
-  version: 2, // v2: the tresillo is in from the start
+  version: 3, // v3: the kick is on one and three, not four-on-the-floor
+  // v2: the tresillo is in from the start
 
   kit: "808",
 
@@ -36,7 +37,10 @@ export const reggaeton: GenreDef = {
     {
       name: "kick",
       kitVoice: "kick",
-      gen: { type: "mask", steps: [0, 4, 8, 12] },
+      // Beats one and three, under the tresillo — the Dem Bow riddim. A kick on all four
+      // is a house record with a dembow snare over it, and that is exactly what blind
+      // listeners called this preset: EDM, dance-pop, synth-pop, never reggaeton.
+      gen: { type: "mask", steps: [0, 8] },
       density: 0.6,
       vel: { base: 1, accent: 1, ghost: 0.8 },
       muteP: 0.1,

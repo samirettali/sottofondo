@@ -22,7 +22,8 @@ export const powwow: GenreDef = {
     "R. Carlos Nakai — Canyon Trilogy",
     "Joanne Shenandoah — Matriarch",
   ],
-  version: 2, // v2: the flute is held and blown rather than struck
+  version: 3, // v3: the drum has a heartbeat, hard then soft
+  // v2: the flute is held and blown rather than struck
 
   kit: "folk",
 
@@ -36,11 +37,26 @@ export const powwow: GenreDef = {
 
   drums: [
     {
+      // The heartbeat: a hard stroke answered by a soft one. Written as two lanes because
+      // that is the only way to make the pair unequal, and the inequality is the whole
+      // sound — an even pulse on every beat is a four-on-the-floor kick, which is what a
+      // blind listener called this preset: minimal techno.
       name: "drum",
       kitVoice: "kick",
-      gen: { type: "mask", steps: [0, 4, 8, 12] },
+      gen: { type: "mask", steps: [0, 8] },
+      density: 0.62,
+      vel: { base: 1, accent: 1, ghost: 0.85 },
+      muteP: 0,
+      minEnergy: 0,
+    },
+    {
+      name: "drum soft",
+      kitVoice: "kick",
+      gen: { type: "mask", steps: [4, 12] },
       density: 0.6,
-      vel: { base: 0.85, accent: 1, ghost: 0.7 },
+      vel: { base: 0.45, accent: 0.55, ghost: 0.3 },
+      // Consistently a hair late, the way a second stroke of a pair falls.
+      nudgeMs: 6,
       muteP: 0,
       minEnergy: 0,
     },
@@ -95,6 +111,9 @@ export const powwow: GenreDef = {
       resonance: 0.7,
       vibrato: 22,
       vibratoHz: 4.6,
+      // The flute carries the song. Under a drum this loud it was inaudible, and blind
+      // listeners reported "no melodic instruments" twice.
+      level: 1.8,
     },
     muteP: 0.2,
     minEnergy: 0.2,
