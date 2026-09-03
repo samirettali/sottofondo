@@ -1,6 +1,6 @@
-# banger
+# sottofondo
 
-A browser toy that generates music from a seed, in several genres.
+A browser toy that generates music from a seed, in several genres. Leave it running.
 
 Descended from vitling's [Endless Acid Banger](https://www.vitling.xyz/toys/acid-banger/)
 (CC-BY 4.0), generalised so that a genre is data rather than code, and so that a piece

@@ -1,4 +1,4 @@
-# banger
+# sottofondo
 
 A browser toy that generates music algorithmically, in several genres, from a seed.
 Descended from vitling's *Endless Acid Banger* (CC-BY 4.0), generalised so that a genre

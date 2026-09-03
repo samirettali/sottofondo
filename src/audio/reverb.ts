@@ -120,7 +120,7 @@ class Fdn extends AudioWorkletProcessor {
     return true;
   }
 }
-registerProcessor("banger-fdn", Fdn);
+registerProcessor("sottofondo-fdn", Fdn);
 `;
 
 let moduleUrl: string | null = null;
@@ -144,7 +144,7 @@ export function createReverb(ctx: BaseAudioContext, out: AudioNode, options: Rev
 
   const ready = ensureModule(ctx).then(async () => {
     if (disposed) return;
-    node = new AudioWorkletNode(ctx, "banger-fdn", {
+    node = new AudioWorkletNode(ctx, "sottofondo-fdn", {
       numberOfInputs: 1,
       numberOfOutputs: 1,
       outputChannelCount: [2],

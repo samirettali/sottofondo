@@ -123,7 +123,7 @@ class Pluck extends AudioWorkletProcessor {
     return true;
   }
 }
-registerProcessor("banger-pluck", Pluck);
+registerProcessor("sottofondo-pluck", Pluck);
 `;
 
 let moduleUrl: string | null = null;
@@ -188,7 +188,7 @@ export function createPluckPool(
     if (disposed) return;
     const alive: Promise<void>[] = [];
     for (let i = 0; i < opts.strings; i++) {
-      const node = new AudioWorkletNode(ctx, "banger-pluck", {
+      const node = new AudioWorkletNode(ctx, "sottofondo-pluck", {
         numberOfInputs: 0,
         numberOfOutputs: 1,
         outputChannelCount: [1],

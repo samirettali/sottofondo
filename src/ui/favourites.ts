@@ -11,7 +11,9 @@ import { formatSeed } from "../core/rng.ts";
  * because it could not read a favourites list would be a poor trade.
  */
 
-const KEY = "banger:favourites";
+const KEY = "sottofondo:favourites";
+/** What the key was called before the project was renamed. Read once, never written. */
+const OLD_KEY = "banger:favourites";
 const LIMIT = 64;
 
 export interface Favourite {
@@ -23,7 +25,7 @@ export interface Favourite {
 
 export function loadFavourites(): Favourite[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = localStorage.getItem(KEY) ?? localStorage.getItem(OLD_KEY);
     if (raw === null) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];

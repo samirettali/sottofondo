@@ -72,7 +72,7 @@ test("the list is capped", () => {
 test("corrupt stored data is ignored rather than thrown", () => {
   const store = installStorage();
   for (const bad of ["not json", "{}", "[1,2,3]", '[{"genre":"acid"}]', "null"]) {
-    store.set("banger:favourites", bad);
+    store.set("sottofondo:favourites", bad);
     assert.deepEqual(loadFavourites(), [], `survived: ${bad}`);
   }
 });
@@ -80,7 +80,7 @@ test("corrupt stored data is ignored rather than thrown", () => {
 test("a partly valid list keeps only the valid entries", () => {
   const store = installStorage();
   store.set(
-    "banger:favourites",
+    "sottofondo:favourites",
     JSON.stringify([
       { genre: "acid", seed: 7, savedAt: 1 },
       { genre: "house", seed: "nope", savedAt: 2 },
