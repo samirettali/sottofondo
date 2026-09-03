@@ -36,6 +36,10 @@ class Pluck extends AudioWorkletProcessor {
 
   constructor() {
     super();
+    // Tells the main thread this processor exists. Constructing the node is not enough:
+    // instantiation on the audio thread is asynchronous, and a trigger scheduled before
+    // it happens is simply never seen.
+    this.port.postMessage("ready");
     this.size = 8192;
     this.buf = new Float32Array(this.size);
     this.w = 0;
@@ -151,8 +155,9 @@ export function createPluckPool(
   let next = 0;
   let disposed = false;
 
-  const ready = ensurePluckModule(ctx).then(() => {
+  const ready = ensurePluckModule(ctx).then(async () => {
     if (disposed) return;
+    const alive: Promise<void>[] = [];
     for (let i = 0; i < opts.strings; i++) {
       const node = new AudioWorkletNode(ctx, "banger-pluck", {
         numberOfInputs: 0,
@@ -164,7 +169,17 @@ export function createPluckPool(
       node.parameters.get("colour")!.value = opts.colour;
       node.connect(level);
       nodes.push(node);
+      // Wait for the processor to say it exists. Without this an offline render is not
+      // reproducible: whether the first notes are heard at all depends on whether the
+      // audio thread got round to constructing the processor before those samples were
+      // rendered, and two renders of one seed came out different.
+      alive.push(
+        new Promise<void>((resolve) => {
+          node.port.onmessage = () => resolve();
+        }),
+      );
     }
+    await Promise.all(alive);
   });
 
   return {

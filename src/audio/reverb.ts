@@ -51,6 +51,8 @@ class Fdn extends AudioWorkletProcessor {
   }
   constructor(options) {
     super();
+    // Says the processor exists on the audio thread: see the note in pluck.ts.
+    this.port.postMessage("ready");
     const size = options.processorOptions.size;
     const pre = options.processorOptions.preDelay;
     const sr = sampleRate;
@@ -140,7 +142,7 @@ export function createReverb(ctx: BaseAudioContext, out: AudioNode, options: Rev
   let node: AudioWorkletNode | null = null;
   let disposed = false;
 
-  const ready = ensureModule(ctx).then(() => {
+  const ready = ensureModule(ctx).then(async () => {
     if (disposed) return;
     node = new AudioWorkletNode(ctx, "banger-fdn", {
       numberOfInputs: 1,
@@ -156,6 +158,10 @@ export function createReverb(ctx: BaseAudioContext, out: AudioNode, options: Rev
     if (decay) decay.value = options.decay;
     if (damp) damp.value = options.damp;
     input.connect(node).connect(wet);
+    const alive = node;
+    await new Promise<void>((resolve) => {
+      alive.port.onmessage = () => resolve();
+    });
   });
 
   return {
