@@ -93,7 +93,11 @@ export const dnb: GenreDef = {
       kitVoice: "closedHat",
       gen: { type: "stepClassP" },
       len: 32,
-      density: 0.5,
+      // The two-step snare is a half-time figure by design, so the hats are what say 174
+      // rather than 87. At half density the fast layer had holes in it, blind listeners
+      // read the tempo at exactly half, and asked which of two clips was drum and bass
+      // they picked the lo-fi hip hop one.
+      density: 0.82,
       chaos: 0.2,
       accentAt: 0.75,
       vel: { base: 0.3, accent: 0.4, ghost: 0.12 },

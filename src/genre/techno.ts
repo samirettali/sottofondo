@@ -126,7 +126,11 @@ export const techno: GenreDef = {
     // narrower range than house: this is a long slow opening, not a drop.
     energyFilter: { type: "lowpass", lo: 1200, hi: 16000, resonance: 0.7 },
     // Detroit's stab sits in a hall; the kick and hats stay dry and close.
-    reverb: { size: 0.75, decay: 3.4, damp: 0.5, wet: 0.22, preDelayMs: 30, sends: ["bass", "perc", "rim"] },
+    // Dry and close. The hypnosis in minimal techno comes from having nothing to hide
+    // behind, and three and a half seconds of tail on the bass made this preset sound
+    // like the dub techno one — asked which of the two was Basic Channel, a blind
+    // listener picked this. The long room belongs to that preset, not this one.
+    reverb: { size: 0.6, decay: 1.5, damp: 0.6, wet: 0.12, preDelayMs: 20, sends: ["perc", "rim"] },
   },
 
   arrangement: {

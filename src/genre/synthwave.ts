@@ -103,8 +103,12 @@ export const synthwave: GenreDef = {
     chaos: 0.05,
     accentP: 0.2,
     slideP: 0.03,
-    // Short and bright enough to read as a pluck; the gaps do the rest.
-    synth: { cutoff: 520, resonance: 5, envMod: 1800, decay: 0.12 },
+    // Round, not plucked. Moroder's pulse is a Moog: a fat filtered saw with a moderate
+    // envelope, and the gaps in the groove come from the note length. At resonance 5 with
+    // a twelfth-of-a-second decay it was a thin bright blip on every eighth, which is an
+    // NES triangle channel — blind, this preset lost to the chiptune one when the
+    // question was which of the two was chiptune.
+    synth: { cutoff: 380, resonance: 2, envMod: 900, decay: 0.19 },
     muteP: 0.1,
     minEnergy: 0.2,
     filterSwing: 0.8,
@@ -142,13 +146,17 @@ export const synthwave: GenreDef = {
     contour: 0.2,
     chordPull: 4,
     synth: {
-      voices: 2,
-      detune: 9,
-      wave: "square",
+      // Three detuned saws, not two squares. A square-wave arpeggio *is* the chiptune
+      // sound — asked which of the two presets was 8-bit video game music, a blind
+      // listener picked this one over the actual chiptune preset. Synthwave's arp is a
+      // wide analogue polysynth; the width is the era.
+      voices: 3,
+      detune: 16,
+      wave: "sawtooth",
       attack: 0.004,
-      decay: 0.18,
-      cutoff: 2600,
-      resonance: 1.5,
+      decay: 0.2,
+      cutoff: 2800,
+      resonance: 1.4,
       envMod: 1200,
     },
     muteP: 0.3,
