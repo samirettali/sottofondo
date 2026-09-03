@@ -59,6 +59,15 @@ interface KitStyle {
     readonly hp: number;
     readonly bp: number;
     readonly level: number;
+    /**
+     * How much struck metal rings under the noise, 0..1.
+     *
+     * A noise burst through a highpass is a hi-hat sample played quietly; a cymbal is a
+     * bell with inharmonic partials that keep ringing after the strike. Without this the
+     * ride in the jazz kit is a short hiss, and every blind listener who described these
+     * renders led with "electronic drum machine".
+     */
+    readonly shimmer?: number;
   };
 }
 
@@ -80,13 +89,15 @@ const STYLES: Record<KitStyleName, KitStyle> = {
   acoustic: {
     kick: { from: 95, to: 50, sweep: 0.06, decay: 0.32, click: 0.12, clickHz: 700, skin: 0.35 },
     snare: { tones: [[185, 0.4], [270, 0.3]], toneDecay: 0.12, noiseHz: 1300, noiseQ: 0.7, noiseDecay: 0.2, noiseLevel: 0.5 },
-    hat: { mode: "noise", closed: 0.04, open: 0.22, hp: 5500, bp: 8000, level: 0.22 },
+    // The open hat is a ride: long, and with metal in it. A drummer's cymbal is the
+    // loudest clue in the kit that a human is playing.
+    hat: { mode: "noise", closed: 0.06, open: 1.3, hp: 5200, bp: 7000, level: 0.22, shimmer: 0.4 },
   },
   // Tupan and tapan: a deep skin drum and a slapped one, brushed hats.
   folk: {
     kick: { from: 80, to: 46, sweep: 0.05, decay: 0.5, click: 0.08, clickHz: 500, skin: 0.6 },
     snare: { tones: [[210, 0.35]], toneDecay: 0.07, noiseHz: 1100, noiseQ: 1.8, noiseDecay: 0.09, noiseLevel: 0.8 },
-    hat: { mode: "noise", closed: 0.035, open: 0.18, hp: 6000, bp: 9000, level: 0.18 },
+    hat: { mode: "noise", closed: 0.045, open: 0.7, hp: 6000, bp: 8500, level: 0.18, shimmer: 0.28 },
   },
 };
 
@@ -110,6 +121,9 @@ export interface Kit {
 const HAT_PARTIALS = [800, 540, 522.7, 369.6, 304.4, 205.3] as const;
 
 const ACCENT_GAIN = 2.2; // within the 808's 2–4x range
+
+/** Inharmonic mode ratios for a struck plate. */
+const RING_RATIOS = [1, 1.47, 2.09, 2.71, 3.33, 4.17] as const;
 
 export function createKit(ctx: BaseAudioContext, out: AudioNode, styleName: KitStyleName = "808"): Kit {
   const style = STYLES[styleName];
@@ -203,11 +217,35 @@ export function createKit(ctx: BaseAudioContext, out: AudioNode, styleName: KitS
     },
   };
 
+  /**
+   * The metal under a cymbal: inharmonic partials that outlast the strike.
+   *
+   * The ratios are not a series — a circular plate's modes are not harmonics, and using
+   * harmonic ones gives a pitched bell rather than a cymbal.
+   */
+  const ring = (at: number, gain: number, decay: number) => {
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = style.hat.bp;
+    bp.Q.value = 0.5;
+    const vca = ctx.createGain();
+    decayTo(vca.gain, at, gain, decay * 1.4);
+    for (const ratio of RING_RATIOS) {
+      const osc = ctx.createOscillator();
+      osc.type = "square";
+      osc.frequency.value = style.hat.hp * ratio;
+      osc.connect(bp);
+      playFor(osc, at, decay * 1.4 + 0.05);
+    }
+    bp.connect(vca).connect(out);
+  };
+
   /** The hat, in either voicing. */
   const hat = (at: number, gain: number, decay: number) => {
     const h = style.hat;
     if (h.mode === "noise") {
       burst(at, gain, decay, "highpass", h.hp, 0.7);
+      if ((h.shimmer ?? 0) > 0) ring(at, gain * (h.shimmer ?? 0), decay);
       return;
     }
     const hp = ctx.createBiquadFilter();

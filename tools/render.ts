@@ -40,7 +40,12 @@ function manualTicker(): Ticker & { fire(): void } {
   };
 }
 
-async function render(genreId: string, seed: number, seconds: number): Promise<AudioBuffer> {
+async function render(
+  genreId: string,
+  seed: number,
+  seconds: number,
+  solo: string | null = null,
+): Promise<AudioBuffer> {
   const genre = GENRES[genreId];
   if (genre === undefined) throw new Error(`unknown genre ${genreId}`);
 
@@ -49,6 +54,17 @@ async function render(genreId: string, seed: number, seconds: number): Promise<A
   const ticker = manualTicker();
   const engine = new Engine(ctx, genre, seed, { now: () => now, ticker });
   await engine.ready;
+
+  // Soloing one lane is how you find out whether an instrument reads as itself, or only
+  // reads as itself when nothing else is playing. `solo=-drums` is the other half of
+  // the question: what the preset sounds like with the kit out of the way.
+  if (solo === "-drums") {
+    genre.drums.forEach((_, index) => engine.setUserMute(index, true));
+  } else if (solo !== null) {
+    engine.views(0).forEach((view, index) => {
+      if (view.name !== solo) engine.setUserMute(index, true);
+    });
+  }
 
   engine.start();
   // The clock schedules everything inside `now + lookahead`; walking `now` forward in
@@ -68,11 +84,13 @@ const seeds = (params.get("seeds") ?? "1,2").split(",").map(parseSeed);
 const only = params.get("g");
 const ids = only === null ? Object.keys(GENRES) : only.split(",");
 
+const solo = params.get("solo");
+
 for (const id of ids) {
   for (const seed of seeds) {
-    const name = `${id}-${formatSeed(seed)}.wav`;
+    const name = `${id}${solo === null ? "" : `-${solo.replace(/\s+/g, "_")}`}-${formatSeed(seed)}.wav`;
     const t0 = performance.now();
-    const blob = wav(await render(id, seed, seconds));
+    const blob = wav(await render(id, seed, seconds, solo));
     await fetch(`${SINK}/${name}`, { method: "POST", body: blob });
     say(`${name} ${(blob.size / 1024).toFixed(0)} KiB ${(performance.now() - t0).toFixed(0)} ms`);
   }
