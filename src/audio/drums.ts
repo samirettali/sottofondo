@@ -30,7 +30,7 @@ export interface DrumVoice {
   play(at: number, velocity: number, accent: boolean): void;
 }
 
-export type KitStyleName = "808" | "909" | "acoustic" | "folk";
+export type KitStyleName = "808" | "909" | "acoustic" | "folk" | "march";
 
 interface KitStyle {
   readonly kick: {
@@ -98,6 +98,15 @@ const STYLES: Record<KitStyleName, KitStyle> = {
     kick: { from: 80, to: 46, sweep: 0.05, decay: 0.5, click: 0.08, clickHz: 500, skin: 0.6 },
     snare: { tones: [[210, 0.35]], toneDecay: 0.07, noiseHz: 1100, noiseQ: 1.8, noiseDecay: 0.09, noiseLevel: 0.8 },
     hat: { mode: "noise", closed: 0.045, open: 0.7, hp: 6000, bp: 8500, level: 0.18, shimmer: 0.28 },
+  },
+  // A band walking down a street: a mallet on a big bass drum, and a field snare with
+  // the wires cranked tight. The Balkan fanfare had been playing on the jazz kit, and
+  // with its drums muted a blind listener called it "trumpet, trombone, tuba — yes, this
+  // is a brass band", and with them in, "electronic drums".
+  march: {
+    kick: { from: 110, to: 54, sweep: 0.07, decay: 0.55, click: 0.05, clickHz: 400, skin: 0.75 },
+    snare: { tones: [[245, 0.28]], toneDecay: 0.045, noiseHz: 2700, noiseQ: 0.55, noiseDecay: 0.1, noiseLevel: 0.95 },
+    hat: { mode: "noise", closed: 0.05, open: 0.9, hp: 6800, bp: 9500, level: 0.2, shimmer: 0.3 },
   },
 };
 

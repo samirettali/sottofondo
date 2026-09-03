@@ -24,7 +24,7 @@ export const gypsy: GenreDef = {
   version: 3, // v3: the trumpet keeps going, as the comment always said it should
   // v2: the band is brass rather than saws
 
-  kit: "acoustic",
+  kit: "march",
 
   clock: {
     bpm: { min: 150, max: 210, default: 184 },
@@ -68,9 +68,13 @@ export const gypsy: GenreDef = {
     {
       name: "cymbal",
       kitVoice: "openHat",
-      gen: { type: "mask", steps: [0, 8] },
-      density: 0.5,
-      vel: { base: 0.3, accent: 0.4, ghost: 0.15 },
+      // A crash at the end of a phrase, not a ride. Twice a bar at 184, with the tail
+      // the acoustic kit's cymbal now has, was a continuous wash — and a continuous
+      // cymbal over offbeat horn stabs is a salsa band, which is what this preset kept
+      // being called.
+      gen: { type: "mask", steps: [0] },
+      density: 0.22,
+      vel: { base: 0.3, accent: 0.42, ghost: 0.15 },
       muteP: 0.5,
       minEnergy: 0.6,
     },
@@ -138,7 +142,10 @@ export const gypsy: GenreDef = {
       // eighteen decibels under the track: soloed it measured -34.8 dBFS against -17.0
       // for the whole preset. Asked which of two clips was a Romani brass band, a blind
       // listener picked the accordion one every time.
-      level: 3,
+      // Loud, but not into the limiter: at level 3 the whole preset came out with a
+      // 14.5 dB crest factor against 20 for the others, and what a compressor takes off
+      // a brass section first is the attack — which is the one thing that says "horn".
+      level: 1.8,
     },
     muteP: 0.15,
     minEnergy: 0.3,
@@ -149,7 +156,10 @@ export const gypsy: GenreDef = {
     // Fast, ornamented, always going somewhere: high density, arch, steps with the odd
     // leap up to the augmented second.
     gen: { type: "stepClassP" },
-    density: 0.78,
+    // Fast, but a line rather than a blur: six and a half notes a second at 184 BPM left
+    // no space between the phrases at all, and a wall with no gaps in it stops sounding
+    // like players.
+    density: 0.6,
     chaos: 0.15,
     register: [64, 88],
     leapiness: 0.6,
@@ -168,7 +178,7 @@ export const gypsy: GenreDef = {
       envMod: 2600,
       formant: 1250,
       vibrato: 16,
-      level: 1.7,
+      level: 1.3,
     },
     muteP: 0.15,
     minEnergy: 0.35,
