@@ -7,7 +7,7 @@ import { chordAt, chooseKey, chooseProgression, type Progression } from "./harmo
 import { rngFor, weighted } from "./core/rng.ts";
 import { scaleOf } from "./harmony/scales.ts";
 import { walkBar } from "./melody/walk.ts";
-import { defaultVoice, realise } from "./pattern/gen.ts";
+import { defaultVoice, realise, type Hit } from "./pattern/gen.ts";
 import { metricFromGrouping } from "./pattern/metric.ts";
 import { chooseNoteSet, defaultNoteVoice, realiseNotes } from "./pattern/notes.ts";
 import type { GenreDef } from "./genre/schema.ts";
@@ -215,8 +215,29 @@ export function laneSilent(
   // The energy window decides whether a lane belongs in this section at all; the mute
   // roll is the variation *within* a section. Two different jobs, and a lane silenced by
   // the curve should not also be rolling dice.
-  if (!laneIsIn(energyAt(genre, bar), def)) return true;
-  return isMuted(seed, bar, laneIndex, genre.arrangement.muteEvery, muteProbsOf(genre));
+  const energy = energyAt(genre, bar);
+  if (!laneIsIn(energy, def)) return true;
+
+  const every = genre.arrangement.muteEvery;
+  const probs = muteProbsOf(genre);
+  if (!isMuted(seed, bar, laneIndex, every, probs)) return false;
+
+  // A mute is variation inside an arrangement, so it may thin one; it may not empty it.
+  // In a deep breakdown the curve can leave a single lane standing, and the roll is then
+  // free to take that one too — thirty-two bars of drum and bass came out as silence
+  // that way. When nothing else survives, the lowest-numbered surviving lane keeps
+  // playing; picking by index rather than by coin keeps the decision pure.
+  const lanes = lanesOf(genre);
+  let last = -1;
+  for (let i = 0; i < lanes.length; i++) {
+    if (!laneIsIn(energy, defOf(genre, i))) continue;
+    if (isMuted(seed, bar, i, every, probs)) continue;
+    return true; // something else is sounding; this lane may go
+  }
+  for (let i = 0; i < lanes.length && last < 0; i++) {
+    if (laneIsIn(energy, defOf(genre, i))) last = i;
+  }
+  return laneIndex !== last;
 }
 
 /**
@@ -339,7 +360,24 @@ function scoreLaneRaw(
     ...withMetric(genre, len),
   });
   const epoch = epochAt(seed, bar, pattern);
-  return realiseNotes(voice, noteSet, len, seed, epoch, laneIndex).map((slot) => ({
+  const slots = realiseNotes(voice, noteSet, len, seed, epoch, laneIndex);
+  // The bass is the only melodic voice several presets have. An empty pattern held for a
+  // whole epoch takes it out for sixteen bars: see `atLeastOneNote`.
+  if (slots.length === 0) {
+    return [
+      {
+        lane: laneIndex,
+        name: bass.name,
+        patternStep: 0,
+        velocity: 0.7,
+        accent: false,
+        midi: noteSet.root,
+        slide: false,
+        glide: false,
+      },
+    ];
+  }
+  return slots.map((slot) => ({
     lane: laneIndex,
     name: bass.name,
     patternStep: slot.step,
@@ -377,8 +415,7 @@ function scoreChords(
     ...withMetric(genre, len),
   });
   const epoch = epochAt(seed, bar, specs(genre).pattern);
-  const hits = realise(voice, len, seed, epoch, laneIndex, bar);
-  if (hits.length === 0) return [];
+  const hits = atLeastOneNote(realise(voice, len, seed, epoch, laneIndex, bar));
 
   const notes = voicingAt(genre, seed, bar, harmony, def.register);
   return hits.map((hit) => ({
@@ -455,6 +492,21 @@ export function scaleAt(genre: GenreDef, seed: number, bar: number): readonly nu
 const SCALE_SALT = 31;
 
 /**
+ * A melodic voice the arrangement has let in plays at least once in the bar.
+ *
+ * Density and the metric curve can agree on an empty pattern, and since a pattern is held
+ * for a whole epoch that is not one silent bar but sixteen. For a hat it is a rest; for
+ * the only melodic voice in a preset it is the genre going missing — a powwow seed opened
+ * with eight bars of drum and no flute, and a techno seed with eight bars and no bass.
+ *
+ * The forced note lands on the downbeat, which is the one position no style objects to.
+ */
+function atLeastOneNote(hits: Hit[]): Hit[] {
+  if (hits.length > 0) return hits;
+  return [{ step: 0, velocity: 0.7, accent: false, strength: 0.7 }];
+}
+
+/**
  * One bar of melody.
  *
  * Gating reuses the pattern generator, so density and the metric curve behave as they do
@@ -480,8 +532,7 @@ function scoreLead(
     ...withMetric(genre, len),
   });
   const epoch = epochAt(seed, bar, specs(genre).pattern);
-  const hits = realise(voice, len, seed, epoch, laneIndex, bar);
-  if (hits.length === 0) return [];
+  const hits = atLeastOneNote(realise(voice, len, seed, epoch, laneIndex, bar));
 
   const chord = chordAt(harmony.progression, bar);
   const chordPcs = chord.intervals.map((i) => ((harmony.key + chord.root + i) % 12 + 12) % 12);

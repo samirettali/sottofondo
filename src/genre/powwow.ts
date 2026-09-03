@@ -90,7 +90,11 @@ export const powwow: GenreDef = {
     name: "flute",
     // Long notes, wide spacing, stepwise, an arch per phrase.
     gen: { type: "stepClassP" },
-    density: 0.3,
+    // The flute is the only melodic voice in the preset, so it cannot be as sparse as an
+    // ornament: at 0.3 the generator produced an empty pattern, and since the pattern is
+    // held for a whole epoch that left seed 65535 with eight bars of drum and nothing
+    // else.
+    density: 0.46,
     chaos: 0.15,
     register: [64, 84],
     leapiness: 0.5,
