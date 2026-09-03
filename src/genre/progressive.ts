@@ -112,8 +112,11 @@ export const progressive: GenreDef = {
     density: 0.6,
     register: [55, 79],
     synth: {
-      voices: 3,
-      detune: 15,
+      // Wide and loud enough to be the thing that pumps: the pad is what a progressive
+      // track breathes with, and at eleven decibels under the mix it was wallpaper.
+      voices: 4,
+      detune: 22,
+      level: 2,
       wave: "sawtooth",
       attack: 0.6,
       decay: 3.5,
@@ -142,10 +145,14 @@ export const progressive: GenreDef = {
       detune: 8,
       wave: "sawtooth",
       attack: 0.003,
-      decay: 0.16,
+      decay: 0.22,
       cutoff: 2400,
       resonance: 2,
       envMod: 1600,
+      // The comment above calls this the signature of the genre, and it was mixed
+      // nineteen decibels below the track: soloed it measured -36.8 dBFS against -17.4
+      // for the whole preset. A signature nobody can hear is not one.
+      level: 3.2,
     },
     swingDepth: 0.5,
     muteP: 0.25,
@@ -178,7 +185,11 @@ export const progressive: GenreDef = {
       feedbackLowpassHz: 5000,
       sends: ["pluck"],
     },
-    sidechain: { db: 5, releaseMs: 110, targets: ["bass", "pad", "pluck"] },
+    // The pump is the genre. Progressive house breathes with the kick — a deep duck with
+    // a long release, so the pad swells back up across the whole beat — and at 5 dB with
+    // a 110 ms release this preset ducked exactly as much as the deep house one, which
+    // is why a blind listener asked to pick the deep house record picked this.
+    sidechain: { db: 9, releaseMs: 200, targets: ["bass", "pad", "pluck"] },
     energyFilter: { type: "lowpass", lo: 500, hi: 18000, resonance: 1 },
     reverb: { size: 0.8, decay: 3, damp: 0.45, wet: 0.3, preDelayMs: 25, sends: ["pad", "pluck", "clap"] },
   },

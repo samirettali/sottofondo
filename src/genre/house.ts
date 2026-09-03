@@ -195,7 +195,9 @@ export const house: GenreDef = {
       sends: ["chords"],
     },
     // House pumps, and this is where it comes from. 5 dB with a 100 ms release.
-    sidechain: { db: 5, releaseMs: 100, targets: ["bass", "chords"] },
+    // Deep house barely ducks: the groove comes from the swing and the chords, not from
+    // the mix breathing. Leave the big pump to the progressive preset.
+    sidechain: { db: 3, releaseMs: 90, targets: ["bass", "chords"] },
     // A lid that comes off as the track lifts. Nearly closed in the breakdown, wide open
     // at the peak — the range is deliberately wide, since house breakdowns filter rather
     // than strip.

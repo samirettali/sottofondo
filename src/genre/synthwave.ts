@@ -141,7 +141,10 @@ export const synthwave: GenreDef = {
     gen: { type: "mask", steps: [0, 2, 4, 6, 8, 10, 12, 14] },
     density: 0.6,
     chaos: 0.05,
-    register: [67, 88],
+    // Down an octave from where it was, which was note-for-note the register the chiptune
+    // preset puts its pulse channel in: same octave, same speed, and the two presets were
+    // being mistaken for each other in both directions.
+    register: [55, 79],
     leapiness: 1.6,
     contour: 0.2,
     chordPull: 4,
@@ -153,11 +156,14 @@ export const synthwave: GenreDef = {
       voices: 3,
       detune: 16,
       wave: "sawtooth",
-      attack: 0.004,
-      decay: 0.2,
-      cutoff: 2800,
-      resonance: 1.4,
-      envMod: 1200,
+      // A chip lead is a bare staccato blip; an analogue arpeggio rings on into the next
+      // note and smears into the pad behind it.
+      attack: 0.006,
+      decay: 0.34,
+      cutoff: 2400,
+      resonance: 1.2,
+      envMod: 900,
+      level: 1.15,
     },
     muteP: 0.3,
     minEnergy: 0.45,

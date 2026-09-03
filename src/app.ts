@@ -187,12 +187,23 @@ export class Engine {
       });
     }
 
-    // A voice named in the delay's send list is routed through it; everything else goes
-    // to the ducked bus. This is the one piece of routing a preset chooses, and it
-    // chooses by name from a fixed pair of destinations rather than describing a graph.
+    // A voice named in the delay's send list is routed through it; a voice named in the
+    // sidechain's targets goes through the ducker; anything else goes straight to the
+    // bus. This is the one piece of routing a preset chooses, and it chooses by name from
+    // a fixed set of destinations rather than describing a graph.
+    //
+    // `targets` used to be declared by every preset and read by none: everything melodic
+    // went through the ducker whatever the list said, so dnb's pad, reggaeton's lead and
+    // synthwave's arpeggio all pumped when their presets had asked that they not.
+    const ducked = (name: string): boolean =>
+      genre.fx.sidechain.db > 0 && genre.fx.sidechain.targets.includes(name);
     const destination = (name: string): AudioNode =>
       fanOut(
-        genre.fx.delay.sends.includes(name) ? this.delay.input : this.ducker.output,
+        genre.fx.delay.sends.includes(name)
+          ? this.delay.input
+          : ducked(name)
+            ? this.ducker.output
+            : bus,
         sentToReverb(name),
       );
 
