@@ -89,4 +89,9 @@ and each of them wins against a distant distractor.
 
 - Zero runtime dependencies. Vite and TypeScript are the only build-time ones.
 - Scale-degree space internally; convert to MIDI at the very last step.
-- Local only for now — no remote, no GitHub.
+- `samirettali/sottofondo` on GitHub, public. Repository settings are declared in
+  `infra/github`, not clicked.
+- Deployed at `sottofondo.samirettali.com`: a static build, rsynced to
+  `/home/samir/volumes/side-proxy/sottofondo-web` on andromeda by `npm run deploy`, served
+  by the Caddy in `servers/side-proxy` and carried to the internet by the shared
+  Cloudflare tunnel. There is no server side to deploy — the whole thing is the bundle.
