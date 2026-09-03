@@ -22,7 +22,7 @@ export const chiptune: GenreDef = {
     "Rob Hubbard — Monty on the Run",
     "Yuzo Koshiro — Streets of Rage 2: Go Straight",
   ],
-  version: 1,
+  version: 2, // v2: the triangle channel is continuous, as an NES bass is
 
   kit: "909", // noise hats, a short kick: the closest of the four to a noise channel
   velocityBits: 4, // sixteen levels, as the hardware had
@@ -88,7 +88,7 @@ export const chiptune: GenreDef = {
     ],
     rootRange: [33, 45],
     gen: { type: "mask", steps: [0, 2, 4, 6, 8, 10, 12, 14] },
-    density: 0.6,
+    density: 0.92,
     chaos: 0.03,
     accentP: 0,
     slideP: 0,

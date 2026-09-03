@@ -28,7 +28,8 @@ export const balkan: GenreDef = {
     "Bulgarian State Radio & Television Female Vocal Choir — Kalimankou Denkou",
     "Trakiya Folk Ensemble — Trakijska Kopanica",
   ],
-  version: 3, // v3: accordion and gaida are reeds, the bass is plucked
+  version: 4, // v4: the tapan is slapped, and the gaida runs
+  // v3: accordion and gaida are reeds, the bass is plucked
 
   kit: "folk", // tupan and tapan, not an 808 playing a wedding
 
@@ -157,7 +158,7 @@ export const balkan: GenreDef = {
     // Kopanitsa is the melody. Busy — near-continuous eighths — and full of steps, the
     // way a bagpipe or clarinet line runs, with leaps as the exception.
     gen: { type: "stepClassP" },
-    density: 0.62,
+    density: 0.82,
     chaos: 0.12,
     register: [67, 86], // G4 to D6
     leapiness: 0.5,

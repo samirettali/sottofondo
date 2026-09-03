@@ -21,7 +21,8 @@ export const gypsy: GenreDef = {
     "Kočani Orkestar — L'Orient Est Rouge",
     "Taraf de Haïdouks — Dumbala Dumba",
   ],
-  version: 2, // v2: the band is brass rather than saws
+  version: 3, // v3: the trumpet keeps going, as the comment always said it should
+  // v2: the band is brass rather than saws
 
   kit: "acoustic",
 
@@ -140,7 +141,7 @@ export const gypsy: GenreDef = {
     // Fast, ornamented, always going somewhere: high density, arch, steps with the odd
     // leap up to the augmented second.
     gen: { type: "stepClassP" },
-    density: 0.6,
+    density: 0.78,
     chaos: 0.15,
     register: [64, 88],
     leapiness: 0.6,

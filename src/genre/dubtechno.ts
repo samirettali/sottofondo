@@ -20,7 +20,8 @@ export const dubtechno: GenreDef = {
     "Rhythm & Sound — Never Tell You",
     "Deepchord presents Echospace — The Coldest Season",
   ],
-  version: 2, // v2: a shorter opening
+  version: 3, // v3: the stab is on every bar, which is what "once a bar" meant
+  // v2: a shorter opening
 
   kit: "909",
 
@@ -91,9 +92,11 @@ export const dubtechno: GenreDef = {
 
   chords: {
     name: "chord",
-    // Once a bar, on the offbeat eighth after the downbeat, and nothing more.
+    // Once a bar, on the offbeat eighth after the downbeat, and nothing more. The chord
+    // chain *is* dub techno, so "once a bar" has to mean every bar: at 0.6 it was absent
+    // from two bars in five, which leaves a kick and a sub and no genre.
     gen: { type: "mask", steps: [2] },
-    density: 0.6,
+    density: 0.95,
     chaos: 0.1,
     register: [48, 67],
     synth: {

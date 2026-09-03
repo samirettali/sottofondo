@@ -22,7 +22,8 @@ export const hindustani: GenreDef = {
     "Nikhil Banerjee — Raga Bhairavi",
     "Hariprasad Chaurasia — Raga Yaman",
   ],
-  version: 2, // v2: sitar and tanpura are plucked strings, and the alap is shorter
+  version: 3, // v3: the bayan bends, the sitar is an octave lower, the drone never stops
+  // v2: sitar and tanpura are plucked strings, and the alap is shorter
 
   kit: "folk",
 
@@ -78,9 +79,10 @@ export const hindustani: GenreDef = {
 
   chords: {
     name: "tanpura",
-    // Sa and Pa, re-struck every bar and left ringing: the drone never stops.
+    // Sa and Pa, re-struck every bar and left ringing: the drone never stops, so the
+    // density may not let it.
     gen: { type: "mask", steps: [0, 8] },
-    density: 0.6,
+    density: 0.95,
     register: [48, 67],
     synth: {
       // A tanpura is plucked as well, and the long ringing tail is the whole drone —

@@ -21,7 +21,8 @@ export const synthwave: GenreDef = {
     "Ryan Paris — Dolce Vita",
     "Com Truise — Brokendate",
   ],
-  version: 2, // v2: a louder opening
+  version: 3, // v3: the pulse actually pulses
+  // v2: a louder opening
 
   kit: "808",
 
@@ -93,9 +94,12 @@ export const synthwave: GenreDef = {
       [0, 0, 12, 12, 7],
     ],
     rootRange: [31, 43],
-    // Every eighth, always: the pulse is the point.
+    // Every eighth, always: the pulse is the point, and the density has to say so. At
+    // 0.6 the generator dropped enough of them to syncopate the line, and a syncopated
+    // bass over a backbeat is funk — which is what three blind verdicts on this preset
+    // said. The gaps in the groove come from the note's length, not from missing notes.
     gen: { type: "mask", steps: [0, 2, 4, 6, 8, 10, 12, 14] },
-    density: 0.6,
+    density: 0.95,
     chaos: 0.05,
     accentP: 0.2,
     slideP: 0.03,

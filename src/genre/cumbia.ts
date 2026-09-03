@@ -20,7 +20,8 @@ export const cumbia: GenreDef = {
     "Celso Piña — Cumbia Sobre el Río",
     "Los Mirlos — La Danza de los Mirlos",
   ],
-  version: 2, // v2: a real accordion and a plucked bass, and the opening states the genre
+  version: 3, // v3: hand percussion instead of a drum kit, and the llamador keeps time
+  // v2: a real accordion and a plucked bass, and the opening states the genre
 
   kit: "acoustic",
 
@@ -58,9 +59,10 @@ export const cumbia: GenreDef = {
       name: "llamador",
       // The caller: a muted hand stroke on the offbeat, not a rimshot.
       kitVoice: "frame",
-      // The caller keeps the offbeat eighths, always.
+      // The caller keeps the offbeat eighths, always — which is what the density now says
+      // too. It is the lane that makes the pattern cumbia rather than a backbeat.
       gen: { type: "mask", steps: [2, 6, 10, 14] },
-      density: 0.55,
+      density: 0.9,
       vel: { base: 0.4, accent: 0.5, ghost: 0.25 },
       swingDepth: 1,
       muteP: 0.2,

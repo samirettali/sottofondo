@@ -22,7 +22,8 @@ export const powwow: GenreDef = {
     "R. Carlos Nakai — Canyon Trilogy",
     "Joanne Shenandoah — Matriarch",
   ],
-  version: 3, // v3: the drum has a heartbeat, hard then soft
+  version: 4, // v4: the flute is dense enough to be the tune
+  // v3: the drum has a heartbeat, hard then soft
   // v2: the flute is held and blown rather than struck
 
   kit: "folk",
