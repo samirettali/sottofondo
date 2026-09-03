@@ -31,6 +31,8 @@ class Pluck extends AudioWorkletProcessor {
       { name: "decay", defaultValue: 2, minValue: 0.05, maxValue: 20, automationRate: "k-rate" },
       // Excitation brightness, 0..1: a fingertip against a plectrum.
       { name: "colour", defaultValue: 0.6, minValue: 0, maxValue: 1, automationRate: "k-rate" },
+      // Jawari: how hard the string grazes a curved bridge on the way back, 0..1.
+      { name: "buzz", defaultValue: 0, minValue: 0, maxValue: 1, automationRate: "k-rate" },
     ];
   }
 
@@ -47,6 +49,7 @@ class Pluck extends AudioWorkletProcessor {
     this.lp = 0;
     this.gain = 0;
     this.prevTrigger = 0;
+    this.prevOut = 0;
     // A cheap deterministic noise source. Math.random would do, but the excitation is
     // audible and a fixed sequence keeps two renders of one seed identical.
     this.rng = 22222;
@@ -65,6 +68,7 @@ class Pluck extends AudioWorkletProcessor {
     const damp = params.damp[0];
     const decay = params.decay[0];
     const colour = params.colour[0];
+    const buzz = params.buzz[0];
 
     for (let i = 0; i < out.length; i++) {
       const t = trig.length > 1 ? trig[i] : trig[0];
@@ -98,7 +102,23 @@ class Pluck extends AudioWorkletProcessor {
       this.lp += (1 - damp) * (y - this.lp);
       this.buf[this.w] = this.lp * this.gain;
       this.w = (this.w + 1) % this.size;
-      out[i] = y;
+
+      let s = y;
+      if (buzz > 0) {
+        // The jawari, as a parallel rasp rather than a clip in the loop.
+        //
+        // A sitar's bridge is a curved plate the string grazes while it is still swinging
+        // wide, so the buzz is loudest at the attack and fades with the note. Clipping
+        // the feedback models that too, but it eats the loop gain and the fundamental
+        // with it — that version came back from a blind listener as a vibraphone. This
+        // adds the rasp instead of taking the string away: a differentiated copy, scaled
+        // by how far the string is actually swinging.
+        const hf = y - this.prevOut;
+        const drive = Math.min(1, Math.abs(y) * 5);
+        s = y + hf * buzz * 1.2 * drive;
+      }
+      this.prevOut = y;
+      out[i] = s;
     }
     return true;
   }
@@ -123,6 +143,11 @@ export interface PluckOptions {
   readonly decay: number;
   /** Excitation brightness, 0..1. */
   readonly colour: number;
+  /**
+   * Jawari, 0..1: how hard the string grazes a curved bridge. Zero for a guitar, high
+   * for a sitar or a tanpura, where the buzz *is* the instrument.
+   */
+  readonly buzz: number;
   /** Simultaneous strings. A chord needs one per note. */
   readonly strings: number;
 }
@@ -147,7 +172,7 @@ export function createPluckPool(
   out: AudioNode,
   options: Partial<PluckOptions> = {},
 ): PluckPool {
-  const opts: PluckOptions = { damp: 0.5, decay: 2, colour: 0.6, strings: 6, ...options };
+  const opts: PluckOptions = { damp: 0.5, decay: 2, colour: 0.6, buzz: 0, strings: 6, ...options };
   const nodes: AudioWorkletNode[] = [];
   const level = ctx.createGain();
   // Unity. A delay line's output is already scaled by the pluck velocity, and the 0.5
@@ -171,6 +196,7 @@ export function createPluckPool(
       node.parameters.get("damp")!.value = opts.damp;
       node.parameters.get("decay")!.value = opts.decay;
       node.parameters.get("colour")!.value = opts.colour;
+      node.parameters.get("buzz")!.value = opts.buzz;
       node.connect(level);
       nodes.push(node);
       // Wait for the processor to say it exists. Without this an offline render is not
@@ -208,6 +234,7 @@ export function createPluckPool(
         if (nextOpts.damp !== undefined) node.parameters.get("damp")!.setValueAtTime(nextOpts.damp, at);
         if (nextOpts.decay !== undefined) node.parameters.get("decay")!.setValueAtTime(nextOpts.decay, at);
         if (nextOpts.colour !== undefined) node.parameters.get("colour")!.setValueAtTime(nextOpts.colour, at);
+        if (nextOpts.buzz !== undefined) node.parameters.get("buzz")!.setValueAtTime(nextOpts.buzz, at);
       }
     },
 

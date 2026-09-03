@@ -88,7 +88,9 @@ export const hindustani: GenreDef = {
       timbre: "pluck",
       cutoff: 2600,
       level: 1.3,
-      pluck: { damp: 0.28, decay: 6, colour: 0.55 },
+      // A tanpura has a jawari too, and the thread under its strings is what turns the
+      // drone into that shimmering cloud of overtones rather than four long notes.
+      pluck: { damp: 0.28, decay: 6, colour: 0.55, buzz: 0.4 },
     },
     muteP: 0,
     minEnergy: 0,
@@ -100,7 +102,10 @@ export const hindustani: GenreDef = {
     gen: { type: "stepClassP" },
     density: 0.5,
     chaos: 0.15,
-    register: [60, 84],
+    // C3 to E5. The main playing string of a sitar sits about an octave below where this
+    // preset had it, and a bright plucked string up at C6 is a mallet instrument: blind,
+    // it came back as a glockenspiel.
+    register: [48, 76],
     leapiness: 0.35,
     contour: 1.4,
     chordPull: 1,
@@ -111,7 +116,9 @@ export const hindustani: GenreDef = {
       timbre: "pluck",
       cutoff: 4200,
       level: 1.6,
-      pluck: { damp: 0.34, decay: 2.6, colour: 0.85 },
+      // The jawari is the sitar. Without the buzz a Karplus-Strong string of this
+      // brightness is an electric guitar, which is what a blind listener called it.
+      pluck: { damp: 0.34, decay: 2.6, colour: 0.8, buzz: 0.5 },
     },
     muteP: 0.2,
     minEnergy: 0.25,
