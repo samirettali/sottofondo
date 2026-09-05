@@ -1,5 +1,10 @@
 # Strudel migration
 
+This page records the frozen `strudel-1` migration and its validation. New acid,
+techno and house compositions now use `strudel-2`; see [Composer v2](COMPOSER.md)
+for the current generator, palette selection and comparison tools. Explicit v1
+links retain the behavior described below.
+
 The first migration covers acid, minimal techno and deep house. It produces an
 infinite procedural composition with returning motifs, bounded phrase variations,
 genre-specific rhythmic relationships and the existing section/energy profiles.

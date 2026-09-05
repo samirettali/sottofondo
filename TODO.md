@@ -1,5 +1,20 @@
 # TODO
 
+## Composer v2
+
+- [x] Preserve legacy/v1 recipes and select v2 for new electronic compositions
+- [x] Seed immutable palettes, roles, grooves, motifs, harmony and chapter forms
+- [x] Add twelve character families, 24 synth patches and three local CC0 kits
+- [x] Select related phrase candidates and arrange calls, answers, breaks and returns
+- [x] Load only selected assets, with explicit retry and no palette substitution
+- [x] Adapt lane names and bass controls to the composition's instruments
+- [x] Add six original studies and a 222-clip comparison export
+- [x] Verify event determinism, 3,000-seed diversity, compatibility and actual synthesis
+- [ ] Complete 30-minute production playback checks for all three electronic genres
+- [ ] Human listening comparison: decide whether v2 has the desired musical character
+
+Implementation and listening commands: `docs/COMPOSER.md`.
+
 ## Strudel migration
 
 - [x] Version recipes and favourites; preserve unversioned links on the legacy engine

@@ -99,7 +99,7 @@ and each of them wins against a distant distractor.
 
 ## Strudel migration
 
-- New acid, techno and house recipes use `strudel-1`; the other genres and unversioned
+- New acid, techno and house recipes use `strudel-2`; the other genres and unversioned
   links/favourites use `legacy-1`. The existing genre definitions are the frozen legacy
   reference. `test/legacy-snapshot.test.ts` pins event lists from main at `df8152b`.
 - A recipe carries engine version, genre version, genre, seed and sound mode. Never
@@ -132,3 +132,23 @@ and each of them wins against a distant distractor.
 - `tools/listen.html` compares three versions at fixed gain without normalisation.
   `npm run render:comparison` exports 81 isolated clips; `npm run test:soak` runs a
   30-minute production-build playback check. See `docs/STRUDEL.md` for commands.
+
+## Composer v2
+
+- Keep `recipe()` as the frozen v1 recipe factory; use `currentRecipe()` for new
+  compositions. V2 has `soundMode: auto`: the seed owns the palette. Explicit v1
+  links retain their synthesis/sample selector and original event/audio mapping.
+- `src/composer/plan.ts` builds an immutable song identity and addressed 128-bar
+  chapters. Candidate phrases use integer costs. Parts are composed together before
+  mute/density filtering; neither controls nor asset completion can regenerate them.
+- Superdough's low-level fields are `fmi`, `cutoff`, `hcutoff`, `resonance`.
+  REPL aliases `fm`, `lpf`, `hpf`, `lpq` are ignored here. `lpenv` is in octaves;
+  the custom 303 uses cents. Sample banks default to MIDI 36; do not transpose both
+  the note and playback speed. Actual audio probes guard these boundaries.
+- The v2 catalog is authored data, separate from the frozen sourced genre presets.
+  Local CC0 assets have immutable source URLs and SHA-256 hashes. Load only the
+  selected kit/instruments and fail explicitly rather than substitute a different
+  palette. The sampled bass, bell and guitar roots were checked spectrally.
+- `tools/composer.html` compares v2/v1 and six authored 32-bar studies with the same
+  instrument renderer. `npm run render:composer` exports 222 isolated WAVs without
+  normalisation. Architecture, research and verification: `docs/COMPOSER.md`.
