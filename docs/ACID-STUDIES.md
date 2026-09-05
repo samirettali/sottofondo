@@ -17,6 +17,11 @@ as close to the original. The following [video research](ACID-VIDEO-RESEARCH.md)
 also qualifies the rationale: note-level randomness is not inherently unsuccessful,
 and authored gestures remain one hypothesis rather than a settled requirement.
 
+The user subsequently rejected small variations of templates as the product
+direction and required fully local composition without generation APIs. These
+studies remain listening references. The broader algorithm research and proposed
+next experiment are in [PROCEDURAL-MUSIC-RESEARCH.md](PROCEDURAL-MUSIC-RESEARCH.md).
+
 ## Listen
 
 Use the same development server and SSH tunnel as the reference page:

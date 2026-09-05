@@ -135,6 +135,11 @@ and each of them wins against a distant distractor.
 
 ## Composer v2
 
+- The user requires composition to run entirely locally, without generation APIs.
+  Different seeds should create distinct musical identities; small variations of
+  authored studies do not meet the goal. The studies remain listening references,
+  not the accepted production direction. Research and a proposed constraint-based
+  experiment: `docs/PROCEDURAL-MUSIC-RESEARCH.md`.
 - Pressure and the faithful reference have an opt-in execution comparison in
   `/tools/acid-studies.html`: `performance=shaped` coordinates gates, accents and
   filter envelopes; `bell=1` reserves occasional answering gaps. Baseline scores
@@ -146,8 +151,9 @@ and each of them wins against a distant distractor.
   `docs/ACID-VIDEO-RESEARCH.md`.
 - The user found ill-fitting notes even with the reference renderer and approved a
   composition-first approach. Three written acid studies and their independent
-  gesture-based generator are at `/tools/acid-studies.html`; listening acceptance
-  is pending. Rules, preview scope and next decision: `docs/ACID-STUDIES.md`.
+  gesture-based generator are at `/tools/acid-studies.html`. Crosscurrent and most
+  of Afterglow were disliked; Pressure was recognized as similar to the original.
+  Rules, preview scope and listening history: `docs/ACID-STUDIES.md`.
 - The user confirmed the explicitly selected Original take in `/tools/acid-reference.html`
   sounds like the handwritten Strudel piece. Diagnose composition separately from
   sound there; scope, sample provenance and results: `docs/ACID-REFERENCE.md`.

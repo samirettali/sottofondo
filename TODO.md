@@ -13,7 +13,12 @@
       observed workflows, usage, and corrections in `docs/ACID-VIDEO-RESEARCH.md`
 - [x] Add a Before/After execution comparison on Pressure and the faithful reference:
       coordinated accents, gates and filter movement, plus optional FM bell replies
-- [ ] Listen to the new written studies and generated variants, then choose the production direction
+- [x] Record the direction correction: fully local composition with distinct seed
+      identities, rather than small variations of authored studies
+- [x] Research procedural composition through web search, Tavily, Monid and X;
+      inspect primary papers and code in `docs/PROCEDURAL-MUSIC-RESEARCH.md`
+- [ ] Test the proposed local composer with relationships between parts and newly
+      generated motifs; compare quality and seed diversity before production adoption
 - [x] Add versioned acid phrasing based on the Acido sotto casa feedback: dense
       related riffs, step dynamics, independent filter/envelope cycles and drum replies
 - [x] Compare the new acid revision against the previous composer at identical tempo
