@@ -2,6 +2,10 @@
 
 ## Composer v2
 
+- [x] Restore the handwritten acid reference and verify its score against the live REPL
+- [x] Isolate phrase/filter/voice changes in a listening preview
+- [x] Confirm the explicitly selected Original take with the user
+- [ ] Evaluate the generated phrase on the reference sound before revising the composer again
 - [x] Add versioned acid phrasing based on the Acido sotto casa feedback: dense
       related riffs, step dynamics, independent filter/envelope cycles and drum replies
 - [x] Compare the new acid revision against the previous composer at identical tempo

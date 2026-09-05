@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acido sotto casa — listening reference</title>
+<style>
+body{font:16px system-ui;max-width:760px;margin:3rem auto;padding:0 1rem;background:#17171c;color:#ddd}
+label,button{margin-right:1rem}select,input,button{font:inherit;max-width:100%}input{width:6rem}
+article{margin:2rem 0}audio{width:100%}iframe{display:none}a{color:inherit}pre{white-space:pre-wrap;font-size:13px}button{margin-block:.3rem}
+</style>
+<h1>Acido sotto casa</h1>
+<p>Start with the original. Then change one element and listen again. Every take uses the same five TR-909 samples, 138 BPM and output level.</p>
+<p><label>Take <select id="variant"></select></label><label>Seed (hex) <input id="seed" value="2" disabled></label></p>
+<p id="description"></p>
+<p><button id="play">Play original</button><button id="compare" disabled>Render A/B</button><button id="reveal" disabled>Reveal takes</button></p>
+<p id="status" role="status">The five original drum samples download on first play.</p>
+<main id="clips"></main>
+<details><summary>Original Strudel code</summary><p><button id="copy">Copy code</button> <a href="https://strudel.cc/" target="_blank" rel="noopener">Open Strudel</a></p><pre id="source"></pre></details>
+<p><a href="/tools/composer.html">Composer comparison</a></p>
+<script type="module" src="/tools/acid-reference.ts"></script></html>

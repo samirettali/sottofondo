@@ -1,5 +1,9 @@
 # Composer v2
 
+The handwritten acid reference and controlled listening comparisons are documented
+in [Acido sotto casa](ACID-REFERENCE.md). The user still preferred that piece after
+acid revision 2; automated validation below does not establish musical acceptance.
+
 New acid techno, minimal techno and deep house pieces use `strudel-2`. A seed
 selects a musical identity, including instruments, before any bars are generated.
 Other genres remain on the legacy engine. Existing unversioned and `strudel-1`

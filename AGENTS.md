@@ -135,6 +135,9 @@ and each of them wins against a distant distractor.
 
 ## Composer v2
 
+- The user confirmed the explicitly selected Original take in `/tools/acid-reference.html`
+  sounds like the handwritten Strudel piece. Diagnose composition separately from
+  sound there; scope, sample provenance and results: `docs/ACID-REFERENCE.md`.
 - New acid uses genre revision 2 within `strudel-2`; revision 1 is frozen for
   saved recipes and the authored studies. `src/composer/acid.ts` adds dense related
   phrases, independently clocked timbral gestures and phrase-level drum conditions.

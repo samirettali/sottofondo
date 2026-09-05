@@ -1,0 +1,54 @@
+// ACIDO SOTTO CASA
+setcpm(138 / 4)
+
+stack(
+  // Acid sequence: four variations, sixteen steps per bar
+  note(`<
+    [e2 ~ e2 e3 ~ e2 g2 e2 bb2 ~ a2 g2 e2 ~ d3 e3]
+    [e2 e2 ~ e3 e2 ~ g2 a2 ~ bb2 a2 g2 e2 d2 ~ e3]
+    [e2 ~ e3 e2 g2 ~ e2 bb2 a2 g2 ~ e3 d3 ~ g2 e2]
+    [e2 e3 e2 ~ bb2 a2 g2 e2 ~ d3 e3 ~ g3 e3 d3 e2]
+  >`)
+    .s("sawtooth")
+    .attack(0.002)
+    .decay(0.14)
+    .sustain(0.12)
+    .release(0.06)
+    .ftype("ladder")
+    .lpf("<180 350 700 1200>/4")
+    .lpq(7)
+    .lpenv("<3 4 5 6>/4")
+    .lpa(0.001)
+    .lpd("<0.12 0.18 0.12 0.25>")
+    .lps(0)
+    .gain("[0.55 0.35 0.4 0.65]*4"),
+
+  // Kick: one-bar break before the loop restarts
+  s("<[bd*4]!15 [bd bd ~ ~]>")
+    .bank("RolandTR909")
+    .gain(0.85),
+
+  // Clap enters after four bars
+  s("~ cp ~ cp")
+    .bank("RolandTR909")
+    .room(0.12)
+    .gain("<0 0.35 0.35 0.45>/4"),
+
+  // Closed hats
+  s("hh*16")
+    .bank("RolandTR909")
+    .gain("[0.18 0.08 0.12 0.08]*4")
+    .pan(0.55),
+
+  // Open hats enter halfway through
+  s("[~ oh]*4")
+    .bank("RolandTR909")
+    .gain("<0 0 0.22 0.28>/4")
+    .pan(0.45),
+
+  // Small snare fill every fourth bar
+  s("<~ ~ ~ [~ ~ sd [sd sd]]>")
+    .bank("RolandTR909")
+    .gain(0.25)
+    .room(0.15)
+)
