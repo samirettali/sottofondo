@@ -13,7 +13,9 @@ npm install
 npm run dev
 ```
 
-Then `?g=<genre>&s=<seed>` — for example `?g=acid&s=cafe1234`. The URL is written as you
+Open without query parameters for a new Strudel composition, or use a saved link.
+Old `?g=<genre>&s=<seed>` links deliberately keep the legacy engine. New links also
+carry engine version, genre version and sound mode. The URL is written as you
 change things, so a piece is always a link, and `☆` keeps one in a local shortlist.
 
 ```sh
@@ -22,7 +24,14 @@ npm test        # unit tests
 npm run build   # static bundle in dist/
 ```
 
-Zero runtime dependencies. Vite and TypeScript are the only build-time ones.
+Strudel core and Superdough are pinned runtime dependencies, loaded lazily. Vite
+and TypeScript build the app; Playwright verifies browser playback.
+
+Acid, minimal techno and deep house now have returning motifs and bounded phrase
+variations, with a **Synth / Samples + synth** selector playing the same score.
+The other genres and existing bookmarks retain the original engine.
+See [the migration guide](docs/STRUDEL.md) for architecture, browser checks and
+the three-way listening comparison at `/tools/listen.html`.
 
 ## How it works
 
@@ -48,3 +57,6 @@ progressive house, psytrance, liquid drum & bass, lo-fi hip hop, synthwave, chip
 ambient, jazz, blues, reggaeton, cumbia, gnawa, a raga in teental, a powwow drum with
 flute, a 9/8 karşılama, Balkan brass, and an 11/8 kopanitsa that exists to keep the
 schema honest.
+
+The Strudel integration is AGPL-3.0-or-later. See [LICENSE](LICENSE) and
+[NOTICE.md](NOTICE.md) for the upstream attribution and CC0 sample provenance.

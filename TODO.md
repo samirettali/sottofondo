@@ -1,5 +1,19 @@
 # TODO
 
+## Strudel migration
+
+- [x] Version recipes and favourites; preserve unversioned links on the legacy engine
+- [x] Add a shared player interface and a lazy Strudel/Superdough backend
+- [x] Generate returning motifs and bounded variations for acid, techno and house
+- [x] Query rational musical intervals, with sub-step fills and bar-boundary controls
+- [x] Compare synthesis and a bundled CC0 sample kit on the same composition
+- [x] Keep 303 articulation and route stereo through the existing master
+- [x] Add deterministic, legacy snapshot and cross-browser tests
+- [x] Add isolated listening renders and a 30-minute soak-test command
+- [ ] Human listening comparison: choose whether the new music is preferable
+
+Commands and compatibility rules: `docs/STRUDEL.md`.
+
 Multi-genre generative music toy. Research and rationale live in `docs/DESIGN.md` —
 read it before touching the generators; the numbers in there are sourced, not invented.
 
@@ -25,7 +39,7 @@ These cannot be retrofitted cheaply. Build them first and build them right.
 - [x] `AudioContext` created lazily inside the first user gesture (autoplay policy)
 - [x] Seed in the URL, `?s=<hex>`, read on load
 - [ ] Add `?g=<genre>` once presets exist
-- [ ] **Version the recipe** — `engineVersion + genreVersion + seed`, so changing a
+- [x] **Version the recipe** — `engineVersion + genreVersion + seed`, so changing a
       generator does not silently repoint every saved seed at different music
       (borrowed from Diaspar, see `docs/DESIGN.md`)
 

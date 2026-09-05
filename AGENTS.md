@@ -87,7 +87,8 @@ and each of them wins against a distant distractor.
 
 ## Conventions
 
-- Zero runtime dependencies. Vite and TypeScript are the only build-time ones.
+- Runtime dependencies are limited to pinned Strudel core and Superdough. Vite and
+  TypeScript build the app; Playwright is a development-only verification dependency.
 - Scale-degree space internally; convert to MIDI at the very last step.
 - `samirettali/sottofondo` on GitHub, public. Repository settings are declared in
   `infra/github`, not clicked.
@@ -95,3 +96,39 @@ and each of them wins against a distant distractor.
   `/home/samir/volumes/side-proxy/sottofondo-web` on andromeda by `npm run deploy`, served
   by the Caddy in `servers/side-proxy` and carried to the internet by the shared
   Cloudflare tunnel. There is no server side to deploy — the whole thing is the bundle.
+
+## Strudel migration
+
+- New acid, techno and house recipes use `strudel-1`; the other genres and unversioned
+  links/favourites use `legacy-1`. The existing genre definitions are the frozen legacy
+  reference. `test/legacy-snapshot.test.ts` pins event lists from main at `df8152b`.
+- A recipe carries engine version, genre version, genre, seed and sound mode. Never
+  silently send an unsupported version through the current generator. Keep an older
+  implementation available or reject its version explicitly.
+- The new composition is independent of audio. Strudel `Pattern`/`Hap`/`TimeSpan`
+  describe musical intervals; our Worker transport queries those intervals and splits
+  tempo changes at unscheduled bar boundaries. There is no grid-step scheduler in the
+  new path. Musical randomness stays in our integer hash, with independent decision
+  domains and frozen lane names as IDs, rather than array indices.
+- `PROFILES` selects acid/minimal/vamp strategies and phrase/mutation parameters.
+  Existing sourced preset values remain shared inputs, never edited to tune the new
+  engine. Put new-only changes in the Strudel profile or instrument mapping.
+- Import core's pinned source modules rather than its umbrella entry: the latter pulls
+  in a Kabelsalat UMD entry that fails under Node's ESM loader. Browser and Node tests
+  exercise the same Pattern implementation.
+- Superdough's multichannel output assigns `destination.maxChannelCount`, which can be
+  zero on WebKit. `StereoOutput` keeps upstream Orbit effects but routes stereo into
+  our master without assigning that value. Its source-module helpers and the bundled
+  synth have separate context singletons; both are set to the same context.
+- Keep the continuous 303 adapter: independent per-note oscillators do not preserve
+  its accent accumulation and connected slides. A slide's fallback gate-off is
+  cancelled by the next note, so a missed scheduling deadline cannot leave a drone.
+- Synth and samples modes change only the drum sound source, on a bar boundary.
+  The CC0 kit is a lazy same-origin JSON payload containing original FLAC bytes in
+  base64, immutable source URLs and SHA-256 hashes. Never load default remote banks.
+- Offline comparisons run each render in a fresh iframe because Superdough's node
+  pools are global and cannot safely cross AudioContexts. The live app reuses one
+  AudioContext and disposes one player before creating the next.
+- `tools/listen.html` compares three versions at fixed gain without normalisation.
+  `npm run render:comparison` exports 81 isolated clips; `npm run test:soak` runs a
+  30-minute production-build playback check. See `docs/STRUDEL.md` for commands.
