@@ -1,12 +1,14 @@
 import { h32, cyrb128 } from "../core/rng.ts";
 import { GENRES } from "../genre/index.ts";
 import { FAMILIES, KITS, getPatch, type KitId } from "./catalog.ts";
+import { developAcidPlan, type AcidPerformance } from "./acid.ts";
 
 export type ElectronicGenre = keyof typeof FAMILIES;
 export interface Cell { step: number; degree: number; length: number; velocity: number; accent: boolean; slide: boolean; }
 export interface Role { id: string; patch: string; register: number; density: number; }
 export interface SongPlan {
   study?: true;
+  performance?: AcidPerformance;
   seed: number; genre: ElectronicGenre; family: number; title: string; bpm: number; key: number;
   scale: readonly number[]; swing: number; kit: KitId; groove: number;
   motifBars: number; phraseBars: number; motifs: readonly (readonly Cell[])[];
@@ -62,7 +64,8 @@ function makeMotif(seed: number, bars: number, which: number, groove: number, te
 }
 
 /** Identity is independent of mute state, transport, query order and sound loading. */
-export function createSongPlan(genre: ElectronicGenre, seed: number): SongPlan {
+export function createSongPlan(genre: ElectronicGenre, seed: number, revision = genre === "acid" ? 2 : 1): SongPlan {
+  if (revision !== 1 && !(genre === "acid" && revision === 2)) throw new Error("Unsupported composition revision.");
   const family = draw(seed, "family", 0, 4);
   const f = FAMILIES[genre][family]!;
   const bass = pick(seed, "bass-patch", f.bass);
@@ -80,7 +83,7 @@ export function createSongPlan(genre: ElectronicGenre, seed: number): SongPlan {
   ];
   if (draw(seed, "roster", 0, 3) !== 0) roles.push({ id: "answer", patch: pick(seed, "answer-patch", ["glass", "reed", "guitar-sample", "bell-sample"]), register: 60, density: .45 });
   const bpm = GENRES[genre]!.clock.bpm;
-  return freeze({ seed, genre, family, title: f.name, bpm: bpm.min + draw(seed, "bpm", 0, bpm.max - bpm.min + 1),
+  const plan: SongPlan = freeze({ seed, genre, family, title: f.name, bpm: bpm.min + draw(seed, "bpm", 0, bpm.max - bpm.min + 1),
     key: draw(seed, "key", 0, 12), scale: pick(seed, "scale", [[0, 2, 3, 5, 7, 8, 10], [0, 2, 3, 5, 7, 9, 10], [0, 1, 3, 5, 7, 8, 10]]),
     swing: genre === "house" ? .54 + draw(seed, "swing", 0, 5) / 100 : genre === "techno" ? .5 + draw(seed, "swing", 0, 3) / 100 : .5,
     kit: pick(seed, "kit", Object.keys(KITS) as KitId[]), groove, motifBars,
@@ -89,6 +92,7 @@ export function createSongPlan(genre: ElectronicGenre, seed: number): SongPlan {
     roles, progression: genre === "house" ? pick(seed, "harmony", [[0, 3, 5, 4], [0, 3, 0, 6], [0, 5, 3, 6], [0, 0, 3, 3]]) : [0],
     chordBars: pick(seed, "harmonic-rhythm", [2, 4, 8]), tension, repetition,
     space: 15 + draw(seed, "space", 0, 60), drive: draw(seed, "drive", 0, 40), articulation: draw(seed, "articulation", 0, 8) });
+  return revision === 2 ? developAcidPlan(plan) : plan;
 }
 
 const FORMS = [

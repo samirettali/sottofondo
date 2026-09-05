@@ -26,7 +26,7 @@ await page.addInitScript(() => {
 const cdp = await page.context().newCDPSession(page);
 const samples = [];
 try {
-  await page.goto(`${process.env.SOAK_URL ?? "http://127.0.0.1:5199"}/?g=${genre}&s=cafe1234&e=${composer ? "strudel-2" : "strudel-1"}&v=1&m=${composer ? "auto" : "samples"}`);
+  await page.goto(`${process.env.SOAK_URL ?? "http://127.0.0.1:5199"}/?g=${genre}&s=cafe1234&e=${composer ? "strudel-2" : "strudel-1"}&v=${composer && genre === "acid" ? 2 : 1}&m=${composer ? "auto" : "samples"}`);
   await page.getByRole("button", { name: "click to start" }).click();
   await page.getByRole("button", { name: "play or stop" }).waitFor();
   for (let minute = 0; minute <= minutes; minute++) {

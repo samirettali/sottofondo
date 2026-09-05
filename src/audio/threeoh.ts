@@ -28,7 +28,7 @@ export interface ThreeOhParams {
 }
 
 export interface ThreeOh {
-  noteOn(at: number, frequency: number, accent: boolean, slide: boolean): void;
+  noteOn(at: number, frequency: number, accent: boolean, slide: boolean, velocity?: number): void;
   noteOff(at: number): void;
   readonly params: ThreeOhParams;
   set(params: Partial<ThreeOhParams>, at?: number): void;
@@ -113,7 +113,7 @@ export function createThreeOh(
       }
     },
 
-    noteOn(at, frequency, accent, slide) {
+    noteOn(at, frequency, accent, slide, velocity = 1) {
       // Accumulate the accent charge, letting it bleed away with the gap since the last
       // note. Consecutive accents stack; an accent after a rest does not.
       const gap = at - lastNoteAt;
@@ -134,8 +134,10 @@ export function createThreeOh(
       // 2 ms rather than a jump, which is a large part of the character.
       filterFreqSafe(osc.frequency, at, frequency, slide ? SLIDE_TC : STEP_TC);
 
-      anchor(vca.gain, at, accent ? 0.22 : 0.16);
-      vca.gain.linearRampToValueAtTime(0.1, at + 0.2);
+      // The default preserves legacy playback. New compositions can phrase every
+      // step dynamically without conflating its level with the accent circuit.
+      anchor(vca.gain, at, (accent ? 0.22 : 0.16) * velocity);
+      vca.gain.linearRampToValueAtTime(0.1 * velocity, at + 0.2);
     },
 
     noteOff(at) {

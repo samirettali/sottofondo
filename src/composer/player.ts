@@ -16,7 +16,7 @@ import { composeSongBar, songPattern, type ComposerEvent } from "./compose.ts";
 
 interface Snapshot { bar: number; controls: Record<string, LaneControl>; swing: number; }
 export function requiredAssets(plan: SongPlan): string[] {
-  return [...new Set([...Object.values(KITS[plan.kit]), ...plan.roles.filter(r => !Object.hasOwn(KITS.round, r.id))
+  return [...new Set([...Object.values(KITS[plan.kit]), ...(plan.performance ? ["elec_hi_snare"] : []), ...plan.roles.filter(r => !Object.hasOwn(KITS.round, r.id))
     .map(r => getPatch(r.patch).asset).filter((a): a is string => !!a)])].sort();
 }
 /** Typed catalog boundary. Never feed REPL aliases into the low-level synthesis API. */
@@ -50,7 +50,7 @@ export class ComposerPlayer implements Player {
 
   constructor(private readonly ctx: BaseAudioContext, recipe: Recipe, plan?: SongPlan) {
     this.recipe = recipe; this.seed = recipe.seed;
-    this.plan = plan ?? createSongPlan(recipe.genre as ElectronicGenre, recipe.seed);
+    this.plan = plan ?? createSongPlan(recipe.genre as ElectronicGenre, recipe.seed, recipe.genreVersion);
     this.genre = GENRES[recipe.genre]!;
     this.bpm = this.plan.bpm;
     const patch = getPatch(this.plan.roles.find(r => r.id === "bass")!.patch);
@@ -172,8 +172,9 @@ export class ComposerPlayer implements Player {
     }
     if(event.kind === "bass" && this.bass) {
       this.delay.setTempo(cps*240,time);
-      this.bass.set({ ...this.bassParams, cutoff: this.bassParams.cutoff * event.brightness },time);
-      this.bass.noteOn(time,midiToFrequency(event.midi!),event.accent,event.glide??false);
+      this.bass.set({ ...this.bassParams, cutoff: this.bassParams.cutoff * event.brightness,
+        envMod: this.bassParams.envMod * (event.envelope ?? 1), decay: this.bassParams.decay * (event.decay ?? 1) },time);
+      this.bass.noteOn(time,midiToFrequency(event.midi!),event.accent,event.glide??false,event.expression??1);
       this.bass.noteOff(time+duration); return;
     }
     const drum = event.patchId.startsWith("sample:");
@@ -181,13 +182,14 @@ export class ComposerPlayer implements Player {
     const s = drum ? { s:`v2_${event.patchId.slice(7)}`, gain:event.laneId==="kick"?.85:.42,
       attack:.001,decay:.2,sustain:0,release:.04 } : patchSound(event.patchId,event.brightness);
     const sound = { ...s, ...(event.kind==="bass" ? { cutoff:this.bassParams.cutoff*event.brightness, resonance:this.bassParams.resonance,
-      lpenv:this.bassParams.envMod/1200, lpdecay:this.bassParams.decay, decay:this.bassParams.decay } : {}) };
+      lpenv:this.bassParams.envMod/1200*(event.envelope??1), lpdecay:this.bassParams.decay*(event.decay??1), decay:this.bassParams.decay*(event.decay??1) } : {}) };
     const notes = event.notes ?? [event.midi ?? 60];
     for(const note of notes) {
       // Unpitched samples play at their recorded speed; Superdough's sample root is MIDI 36.
       await superdough({ ...sound, orbit, note: drum || (patch?.asset && patch.rootMidi === undefined) ? 36 : note,
         velocity:event.velocity, pan:.5+event.pan,
         ...(patch?.rootMidi === undefined ? {} : { speed:2**((36-patch.rootMidi)/12) }),
+        ...(event.room === undefined ? {} : { room:event.room, roomsize:1.2 }),
         ...(drum || event.kind==="bass" ? {} : { delay:this.delayParams.wet, delayfeedback:this.delayParams.feedback,
           delaysync:3/16, room:event.space*.45, roomsize:1+event.space*2 }),
       },time,duration,cps,event.begin);

@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
 import { createSongPlan, type ElectronicGenre } from "../src/composer/plan.ts";
 import { songPattern } from "../src/composer/compose.ts";
+import { currentRecipe, recipeParams } from "../src/recipe.ts";
 
 for(const genre of ["acid","techno","house"] as ElectronicGenre[]) {
   test(`${genre}: v2 browser decisions match Node, audio and restart work`,async({page})=>{
     const errors:string[]=[];page.on("pageerror",e=>errors.push(e.message));
-    await page.goto(`/?g=${genre}&s=2&e=strudel-2&v=1&m=auto`);
+    await page.goto(`/?${recipeParams(currentRecipe(genre, 2))}`);
     const expected=songPattern(createSongPlan(genre,2)).queryArc(600,608).map(h=>[+h.whole.begin,+h.whole.end,h.value]);
     const actual=await page.evaluate(async genre=>{
       const planPath="/src/composer/plan.ts",composePath="/src/composer/compose.ts";
@@ -16,6 +17,7 @@ for(const genre of ["acid","techno","house"] as ElectronicGenre[]) {
     await page.getByRole("button",{name:"click to start"}).click();
     await expect(page.getByRole("button",{name:"play or stop"})).toBeVisible();
     await expect(page.getByRole("combobox",{name:"sound mode"})).toHaveCount(0);
+    expect(await page.evaluate(() => Boolean((window as any).engine.plan.performance))).toBe(genre === "acid");
     const amplitude=()=>page.evaluate(()=>{
       const e=(window as any).engine;const a=new Float32Array(e.scopeSize);e.readScope(a);return Math.max(...a.map(Math.abs));
     });
@@ -70,4 +72,37 @@ test("v2 loads only its palette and bounds control history while silent",async({
   });
   expect(result.bar).toBeGreaterThan(20);expect(result.snapshots).toBeLessThanOrEqual(8);
   expect(result.samePlan).toBe(true);expect(result.error).toBeNull();
+});
+
+test("acid expression and filter gestures reach the production audio", async ({ page }) => {
+  const results: Record<string, { rms: number; tail: number; roughness: number }> = {};
+  for (const variant of ["quiet", "loud", "cutoff-low", "cutoff-high", "envelope-flat", "envelope-wide", "decay-short", "decay-long"]) {
+    await page.goto(`/tools/acid-probe.html?variant=${variant}`);
+    await page.waitForFunction(() => (window as any).probeResult || (window as any).probeError);
+    expect(await page.evaluate(() => (window as any).probeError)).toBeUndefined();
+    results[variant] = await page.evaluate(() => (window as any).probeResult);
+  }
+  expect(results.loud!.rms).toBeGreaterThan(results.quiet!.rms * 1.3);
+  expect(results["cutoff-high"]!.roughness).toBeGreaterThan(results["cutoff-low"]!.roughness * 2);
+  expect(results["envelope-wide"]!.roughness).toBeGreaterThan(results["envelope-flat"]!.roughness * 1.2);
+  // The 303 decay controls its filter envelope, so measure retained brightness,
+  // not amplitude: resonance can make a darker note louder than an open filter.
+  expect(results["decay-long"]!.roughness).toBeGreaterThan(results["decay-short"]!.roughness * 2);
+});
+
+test("saved acid revisions keep their music and new seeds use the new phrasing", async ({ page }) => {
+  await page.goto("/?g=acid&s=2&e=strudel-2&v=1&m=auto");
+  await page.getByRole("button", { name: "click to start" }).click();
+  await page.getByRole("button", { name: "play or stop" }).waitFor();
+  expect(await page.evaluate(() => (window as any).engine.plan.performance)).toBeUndefined();
+  await page.getByRole("button", { name: "save this seed" }).click();
+  await page.getByRole("button", { name: "new seed", exact: true }).click();
+  await expect(page).toHaveURL(/e=strudel-2&v=2&m=auto/);
+  expect(await page.evaluate(() => (window as any).engine.plan.performance)).toBeDefined();
+  const assets = await page.evaluate(async () => {
+    const path = "/src/composer/player.ts";
+    const { requiredAssets } = await import(path);
+    return requiredAssets((window as any).engine.plan);
+  });
+  expect(assets).toContain("elec_hi_snare");
 });

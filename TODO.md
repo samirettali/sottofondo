@@ -2,6 +2,9 @@
 
 ## Composer v2
 
+- [x] Add versioned acid phrasing based on the Acido sotto casa feedback: dense
+      related riffs, step dynamics, independent filter/envelope cycles and drum replies
+- [x] Compare the new acid revision against the previous composer at identical tempo
 - [x] Preserve legacy/v1 recipes and select v2 for new electronic compositions
 - [x] Seed immutable palettes, roles, grooves, motifs, harmony and chapter forms
 - [x] Add twelve character families, 24 synth patches and three local CC0 kits

@@ -13,7 +13,7 @@ async function render(): Promise<void> {
   const begin = Number(params.get("begin") ?? 0);
   const end = Number(params.get("end") ?? 8);
   const rate = 48000;
-  const plan = r.engineVersion === "strudel-2" ? params.has("study") ? studyPlan(params.get("study")!) : createSongPlan(r.genre as ElectronicGenre,r.seed) : undefined;
+  const plan = r.engineVersion === "strudel-2" ? params.has("study") ? studyPlan(params.get("study")!) : createSongPlan(r.genre as ElectronicGenre,r.seed,r.genreVersion) : undefined;
   const secondsPerBar = 240 / (plan?.bpm ?? g.clock.bpm.default);
   const ctx = new OfflineAudioContext(2, Math.ceil((end * secondsPerBar + 2) * rate), rate);
   let rendering: Promise<AudioBuffer> | undefined;

@@ -22,11 +22,13 @@ button.addEventListener("click",()=>{
     const form=planChapter(createSongPlan(genre,seed),0);
     const section=select("section").value;
     const begin=study?0:section==="opening"?0:section==="development"?form.find(s=>s.name==="develop")!.start:form.find(s=>s.name==="contrast")!.start-4;
-    const versions=study?["study"]:seed%2?["strudel-2","strudel-1"]:["strudel-1","strudel-2"];
+    const previous=genre==="acid"?"previous-composer":"strudel-1";
+    const versions=study?["study"]:seed%2?["strudel-2",previous]:[previous,"strudel-2"];
     for(const [i,version] of versions.entries()) {
       status.textContent=`Rendering ${i+1}/${versions.length}…`;
-      const params=recipeParams(version==="strudel-1"?recipe(genre,seed):currentRecipe(genre,seed));
-      params.set("begin",String(begin));params.set("end",String(study?32:begin+8));
+      const params=recipeParams(version==="strudel-1"?recipe(genre,seed):version==="previous-composer"?
+        {...currentRecipe(genre,seed),genreVersion:1}:currentRecipe(genre,seed));
+      params.set("begin",String(begin));params.set("end",String(study?32:begin+(genre==="acid"?16:8)));
       if(study) params.set("study",study.id);
       const frame=document.createElement("iframe");
       const result=await new Promise<{bytes:ArrayBuffer;peak:number;rms:number}>((resolve,reject)=>{

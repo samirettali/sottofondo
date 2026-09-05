@@ -4,9 +4,11 @@ import { TimeSpan } from "@strudel/core/timespan.mjs";
 import type { ScoreEvent, LaneControl } from "../strudel/compose.ts";
 import { KITS, getPatch, type DrumId } from "./catalog.ts";
 import { degreeMidi, draw, sectionFor, type SongPlan } from "./plan.ts";
+import { composeAcidBar } from "./acid.ts";
 
 export interface ComposerEvent extends ScoreEvent {
   patchId: string; brightness: number; space: number; pan: number; densityRank: number;
+  envelope?: number; decay?: number; expression?: number; room?: number;
 }
 const HATS = [[2,6,10,14],[0,2,4,6,8,10,12,14],[1,3,6,9,11,14],[2,5,6,10,13,14],
   [2,6,7,10,14],[0,3,6,8,11,14],[2,4,6,10,12,14],[1,2,6,9,10,14]];
@@ -16,6 +18,7 @@ const SUPPORT = [[2,10],[3,11],[2,7,14],[6,12],[2,8,11],[3,10,15],[6],[2,9]];
 /** Compose all related parts before applying the player's mute/density controls. */
 export function composeSongBar(p: SongPlan, bar: number): ComposerEvent[] {
   if (bar < 0) return [];
+  if (p.performance) return composeAcidBar(p, bar);
   const section = sectionFor(p, bar);
   const inSection = bar - section.start;
   const last = inSection === section.bars - 1;

@@ -23,7 +23,7 @@ export function studyPlan(id: string): SongPlan {
   const index = STUDIES.findIndex(s => s.id === id);
   const study = STUDIES[index];
   if (!study) throw new Error(`Unknown study: ${id}`);
-  const p = createSongPlan(study.genre as ElectronicGenre, study.seed);
+  const p = createSongPlan(study.genre as ElectronicGenre, study.seed, 1);
   const a: Cell[] = PHRASES[index]!.map(([step, degree, length], i) => ({ step, degree, length,
     velocity: i % 3 ? .68 : .9, accent: i % 3 === 0, slide: i % 4 === 1 }));
   return freeze({ ...p, study: true, title: study.title, kit: study.kit, motifBars: 2, phraseBars: 8,

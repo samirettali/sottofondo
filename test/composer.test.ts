@@ -67,6 +67,64 @@ test("v1 event snapshots remain frozen",()=>{
 test("v2 recipes round trip and reject incompatible palette modes",()=>{
   for(const g of genres) assert.deepEqual(readRecipe(recipeParams(currentRecipe(g,729))),currentRecipe(g,729));
   assert.throws(()=>readRecipe(new URLSearchParams("g=acid&e=strudel-2&m=synth")));
+  assert.equal(currentRecipe("acid", 1).genreVersion, 2);
+  assert.equal(readRecipe(new URLSearchParams("g=acid&e=strudel-2&v=1&m=auto")).genreVersion, 1);
+  assert.equal(readRecipe(new URLSearchParams("g=acid&e=strudel-2&m=auto")).genreVersion, 1);
+  assert.throws(()=>readRecipe(new URLSearchParams("g=house&e=strudel-2&v=2&m=auto")));
+});
+test("the first composer revision retains its saved scores", () => {
+  const hashes = ["88ef9575c9c971c8ffa05d2c94900450babdcfa84422cecd9158a2041451878d", "b257ff10e3ee87dabd087b857bcce7df3b38bd610d23d4e8439d53dd86e22f32", "dc1adea96c3612aab9fe732bf0fd1dc10523b7b879824f19e533356178170834"];
+  genres.forEach((genre, i) => {
+    const data = [1,3,4,17,31,47,729].flatMap(seed => [0,4,8,15,16,31,64,129,600].map(bar =>
+      events(songPattern(createSongPlan(genre, seed, 1)), bar, bar + 1)));
+    assert.equal(createHash("sha256").update(JSON.stringify(data)).digest("hex"), hashes[i]);
+  });
+});
+test("acid phrases retain a tonic anchor, four cadences and step dynamics", () => {
+  for (let seed = 0; seed < 200; seed++) {
+    const p = createSongPlan("acid", seed);
+    for (const motif of p.motifs) {
+      const signatures = [];
+      for (let bar = 0; bar < 4; bar++) {
+        const cells = motif.filter(c => Math.floor(c.step / 16) === bar);
+        assert.ok(cells.length >= 11 && cells.length <= 13);
+        assert.equal(cells[0]!.degree, 0);
+        assert.ok(new Set(cells.map(c => c.velocity)).size >= 3);
+        signatures.push(JSON.stringify(cells.map(c => [c.step % 16, c.degree])));
+      }
+      assert.equal(new Set(signatures).size, 4);
+    }
+  }
+});
+test("acid drums introduce layers and answer four-, eight- and sixteen-bar phrases", () => {
+  const p = { ...createSongPlan("acid", 2), study: true as const };
+  const lane = (bar: number, id: string) => composeSongBar(p, bar).filter(e => e.laneId === id);
+  assert.equal(lane(0, "hat").length, 16);
+  assert.equal(lane(0, "backbeat").length, 0);
+  assert.equal(lane(4, "backbeat").length, 2);
+  assert.equal(lane(4, "open").length, 0);
+  assert.equal(lane(8, "open").length, 4);
+  assert.ok(lane(3, "perc").some(e => e.patchId === "sample:elec_hi_snare" && e.room === .15));
+  assert.ok(lane(7, "perc").length > lane(3, "perc").length);
+  // A long return section contains an internal sixteen-bar drum turnaround.
+  const returning = planChapter(p, 0).find(s => s.name === "return" && s.bars >= 32)!;
+  const continuous = createSongPlan("acid", 2);
+  const kick = composeSongBar(continuous, returning.start + 15).filter(e => e.laneId === "kick");
+  assert.equal(kick.length, 2);
+  assert.equal(lane(16, "kick").length, 0);
+  assert.ok(lane(16, "bass").length > 0);
+  assert.equal(lane(0, "lead").length, 0);
+  assert.ok(lane(10, "lead").length < lane(10, "bass").length / 2);
+});
+test("acid automation moves across repeated riffs without losing articulation", () => {
+  const p = createSongPlan("acid", 2);
+  const bass = Array.from({ length: 16 }, (_, bar) => composeSongBar(p, bar).filter(e => e.kind === "bass")).flat();
+  const cutoff = bass.map(e => e.brightness);
+  assert.ok(Math.max(...cutoff) / Math.min(...cutoff) > 5);
+  assert.equal(new Set(bass.map(e => e.envelope)).size, 4);
+  assert.equal(new Set(bass.map(e => e.decay)).size, 4);
+  assert.ok(new Set(bass.map(e => e.expression)).size >= 3);
+  assert.ok(bass.some(e => e.slide) && bass.some(e => e.glide));
 });
 test("catalog assets have immutable provenance and fit the loading budget",()=>{
   assert.ok(PATCHES.filter(p=>!p.asset).length>=24);
@@ -82,7 +140,7 @@ test("catalog assets have immutable provenance and fit the loading budget",()=>{
   for(const s of STUDIES) assert.equal(studyPlan(s.id).motifBars,2);
 });
 test("composer decisions use neither clocks nor transcendental functions",()=>{
-  for(const name of ["plan","compose","studies"]){
+  for(const name of ["plan","compose","acid","studies"]){
     const source=readFileSync(new URL(`../src/composer/${name}.ts`,import.meta.url),"utf8");
     assert.doesNotMatch(source,/Math\.(sin|cos|tan|pow|exp|log|random)\s*\(|Date\.now|performance\.now|currentTime/);
   }

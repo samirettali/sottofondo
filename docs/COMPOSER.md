@@ -5,6 +5,10 @@ selects a musical identity, including instruments, before any bars are generated
 Other genres remain on the legacy engine. Existing unversioned and `strudel-1`
 links keep their original implementations; event snapshots pin both references.
 
+New acid recipes now use genre revision `v=2`. Existing `e=strudel-2&v=1`
+recipes, including explicit engine links without `v`, retain the first composer.
+Techno, house and the six authored studies still use that first revision.
+
 ## Try it
 
 ```sh
@@ -31,6 +35,8 @@ download offers a retry of the same recipe.
 For a quick comparison, acid seeds `3` and `4` both choose 142 BPM but use
 different kits and lead/support instruments. Seeds `2` and `7` select the Orbital
 and Liquid families. Enter these seeds in the app or comparison page.
+To hear the latest acid from an existing browser session, open
+`/?g=acid&s=2&e=strudel-2&v=2&m=auto`; reloading an older `v=1` link preserves it.
 
 ## Musical model
 
@@ -69,6 +75,32 @@ seed, tempo and key. Passing that test establishes structural variety, not taste
 
 ## Sound and assets
 
+### Acid phrasing revision
+
+The user's *Acido sotto casa* example exposed a gap that instrument diversity did
+not address: sparse scalar phrases, few hat attacks and almost static envelopes.
+`src/composer/acid.ts` adds a performance plan for the new acid revision:
+
+- Four related bars with 11–13 notes each, tonic anchors, octave jumps, minor-blues
+  colour and distinct endings. The seed chooses a riff and its rest positions.
+- Repeating four-step velocity shapes. The continuous 303 now accepts an optional
+  velocity, with the legacy default of 1. Accent still operates independently.
+- Cutoff patterns advancing every two or four bars, envelope depth every four
+  bars, and decay every bar. A returning riff can meet a different filter setting.
+- Sixteenth-note hats, backbeats entering after four bars, open hats after eight,
+  snare replies every four bars, longer eighth-bar fills, and half-bar kick gaps
+  at sixteen-bar turnarounds. Contrast sections retain a sparse acid phrase.
+- Short upper-register counterlines at phrase endings, leaving the acid line in
+  front. Supporting pads and textures have separate entrances.
+
+The palette and sample bank remain seeded. A dedicated existing snare sample is
+also loaded for fills, with a small room send. This is an adaptation of the
+example's compositional gestures to our continuous 303, not an identical render
+of its Strudel ladder-filter patch. The controls still multiply the composed
+filter gestures; they do not regenerate the piece.
+
+### Catalog
+
 The catalog contains 24 synthetic patches plus three sampled instruments and a
 noise texture. Synthesis combines a continuous 303, subtractive voices, FM,
 custom partials, supersaws, pitch envelopes, filters, delay and reverb. The 303
@@ -93,8 +125,9 @@ from its sample root; the adapter must not apply that interval twice.
 
 ## Listening and verification
 
-At `/tools/composer.html`, compare v2 with frozen v1 synthesis using the same
-genre/seed. Select opening, development or transition; the latter straddles the
+At `/tools/composer.html`, compare the new acid revision with the previous
+composer using the same seed and tempo over sixteen bars. Techno and house compare
+v2 with frozen v1 synthesis over eight bars. Select opening, development or transition; the latter straddles the
 first contrast section. Both versions render all preceding bars before cropping,
 preserving effect and accent state. Their tempos may differ. A/B order alternates
 with the seed and labels remain hidden until revealed.
@@ -134,6 +167,9 @@ from cumulative counters while explicitly forcing garbage collection.
 
 ## Recorded validation — 2026-09-05
 
+The following records the first composer revision. Acid revision 2 has separate
+results below; the earlier 222-clip export must not be reused for this revision.
+
 - 292 unit tests passed, including frozen legacy/v1 snapshots, query fragmentation,
   distant seeking, swing/slide boundaries and independent lane controls.
 - For each genre, 998 of 999 adjacent pairs across 1,000 seeds differed in at least
@@ -156,6 +192,28 @@ from cumulative counters while explicitly forcing garbage collection.
   shared Strudel code 156.37 kB (55.74 kB gzip), and the lazy v2 player 20.53 kB
   (7.92 kB gzip). The eighteen asset payloads total 663,046 bytes when gzipped
   individually, including metadata.
+
+### Acid revision 2 validation
+
+- 296 unit tests passed, including snapshots of all three previous composer
+  scores, dense phrase constraints, instrument entrances, fills, independent
+  parameter cycles, seeking and mute isolation. Type checking and build passed.
+- Production-player audio probes show a 2.49× RMS difference between quiet/loud
+  unaccented notes, and clear spectral changes from cutoff, envelope depth and
+  filter decay. Filter decay is tested through brightness, not loudness: filter
+  resonance makes amplitude an unreliable proxy for an open filter.
+- Chromium passed all 18 browser cases; Firefox passed the seven composer/audio
+  cases. WebKit passed all eight composer cases three times (24 checks). One
+  earlier WebKit run timed out waiting for audio after restart; it did not recur
+  in sixteen instrumented restarts or those three UI repetitions. Its cause was
+  not established, and no speculative audio lifecycle change was made.
+- Sixteen A/B WAVs cover seeds 2, 3, 4 and 7, opening and transition, at matched
+  tempos and fixed master gain. The new clips have RMS 0.03700–0.11727 and a maximum
+  absolute PCM peak of 0.63541. Scanning all 42,143,368 samples found no saturation.
+  Artifacts and manifest: `/tmp/sottofondo-acid-phrasing` on andromeda.
+- A one-minute production acid smoke test passed, with no reported errors and
+  zero active source nodes three seconds after Stop. This does not complete the
+  outstanding 30-minute validation.
 
 ## Research references
 

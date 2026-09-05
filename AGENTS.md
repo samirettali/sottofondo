@@ -135,6 +135,10 @@ and each of them wins against a distant distractor.
 
 ## Composer v2
 
+- New acid uses genre revision 2 within `strudel-2`; revision 1 is frozen for
+  saved recipes and the authored studies. `src/composer/acid.ts` adds dense related
+  phrases, independently clocked timbral gestures and phrase-level drum conditions.
+  The 303's optional velocity defaults to 1 to preserve older audio behavior.
 - Keep `recipe()` as the frozen v1 recipe factory; use `currentRecipe()` for new
   compositions. V2 has `soundMode: auto`: the seed owns the palette. Explicit v1
   links retain their synthesis/sample selector and original event/audio mapping.
