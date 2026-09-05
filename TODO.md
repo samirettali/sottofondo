@@ -9,6 +9,8 @@
 - [x] Write three distinct acid studies and expose them in a simple listening preview
 - [x] Build an independent seeded composer around complete calls, replies and endings
 - [x] Compare written/generated studies, verify multiple seeds and export full arrangements
+- [x] Analyze three acid composition videos with Gemini 3.8 Flash agentic video; record
+      observed workflows, usage, and corrections in `docs/ACID-VIDEO-RESEARCH.md`
 - [ ] Listen to the new written studies and generated variants, then choose the production direction
 - [x] Add versioned acid phrasing based on the Acido sotto casa feedback: dense
       related riffs, step dynamics, independent filter/envelope cycles and drum replies

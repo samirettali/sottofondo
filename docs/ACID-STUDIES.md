@@ -11,6 +11,11 @@ three written compositions and a first seeded grammar for each. It does not
 import the old composition algorithms or change the main app's recipe version.
 The production composer remains revision 2 while the musical direction is
 evaluated. Acceptance of these studies is still pending human listening.
+Subsequent feedback disliked Crosscurrent's perceived tuning/timing and most of
+Afterglow, but liked a background sound, likely its bell. Pressure was recognized
+as close to the original. The following [video research](ACID-VIDEO-RESEARCH.md)
+also qualifies the rationale: note-level randomness is not inherently unsuccessful,
+and authored gestures remain one hypothesis rather than a settled requirement.
 
 ## Listen
 

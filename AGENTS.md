@@ -135,6 +135,10 @@ and each of them wins against a distant distractor.
 
 ## Composer v2
 
+- Gemini 3.8 Flash analyzed three acid-making videos with agentic video processing.
+  Switch Angel uses random pitches then a fixed ribbon; randomness alone is not
+  the established cause of weak output. Observations and corrected model claims:
+  `docs/ACID-VIDEO-RESEARCH.md`.
 - The user found ill-fitting notes even with the reference renderer and approved a
   composition-first approach. Three written acid studies and their independent
   gesture-based generator are at `/tools/acid-studies.html`; listening acceptance
