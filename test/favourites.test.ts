@@ -1,9 +1,11 @@
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
+import { recipe, validateRecipe } from "../src/recipe.ts";
 
 import {
   addFavourite,
   favouriteLabel,
+  favouriteRecipe,
   isFavourited,
   loadFavourites,
   removeFavourite,
@@ -104,4 +106,38 @@ test("storage that throws degrades to an empty list rather than breaking", () =>
 
 test("labels are readable and stable", () => {
   assert.equal(favouriteLabel({ genre: "acid", seed: 0xcafe1234, savedAt: 0 }), "acid cafe1234");
+});
+
+test("legacy and both new sound modes coexist for the same seed", () => {
+  addFavourite("acid", 1);
+  const synth = recipe("acid", 1);
+  const samples = { ...synth, soundMode: "samples" as const };
+  addFavourite("acid", 1, synth);
+  addFavourite("acid", 1, samples);
+  assert.equal(loadFavourites().length, 3);
+  assert.ok(isFavourited("acid", 1, recipe("acid", 1, true)));
+  assert.deepEqual(favouriteRecipe(loadFavourites()[0]!), samples);
+  removeFavourite("acid", 1, synth);
+  assert.equal(loadFavourites().length, 2);
+  assert.ok(isFavourited("acid", 1, samples));
+  assert.ok(isFavourited("acid", 1));
+});
+
+test("pre-rename bookmarks retain their legacy identity when saved again", () => {
+  const store = installStorage();
+  store.set("banger:favourites", JSON.stringify([{ genre: "house", seed: 7, savedAt: 1 }]));
+  const legacy = favouriteRecipe(loadFavourites()[0]!);
+  assert.equal(legacy.engineVersion, "legacy-1");
+  addFavourite("house", 7, legacy);
+  assert.equal(loadFavourites().length, 1);
+  assert.ok(store.has("sottofondo:favourites"));
+});
+
+test("an unsupported saved version is retained for explicit load failure", () => {
+  const store = installStorage();
+  store.set("sottofondo:favourites", JSON.stringify([{ genre: "acid", seed: 1, savedAt: 1,
+    recipe: { ...recipe("acid", 1), engineVersion: "strudel-99" } }]));
+  const favourites = loadFavourites();
+  assert.equal(favourites.length, 1);
+  assert.throws(() => validateRecipe(favouriteRecipe(favourites[0]!)), /not supported/);
 });

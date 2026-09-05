@@ -1,4 +1,5 @@
 import { formatSeed } from "../core/rng.ts";
+import { recipe, recipeKey, validateRecipe, type Recipe } from "../recipe.ts";
 
 /**
  * Saved seeds.
@@ -21,6 +22,13 @@ export interface Favourite {
   readonly seed: number;
   /** Epoch milliseconds, for ordering. */
   readonly savedAt: number;
+  readonly recipe?: Recipe;
+}
+
+export function favouriteRecipe(f: Favourite): Recipe {
+  if (f.recipe) return f.recipe;
+  try { return recipe(f.genre, f.seed, true); }
+  catch { return { genre: f.genre, seed: f.seed, engineVersion: "legacy-1", genreVersion: 0, soundMode: "synth" }; }
 }
 
 export function loadFavourites(): Favourite[] {
@@ -40,6 +48,14 @@ export function loadFavourites(): Favourite[] {
 function isFavourite(x: unknown): x is Favourite {
   if (typeof x !== "object" || x === null) return false;
   const f = x as Record<string, unknown>;
+  if (f["recipe"] !== undefined) {
+    const r = f["recipe"];
+    if (!r || typeof r !== "object") return false;
+    const value = r as Record<string, unknown>;
+    if (value["genre"] !== f["genre"] || value["seed"] !== f["seed"] ||
+        typeof value["engineVersion"] !== "string" || typeof value["genreVersion"] !== "number" ||
+        typeof value["soundMode"] !== "string") return false;
+  }
   return (
     typeof f["genre"] === "string" &&
     typeof f["seed"] === "number" &&
@@ -57,24 +73,31 @@ function save(list: readonly Favourite[]): void {
 }
 
 /** Add, or move to the front if it is already there. */
-export function addFavourite(genre: string, seed: number): Favourite[] {
-  const without = loadFavourites().filter((f) => !(f.genre === genre && f.seed === seed));
-  const list = [{ genre, seed, savedAt: Date.now() }, ...without].slice(0, LIMIT);
+export function addFavourite(genre: string, seed: number, r?: Recipe): Favourite[] {
+  if (r) validateRecipe(r);
+  const without = loadFavourites().filter((f) => !matches(f, genre, seed, r));
+  const list = [{ genre, seed, savedAt: Date.now(), ...(r ? { recipe: r } : {}) }, ...without].slice(0, LIMIT);
   save(list);
   return list;
 }
 
-export function removeFavourite(genre: string, seed: number): Favourite[] {
-  const list = loadFavourites().filter((f) => !(f.genre === genre && f.seed === seed));
+export function removeFavourite(genre: string, seed: number, r?: Recipe): Favourite[] {
+  const list = loadFavourites().filter((f) => !matches(f, genre, seed, r));
   save(list);
   return list;
 }
 
-export function isFavourited(genre: string, seed: number): boolean {
-  return loadFavourites().some((f) => f.genre === genre && f.seed === seed);
+export function isFavourited(genre: string, seed: number, r?: Recipe): boolean {
+  return loadFavourites().some((f) => matches(f, genre, seed, r));
+}
+
+function matches(f: Favourite, genre: string, seed: number, r?: Recipe): boolean {
+  if (f.genre !== genre || f.seed !== seed) return false;
+  if (!r) return !f.recipe;
+  try { return recipeKey(favouriteRecipe(f)) === recipeKey(r); } catch { return false; }
 }
 
 /** How a favourite reads in the list. */
 export function favouriteLabel(f: Favourite): string {
-  return `${f.genre} ${formatSeed(f.seed)}`;
+  return `${f.genre} ${formatSeed(f.seed)}${f.recipe?.engineVersion === "strudel-1" ? ` · ${f.recipe.soundMode}` : ""}`;
 }
