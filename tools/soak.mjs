@@ -9,12 +9,15 @@ const page = await browser.newPage();
 const errors = [];
 page.on("pageerror", error => errors.push(error.message));
 await page.addInitScript(() => {
-  window.soak = { started: 0, ended: 0 };
+  // Retain monitored wrappers until their lifecycle events arrive. A cumulative
+  // counter alone cannot distinguish a collected wrapper from a live source.
+  window.soak = { started: 0, ended: 0, active: new Set() };
   for (const Type of [OscillatorNode, AudioBufferSourceNode, ConstantSourceNode]) {
     const start = Type.prototype.start;
     Type.prototype.start = function (...args) {
-      this.addEventListener("ended", () => { window.soak.ended++; }, { once: true });
       const result = start.apply(this, args);
+      window.soak.active.add(this);
+      this.addEventListener("ended", () => { window.soak.ended++; window.soak.active.delete(this); }, { once: true });
       window.soak.started++;
       return result;
     };
@@ -30,9 +33,9 @@ try {
     if (minute) await page.waitForTimeout(60000);
     await cdp.send("HeapProfiler.collectGarbage");
     const memory = await cdp.send("Runtime.getHeapUsage");
-    const state = await page.evaluate(() => ({ ...window.soak,
+    const state = await page.evaluate(() => ({ active: window.soak.active.size,
       status: document.querySelector("main > p.status")?.textContent }));
-    const sample = { minute, active: state.started - state.ended, heap: memory.usedSize, status: state.status };
+    const sample = { minute, active: state.active, heap: memory.usedSize, status: state.status };
     samples.push(sample); console.log(JSON.stringify(sample));
     if (errors.length || sample.active > 128) throw new Error(JSON.stringify({ errors, sample }));
     if (!composer && minute < minutes && minute % 5 === 4) {
@@ -41,9 +44,10 @@ try {
   }
   await page.getByRole("button", { name: "play or stop" }).click();
   await page.waitForTimeout(3000);
-  const active = await page.evaluate(() => window.soak.started - window.soak.ended);
+  const active = await page.evaluate(() => window.soak.active.size);
   if (active !== 0) throw new Error(`${active} sources survived Stop`);
   const tail = samples.slice(5);
   if (tail.length && tail.at(-1).heap > tail[0].heap + 4 * 1024 * 1024) throw new Error("Heap grew by more than 4 MiB after warmup");
-  console.log(JSON.stringify({ passed: true, minutes, activeAfterStop: active, errors }));
+  console.log(JSON.stringify({ passed: true, minutes, activeAfterStop: active, errors,
+    maxActive:Math.max(...samples.map(s=>s.active)),heapAfterWarmup:tail[0]?.heap,heapFinal:samples.at(-1).heap }));
 } finally { await browser.close(); }
