@@ -56,11 +56,11 @@ test("legacy links stay legacy and genre selection moves to the new engine", asy
   await expect(page).toHaveURL(/e=legacy-1/);
   await expect(page.getByRole("combobox", { name: "sound mode" })).toHaveCount(0);
   await page.getByRole("radio", { name: "Deep house", exact: true }).click();
-  await expect(page).toHaveURL(/e=strudel-1/);
-  await expect(page.getByRole("combobox", { name: "sound mode" })).toBeVisible();
+  await expect(page).toHaveURL(/e=strudel-2/);
+  await expect(page.getByRole("combobox", { name: "sound mode" })).toHaveCount(0);
 });
 test("failed sample loading leaves synth active and can be retried", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?g=acid&s=1&e=strudel-1&v=1&m=synth");
   await page.getByRole("button", { name: "click to start" }).click();
   const select = page.getByRole("combobox", { name: "sound mode" });
   await expect(select).toBeVisible();
@@ -78,7 +78,8 @@ test("unsupported recipe is explicit and recoverable", async ({ page }) => {
   await page.getByRole("button", { name: "click to start" }).click();
   await expect(page.locator("main")).toContainText("not supported");
   await page.getByRole("button", { name: "Start a new composition" }).click();
-  await expect(page.getByRole("combobox", { name: "sound mode" })).toBeVisible();
+  await expect(page).toHaveURL(/e=strudel-2/);
+  await expect(page.getByRole("button", { name: "play or stop" })).toBeVisible();
 });
 test("a late sample download cannot overwrite a newer composition URL", async ({ page }) => {
   let release!: () => void;
@@ -95,7 +96,7 @@ test("a late sample download cannot overwrite a newer composition URL", async ({
   await expect(page).toHaveURL(/g=house/);
   release();
   await expect.poll(() => page.evaluate(() => (window as any).previousEngine.samplesReady)).toBe(true);
-  await expect(page).toHaveURL(/g=house.*m=synth/);
+  await expect(page).toHaveURL(/g=house.*m=auto/);
 });
 test("isolated listening renders produce three non-silent clips", async ({ page }) => {
   test.setTimeout(180000);

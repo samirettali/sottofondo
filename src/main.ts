@@ -1,6 +1,6 @@
 import { GENRES } from "./genre/index.ts";
 import { LegacyPlayer, type Player } from "./player.ts";
-import { readRecipe, recipe, recipeParams, validateRecipe, type Recipe } from "./recipe.ts";
+import { readRecipe, currentRecipe, recipeParams, validateRecipe, type Recipe } from "./recipe.ts";
 import { buildUi } from "./ui/ui.ts";
 
 const app = document.getElementById("app");
@@ -14,12 +14,16 @@ function writeUrl(r: Recipe): void {
   url.search = recipeParams(r).toString();
   history.replaceState(null, "", url);
 }
-function showError(error: unknown): void {
+function showError(error: unknown, retry?: Recipe): void {
   if (!app) return;
   app.textContent = String(error);
+  if (retry) {
+    const button = document.createElement("button"); button.textContent = "Retry composition";
+    button.onclick = () => void load(retry); app.append(button);
+  }
   const reset = document.createElement("button");
   reset.textContent = "Start a new composition";
-  reset.onclick = () => void load(recipe("acid", 1));
+  reset.onclick = () => void load(currentRecipe("acid", 1));
   app.append(reset);
 }
 async function load(r: Recipe): Promise<void> {
@@ -28,12 +32,18 @@ async function load(r: Recipe): Promise<void> {
   try {
     validateRecipe(r);
     if (!ctx || !app) return;
+    if (!ctx.audioWorklet) {
+      const port = location.port || "5173";
+      throw new Error(`Audio requires HTTPS or localhost. For andromeda, run ssh -N -L ${port}:127.0.0.1:${port} andromeda on your Mac, then open http://localhost:${port}.`);
+    }
     teardown?.(); teardown = null;
     engine?.dispose(); engine = null;
     app.textContent = "Loading instruments…";
     next = r.engineVersion === "legacy-1"
       ? new LegacyPlayer(ctx, r, GENRES[r.genre]!)
-      : new (await import("./strudel/engine.ts")).StrudelPlayer(ctx, r);
+      : r.engineVersion === "strudel-2"
+        ? new (await import("./composer/player.ts")).ComposerPlayer(ctx, r)
+        : new (await import("./strudel/engine.ts")).StrudelPlayer(ctx, r);
     await next.ready;
     if (token !== generation) { next.dispose(); return; }
     engine = next;
@@ -41,8 +51,8 @@ async function load(r: Recipe): Promise<void> {
     engine.start();
     if (import.meta.env.DEV) Object.assign(window, { engine });
     teardown = buildUi(app, engine, {
-      onGenre: id => void load(recipe(id, r.seed)),
-      onSeed: seed => void load({ ...recipe(r.genre, seed), soundMode: engine?.recipe.soundMode ?? "synth" }),
+      onGenre: id => void load(currentRecipe(id, r.seed)),
+      onSeed: seed => void load(currentRecipe(r.genre, seed)),
       onLoad: saved => void load(saved),
       onRecipe: changed => { if (token === generation) writeUrl(changed); },
     });
@@ -52,7 +62,7 @@ async function load(r: Recipe): Promise<void> {
       teardown?.(); teardown = null;
       if (engine !== next) engine?.dispose();
       engine = null;
-      showError(error);
+      showError(error, r);
     }
   }
 }

@@ -99,5 +99,5 @@ function matches(f: Favourite, genre: string, seed: number, r?: Recipe): boolean
 
 /** How a favourite reads in the list. */
 export function favouriteLabel(f: Favourite): string {
-  return `${f.genre} ${formatSeed(f.seed)}${f.recipe?.engineVersion === "strudel-1" ? ` · ${f.recipe.soundMode}` : ""}`;
+  return `${f.genre} ${formatSeed(f.seed)}${f.recipe?.engineVersion === "strudel-2" ? " · composed" : f.recipe?.engineVersion === "strudel-1" ? ` · ${f.recipe.soundMode}` : ""}`;
 }

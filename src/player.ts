@@ -11,6 +11,8 @@ export interface Player extends Pick<Engine, "genre" | "seed" | "seedLabel" | "t
   readonly scopeSize: number;
   readonly recipe: Recipe;
   readonly error?: string | null;
+  readonly identityLabel?: string;
+  readonly bassLabel?: string;
   start(): void;
   stop(): void;
   readScope(data: Float32Array<ArrayBuffer>): void;

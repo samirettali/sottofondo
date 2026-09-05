@@ -12,6 +12,7 @@
     "test:browser": "playwright test",
     "test:soak": "node tools/soak.mjs",
     "render:comparison": "node tools/render-suite.mjs",
+    "render:composer": "node tools/composer-suite.mjs",
     "deploy": "npm run build && rsync -a --delete dist/ andromeda:/home/samir/volumes/side-proxy/sottofondo-web/"
   },
   "devDependencies": {

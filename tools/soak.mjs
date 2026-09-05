@@ -1,6 +1,8 @@
 import { chromium } from "@playwright/test";
 
 const minutes = Number(process.env.SOAK_MINUTES ?? 30);
+const composer = process.env.SOAK_ENGINE === "strudel-2";
+const genre = process.env.SOAK_GENRE ?? "house";
 const browser = await chromium.launch({ headless: true,
   ...(process.env.CHROMIUM_BIN ? { executablePath: process.env.CHROMIUM_BIN } : {}) });
 const page = await browser.newPage();
@@ -21,9 +23,9 @@ await page.addInitScript(() => {
 const cdp = await page.context().newCDPSession(page);
 const samples = [];
 try {
-  await page.goto(`${process.env.SOAK_URL ?? "http://127.0.0.1:5199"}/?g=house&s=cafe1234&e=strudel-1&v=1&m=samples`);
+  await page.goto(`${process.env.SOAK_URL ?? "http://127.0.0.1:5199"}/?g=${genre}&s=cafe1234&e=${composer ? "strudel-2" : "strudel-1"}&v=1&m=${composer ? "auto" : "samples"}`);
   await page.getByRole("button", { name: "click to start" }).click();
-  await page.getByRole("combobox", { name: "sound mode" }).waitFor();
+  await page.getByRole("button", { name: "play or stop" }).waitFor();
   for (let minute = 0; minute <= minutes; minute++) {
     if (minute) await page.waitForTimeout(60000);
     await cdp.send("HeapProfiler.collectGarbage");
@@ -33,7 +35,7 @@ try {
     const sample = { minute, active: state.started - state.ended, heap: memory.usedSize, status: state.status };
     samples.push(sample); console.log(JSON.stringify(sample));
     if (errors.length || sample.active > 128) throw new Error(JSON.stringify({ errors, sample }));
-    if (minute < minutes && minute % 5 === 4) {
+    if (!composer && minute < minutes && minute % 5 === 4) {
       await page.getByRole("combobox", { name: "sound mode" }).selectOption(minute % 10 === 4 ? "synth" : "samples");
     }
   }

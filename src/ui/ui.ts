@@ -117,6 +117,7 @@ export function buildUi(root: HTMLElement, engine: Player, cb: UiCallbacks): () 
   renderFavourites(loadFavourites());
 
   const soundRow = el("label", "bar");
+  if (engine.identityLabel) soundRow.textContent = engine.identityLabel;
   if (engine.recipe.engineVersion === "strudel-1") {
     soundRow.append("Sound ");
     const select = document.createElement("select");
@@ -160,6 +161,7 @@ export function buildUi(root: HTMLElement, engine: Player, cb: UiCallbacks): () 
   // Synth and effect controls, only for the voices this genre actually has.
   const synth = engine.synthState;
   const tweaks = el("div", "globals");
+  if (engine.bassLabel) { const label = el("span", "status"); label.textContent = engine.bassLabel; tweaks.append(label); }
   if (synth.bass !== null) {
     // Cutoff on a logarithmic slider: an octave should be the same distance everywhere,
     // which a linear hertz control does not give.
@@ -244,7 +246,7 @@ export function buildUi(root: HTMLElement, engine: Player, cb: UiCallbacks): () 
   // it is the single most useful readout a polymetric sequencer can give, and there is
   // no other way to know a seven-step lane will not repeat for seven bars.
   const cycleBars = engine.compositeCycleBars;
-  const cycleNote = cycleBars > 1 ? ` · repeats every ${cycleBars} bars` : "";
+  const cycleNote = engine.recipe.engineVersion === "strudel-2" ? ` · ${cycleBars}-bar motifs` : cycleBars > 1 ? ` · repeats every ${cycleBars} bars` : "";
 
   const wave = new Float32Array(engine.scopeSize);
   let raf = 0;

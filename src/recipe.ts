@@ -1,11 +1,11 @@
 import { GENRES, defaultGenre } from "./genre/index.ts";
 import { formatSeed, parseSeed } from "./core/rng.ts";
 
-export type SoundMode = "synth" | "samples";
+export type SoundMode = "synth" | "samples" | "auto";
 export interface Recipe {
   readonly genre: string;
   readonly seed: number;
-  readonly engineVersion: "legacy-1" | "strudel-1";
+  readonly engineVersion: "legacy-1" | "strudel-1" | "strudel-2";
   readonly genreVersion: number;
   readonly soundMode: SoundMode;
 }
@@ -20,21 +20,30 @@ export function recipe(genre: string, seed: number, legacy = false): Recipe {
 export function validateRecipe(r: Recipe): Recipe {
   if (!Number.isInteger(r.seed) || r.seed < 0 || r.seed > 0xffffffff) throw new Error("Invalid recipe seed.");
   const expected = recipe(r.genre, r.seed, r.engineVersion === "legacy-1");
+  if (r.engineVersion === "strudel-2") {
+    if (!migrated(r.genre) || r.genreVersion !== 1 || r.soundMode !== "auto") throw new Error("This recipe version is not supported by this build.");
+    return r;
+  }
   if (r.engineVersion !== expected.engineVersion || r.genreVersion !== expected.genreVersion ||
       !["synth", "samples"].includes(r.soundMode) || (r.engineVersion === "legacy-1" && r.soundMode !== "synth")) {
     throw new Error("This recipe version is not supported by this build.");
   }
   return r;
 }
+export function currentRecipe(genre: string, seed: number): Recipe {
+  const old = recipe(genre, seed);
+  return migrated(genre) ? { ...old, engineVersion: "strudel-2", soundMode: "auto" } : old;
+}
 export function readRecipe(params: URLSearchParams): Recipe {
   const genre = params.get("g") ?? defaultGenre.id;
   const seed = parseSeed(params.get("s") ?? "1");
-  const base = recipe(genre, seed, params.get("e") === "legacy-1" ||
-    (!params.has("e") && (params.has("g") || params.has("s"))));
+  const base = params.get("e") === "strudel-2" || (!params.has("e") && !params.has("g") && !params.has("s"))
+    ? currentRecipe(genre, seed) : recipe(genre, seed, params.get("e") === "legacy-1" ||
+      (!params.has("e") && (params.has("g") || params.has("s"))));
   return validateRecipe({ ...base,
     engineVersion: (params.get("e") ?? base.engineVersion) as Recipe["engineVersion"],
     genreVersion: params.has("v") ? Number(params.get("v")) : base.genreVersion,
-    soundMode: (params.get("m") ?? "synth") as SoundMode });
+    soundMode: (params.get("m") ?? base.soundMode) as SoundMode });
 }
 export function recipeParams(r: Recipe): URLSearchParams {
   return new URLSearchParams({ g: r.genre, s: formatSeed(r.seed), e: r.engineVersion,

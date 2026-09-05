@@ -4,7 +4,7 @@ import { recipe, readRecipe, recipeParams, validateRecipe } from "../src/recipe.
 
 test("unversioned links keep the legacy engine; a fresh visit gets Strudel", () => {
   assert.equal(readRecipe(new URLSearchParams("g=acid&s=deadbeef")).engineVersion, "legacy-1");
-  assert.equal(readRecipe(new URLSearchParams()).engineVersion, "strudel-1");
+  assert.equal(readRecipe(new URLSearchParams()).engineVersion, "strudel-2");
   assert.equal(recipe("jazz", 1).engineVersion, "legacy-1");
 });
 test("versioned recipes preserve engine, genre, seed and sound mode", () => {

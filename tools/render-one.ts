@@ -1,6 +1,8 @@
 import { Engine } from "../src/app.ts";
 import { GENRES } from "../src/genre/index.ts";
 import { readRecipe } from "../src/recipe.ts";
+import { createSongPlan, type ElectronicGenre } from "../src/composer/plan.ts";
+import { studyPlan } from "../src/composer/studies.ts";
 import { wav } from "./wav.ts";
 
 /** Each render has a fresh realm: Superdough's node pools are process-global. */
@@ -11,7 +13,8 @@ async function render(): Promise<void> {
   const begin = Number(params.get("begin") ?? 0);
   const end = Number(params.get("end") ?? 8);
   const rate = 48000;
-  const secondsPerBar = 240 / g.clock.bpm.default;
+  const plan = r.engineVersion === "strudel-2" ? params.has("study") ? studyPlan(params.get("study")!) : createSongPlan(r.genre as ElectronicGenre,r.seed) : undefined;
+  const secondsPerBar = 240 / (plan?.bpm ?? g.clock.bpm.default);
   const ctx = new OfflineAudioContext(2, Math.ceil((end * secondsPerBar + 2) * rate), rate);
   let rendering: Promise<AudioBuffer> | undefined;
   // Suspend at bar boundaries so future worklets do not process minutes of silence.
@@ -26,7 +29,12 @@ async function render(): Promise<void> {
     await paused;
   };
   let dispose = () => {};
-  if (r.engineVersion === "strudel-1") {
+  if (r.engineVersion === "strudel-2") {
+    const { ComposerPlayer } = await import("../src/composer/player.ts");
+    const engine = new ComposerPlayer(ctx,r,plan);
+    await engine.scheduleRender(0,end,beforeBar);
+    dispose = () => engine.dispose();
+  } else if (r.engineVersion === "strudel-1") {
     const { StrudelPlayer } = await import("../src/strudel/engine.ts");
     const engine = new StrudelPlayer(ctx, r);
     await engine.scheduleRender(0, end, beforeBar);
