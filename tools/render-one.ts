@@ -1,0 +1,62 @@
+import { Engine } from "../src/app.ts";
+import { GENRES } from "../src/genre/index.ts";
+import { readRecipe } from "../src/recipe.ts";
+import { wav } from "./wav.ts";
+
+/** Each render has a fresh realm: Superdough's node pools are process-global. */
+async function render(): Promise<void> {
+  const params = new URLSearchParams(location.search);
+  const r = readRecipe(params);
+  const g = GENRES[r.genre]!;
+  const begin = Number(params.get("begin") ?? 0);
+  const end = Number(params.get("end") ?? 8);
+  const rate = 48000;
+  const secondsPerBar = 240 / g.clock.bpm.default;
+  const ctx = new OfflineAudioContext(2, Math.ceil((end * secondsPerBar + 2) * rate), rate);
+  let rendering: Promise<AudioBuffer> | undefined;
+  // Suspend at bar boundaries so future worklets do not process minutes of silence.
+  // The same context keeps all preceding automation, accent charge and effect tails.
+  const beforeBar = async (bar: number): Promise<void> => {
+    // Firefox does not expose OfflineAudioContext.suspend; schedule ahead there.
+    if (bar === 0 || typeof ctx.suspend !== "function") return;
+    // suspend() quantises to a render quantum; leave two quanta of scheduling lead.
+    const paused = ctx.suspend(bar * secondsPerBar - 256 / rate);
+    if (!rendering) rendering = ctx.startRendering();
+    else await ctx.resume();
+    await paused;
+  };
+  let dispose = () => {};
+  if (r.engineVersion === "strudel-1") {
+    const { StrudelPlayer } = await import("../src/strudel/engine.ts");
+    const engine = new StrudelPlayer(ctx, r);
+    await engine.scheduleRender(0, end, beforeBar);
+    dispose = () => engine.dispose();
+  } else {
+    let now = 0;
+    let tick = () => {};
+    const engine = new Engine(ctx, g, r.seed, { now: () => now, ticker: { start(cb) { tick = cb; }, stop() {} } });
+    await engine.ready;
+    engine.start();
+    for (let bar = 0; bar < end; bar++) {
+      await beforeBar(bar);
+      while (now < (bar + 1) * secondsPerBar) { now += 0.05; tick(); }
+    }
+    engine.clock.stop();
+    dispose = () => engine.dispose();
+  }
+  if (rendering) await ctx.resume();
+  const rendered = await (rendering ?? ctx.startRendering());
+  const offset = Math.round((begin * secondsPerBar + (r.engineVersion === "legacy-1" ? 0.05 : 0)) * rate);
+  const length = Math.round((end - begin) * secondsPerBar * rate);
+  const clip = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: rate });
+  let peak = 0; let squares = 0;
+  for (let channel = 0; channel < 2; channel++) {
+    const data = rendered.getChannelData(channel).subarray(offset, offset + length);
+    clip.copyToChannel(data, channel);
+    for (const value of data) { peak = Math.max(peak, Math.abs(value)); squares += value * value; }
+  }
+  const bytes = await wav(clip).arrayBuffer();
+  parent.postMessage({ type: "rendered", bytes, peak, rms: Math.sqrt(squares / (2 * length)) }, location.origin, [bytes]);
+  dispose();
+}
+void render().catch(error => parent.postMessage({ type: "render-error", message: String(error) }, location.origin));

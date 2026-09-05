@@ -45,12 +45,13 @@ export function workerTicker(): Ticker {
       }
     };
   `;
-  const url = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
   let worker: Worker | null = null;
   return {
     start(onTick, intervalMs) {
       this.stop();
+      const url = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
       worker = new Worker(url);
+      URL.revokeObjectURL(url);
       worker.onmessage = () => onTick();
       worker.postMessage({ interval: intervalMs });
     },

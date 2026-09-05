@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sottofondo listening comparison</title>
+<style>body{font:16px system-ui;max-width:760px;margin:3rem auto;padding:0 1rem;background:#17171c;color:#ddd}label,button{margin-right:1rem}select,button{font:inherit}article{margin:2rem 0}audio{width:100%}iframe{display:none}a{color:inherit}</style>
+<h1>Listening comparison</h1>
+<p>Same seed and section. Fixed gain staging; no clip normalisation. Listen before revealing the versions.</p>
+<label>Genre <select id="genre"><option>acid</option><option>techno</option><option>house</option></select></label>
+<label>Seed <select id="seed"><option>1</option><option>2</option><option>cafe1234</option></select></label>
+<label>Section <select id="section"><option>opening</option><option>development</option><option>transition</option></select></label>
+<p><button id="render">Render comparison</button><button id="reveal">Reveal versions</button></p>
+<p id="status" role="status"></p><main id="clips"></main>
+<script type="module" src="/tools/listen.ts"></script></html>

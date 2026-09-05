@@ -1,8 +1,10 @@
-import type { Engine } from "../app.ts";
+import type { Player } from "../player.ts";
+import type { Recipe, SoundMode } from "../recipe.ts";
 import { genreList } from "../genre/index.ts";
 import {
   addFavourite,
   favouriteLabel,
+  favouriteRecipe,
   isFavourited,
   loadFavourites,
   removeFavourite,
@@ -24,10 +26,11 @@ export interface UiCallbacks {
   onGenre(id: string): void;
   onSeed(seed: number): void;
   /** Load a saved seed, which may belong to a different genre. */
-  onLoad(genre: string, seed: number): void;
+  onLoad(recipe: Recipe): void;
+  onRecipe(recipe: Recipe): void;
 }
 
-export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () => void {
+export function buildUi(root: HTMLElement, engine: Player, cb: UiCallbacks): () => void {
   root.textContent = "";
   root.classList.add("rack");
 
@@ -56,8 +59,8 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
     cb.onSeed((engine.seed + 1) >>> 0);
   });
 
-  const transport = button(engine.clock.isRunning ? "stop" : "play", "play or stop", () => {
-    if (engine.clock.isRunning) {
+  const transport = button(engine.isRunning ? "stop" : "play", "play or stop", () => {
+    if (engine.isRunning) {
       engine.stop();
       transport.textContent = "play";
     } else {
@@ -74,10 +77,10 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
   });
 
   const star = button("", "save this seed", () => {
-    const saved = isFavourited(engine.genre.id, engine.seed);
+    const saved = isFavourited(engine.genre.id, engine.seed, engine.recipe);
     const list = saved
-      ? removeFavourite(engine.genre.id, engine.seed)
-      : addFavourite(engine.genre.id, engine.seed);
+      ? removeFavourite(engine.genre.id, engine.seed, engine.recipe)
+      : addFavourite(engine.genre.id, engine.seed, engine.recipe);
     renderFavourites(list);
     markStar(!saved);
   });
@@ -85,7 +88,7 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
     star.textContent = saved ? "★" : "☆";
     star.setAttribute("aria-pressed", String(saved));
   };
-  markStar(isFavourited(engine.genre.id, engine.seed));
+  markStar(isFavourited(engine.genre.id, engine.seed, engine.recipe));
 
   header.append(transport, seed, reroll, copy, star);
 
@@ -100,11 +103,11 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
     for (const f of list) {
       const chip = el("span", "chip");
       const load = button(favouriteLabel(f), `load ${favouriteLabel(f)}`, () =>
-        cb.onLoad(f.genre, f.seed),
+        cb.onLoad(favouriteRecipe(f)),
       );
       const drop = button("×", `forget ${favouriteLabel(f)}`, () => {
-        renderFavourites(removeFavourite(f.genre, f.seed));
-        markStar(isFavourited(engine.genre.id, engine.seed));
+        renderFavourites(removeFavourite(f.genre, f.seed, f.recipe));
+        markStar(isFavourited(engine.genre.id, engine.seed, engine.recipe));
       });
       drop.classList.add("drop");
       chip.append(load, drop);
@@ -112,6 +115,32 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
     }
   };
   renderFavourites(loadFavourites());
+
+  const soundRow = el("label", "bar");
+  if (engine.recipe.engineVersion === "strudel-1") {
+    soundRow.append("Sound ");
+    const select = document.createElement("select");
+    select.setAttribute("aria-label", "sound mode");
+    for (const [value, label] of [["synth", "Synth"], ["samples", "Samples + synth"]]) {
+      const option = document.createElement("option");
+      option.value = value!; option.textContent = label!; select.append(option);
+    }
+    select.value = engine.recipe.soundMode;
+    const message = el("span", "status");
+    message.setAttribute("role", "status");
+    select.addEventListener("change", () => {
+      select.disabled = true; message.textContent = "Loading…";
+      void engine.setSoundMode(select.value as SoundMode).then(() => {
+        cb.onRecipe(engine.recipe);
+        markStar(isFavourited(engine.genre.id, engine.seed, engine.recipe));
+        message.textContent = "";
+      }).catch((error: unknown) => {
+        select.value = engine.recipe.soundMode;
+        message.textContent = `${String(error)} Select again to retry.`;
+      }).finally(() => { select.disabled = false; });
+    });
+    soundRow.append(select, message);
+  }
 
   const globals = el("div", "globals");
   const bpm = slider("bpm", engine.genre.clock.bpm.min, engine.genre.clock.bpm.max, 1, engine.tempo, (v) => {
@@ -207,7 +236,7 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
 
   const status = el("p", "status");
 
-  root.append(header, genre, saved, globals, lanes, energyBar, tweaks, scope, status);
+  root.append(header, genre, saved, soundRow, globals, lanes, energyBar, tweaks, scope, status);
 
   // Drawing runs on requestAnimationFrame and reads the engine; it never writes to it,
   // and it never touches the audio clock for anything but display.
@@ -217,7 +246,7 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
   const cycleBars = engine.compositeCycleBars;
   const cycleNote = cycleBars > 1 ? ` · repeats every ${cycleBars} bars` : "";
 
-  const wave = new Float32Array(engine.master.analyser.fftSize);
+  const wave = new Float32Array(engine.scopeSize);
   let raf = 0;
   const draw = () => {
     const bar = engine.currentBar;
@@ -231,15 +260,16 @@ export function buildUi(root: HTMLElement, engine: Engine, cb: UiCallbacks): () 
       drawSteps(lv.canvas, view.steps, step, view.autoMuted || view.userMuted);
     });
 
-    engine.master.analyser.getFloatTimeDomainData(wave);
+    engine.readScope(wave);
     drawScope(scope, wave);
 
     const section = engine.sectionAt(bar);
     energyFill.style.width = `${(section.energy * 100).toFixed(1)}%`;
     const where = section.bars > 0 ? ` ${section.bar + 1}/${section.bars}` : "";
     status.textContent =
-      `${engine.genre.name} · seed ${formatSeed(engine.seed)} · bar ${bar + 1}` +
-      ` · ${section.name}${where} · energy ${section.energy.toFixed(2)}${cycleNote}`;
+      engine.error ?? (`${engine.genre.name} · seed ${formatSeed(engine.seed)} · bar ${bar + 1}` +
+      ` · ${section.name}${where} · energy ${section.energy.toFixed(2)}${cycleNote}`);
+    transport.textContent = engine.isRunning ? "stop" : "play";
     raf = requestAnimationFrame(draw);
   };
   raf = requestAnimationFrame(draw);

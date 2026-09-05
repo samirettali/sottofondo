@@ -40,6 +40,7 @@ export interface Delay {
   readonly input: GainNode;
   setTempo(bpm: number, at?: number): void;
   set(options: Partial<DelayOptions>, at?: number): void;
+  dispose(): void;
 }
 
 export function createDelay(
@@ -75,6 +76,10 @@ export function createDelay(
 
   return {
     input,
+
+    dispose() {
+      input.disconnect(); delay.disconnect(); damp.disconnect(); feedback.disconnect(); wet.disconnect();
+    },
 
     setTempo(newBpm, at = ctx.currentTime) {
       // delayTime is a-rate, so moving it resamples the buffer and shifts pitch. A short
