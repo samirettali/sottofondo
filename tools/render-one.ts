@@ -5,6 +5,7 @@ import { createSongPlan, type ElectronicGenre } from "../src/composer/plan.ts";
 import { studyPlan } from "../src/composer/studies.ts";
 import { wav } from "./wav.ts";
 import { REFERENCE_BPM, VARIANTS, type ReferenceVariant } from "./acid-reference-score.ts";
+import { createStudy, STUDIES, studyPattern, type StudyId } from "./acid-studies-score.ts";
 
 /** Each render has a fresh realm: Superdough's node pools are process-global. */
 async function render(): Promise<void> {
@@ -12,12 +13,17 @@ async function render(): Promise<void> {
   const r = readRecipe(params);
   const reference = params.get("reference");
   if (reference && !Object.hasOwn(VARIANTS, reference)) throw new Error("Unknown reference take");
+  const sketchId = params.get("sketch");
+  if (sketchId && !Object.hasOwn(STUDIES, sketchId)) throw new Error("Unknown acid study");
+  if (sketchId && params.has("take") && !["written","generated"].includes(params.get("take")!)) throw new Error("Unknown study version");
+  if (sketchId && reference) throw new Error("Choose either a study or a reference");
+  const sketch = sketchId ? createStudy(sketchId as StudyId, params.get("take") === "generated" ? "generated" : "written", r.seed) : undefined;
   const g = GENRES[r.genre]!;
   const begin = Number(params.get("begin") ?? 0);
   const end = Number(params.get("end") ?? 8);
   const rate = 48000;
   const plan = r.engineVersion === "strudel-2" ? params.has("study") ? studyPlan(params.get("study")!) : createSongPlan(r.genre as ElectronicGenre,r.seed,r.genreVersion) : undefined;
-  const secondsPerBar = 240 / (reference ? REFERENCE_BPM : plan?.bpm ?? g.clock.bpm.default);
+  const secondsPerBar = 240 / (sketch?.bpm ?? (reference ? REFERENCE_BPM : plan?.bpm ?? g.clock.bpm.default));
   const ctx = new OfflineAudioContext(2, Math.ceil((end * secondsPerBar + 2) * rate), rate);
   let rendering: Promise<AudioBuffer> | undefined;
   // Suspend at bar boundaries so future worklets do not process minutes of silence.
@@ -32,9 +38,10 @@ async function render(): Promise<void> {
     await paused;
   };
   let dispose = () => {};
-  if (reference) {
+  if (sketch || reference) {
     const { ReferencePlayer } = await import("./acid-reference-player.ts");
-    const engine = new ReferencePlayer(ctx, reference as ReferenceVariant, r.seed);
+    const engine = new ReferencePlayer(ctx, (reference ?? "original") as ReferenceVariant, r.seed,
+      sketch ? { bpm: sketch.bpm, pattern: studyPattern(sketch) } : undefined);
     await engine.scheduleRender(end, beforeBar);
     dispose = () => engine.dispose();
   } else if (r.engineVersion === "strudel-2") {
@@ -62,7 +69,7 @@ async function render(): Promise<void> {
   }
   if (rendering) await ctx.resume();
   const rendered = await (rendering ?? ctx.startRendering());
-  const offset = Math.round((begin * secondsPerBar + (!reference && r.engineVersion === "legacy-1" ? 0.05 : 0)) * rate);
+  const offset = Math.round((begin * secondsPerBar + (!sketch && !reference && r.engineVersion === "legacy-1" ? 0.05 : 0)) * rate);
   const length = Math.round((end - begin) * secondsPerBar * rate);
   const clip = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: rate });
   let peak = 0; let squares = 0;

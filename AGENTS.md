@@ -135,6 +135,10 @@ and each of them wins against a distant distractor.
 
 ## Composer v2
 
+- The user found ill-fitting notes even with the reference renderer and approved a
+  composition-first approach. Three written acid studies and their independent
+  gesture-based generator are at `/tools/acid-studies.html`; listening acceptance
+  is pending. Rules, preview scope and next decision: `docs/ACID-STUDIES.md`.
 - The user confirmed the explicitly selected Original take in `/tools/acid-reference.html`
   sounds like the handwritten Strudel piece. Diagnose composition separately from
   sound there; scope, sample provenance and results: `docs/ACID-REFERENCE.md`.

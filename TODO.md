@@ -5,7 +5,11 @@
 - [x] Restore the handwritten acid reference and verify its score against the live REPL
 - [x] Isolate phrase/filter/voice changes in a listening preview
 - [x] Confirm the explicitly selected Original take with the user
-- [ ] Evaluate the generated phrase on the reference sound before revising the composer again
+- [x] Evaluate the generated phrase on the reference sound: the user found ill-fitting notes
+- [x] Write three distinct acid studies and expose them in a simple listening preview
+- [x] Build an independent seeded composer around complete calls, replies and endings
+- [x] Compare written/generated studies, verify multiple seeds and export full arrangements
+- [ ] Listen to the new written studies and generated variants, then choose the production direction
 - [x] Add versioned acid phrasing based on the Acido sotto casa feedback: dense
       related riffs, step dynamics, independent filter/envelope cycles and drum replies
 - [x] Compare the new acid revision against the previous composer at identical tempo

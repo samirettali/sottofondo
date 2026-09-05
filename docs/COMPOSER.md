@@ -3,6 +3,8 @@
 The handwritten acid reference and controlled listening comparisons are documented
 in [Acido sotto casa](ACID-REFERENCE.md). The user still preferred that piece after
 acid revision 2; automated validation below does not establish musical acceptance.
+The next composition approach is the development-only [Acid studies](ACID-STUDIES.md)
+preview, with three authored pieces and gesture-based seeded variations.
 
 New acid techno, minimal techno and deep house pieces use `strudel-2`. A seed
 selects a musical identity, including instruments, before any bars are generated.

@@ -42,9 +42,10 @@ auditions, not a new default composer. The small-edit mode establishes whether
 bounded changes preserve the reference; it does not satisfy the full desired
 diversity between generated songs by itself.
 
-The next listening question, after confirming Original, is whether Generated
-phrase still sounds worse. That separates the current phrase algorithm from the
-sound/mix changes before making another production revision.
+The user subsequently reported that some notes in Generated phrase did not fit.
+This isolated composition as a problem as well as the sound/mix differences.
+The agreed next approach is documented in [Acid studies](ACID-STUDIES.md): three
+authored pieces and a separate generator that composes complete musical gestures.
 
 ## Samples and validation
 

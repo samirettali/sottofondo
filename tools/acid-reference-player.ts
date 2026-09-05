@@ -3,6 +3,9 @@ import { StereoOutput } from "../src/strudel/output.ts";
 import { Transport } from "../src/strudel/transport.ts";
 import { createThreeOh, midiToFrequency, type ThreeOh } from "../src/audio/threeoh.ts";
 import { REFERENCE_BPM, referencePattern, type ReferenceEvent, type ReferenceVariant } from "./acid-reference-score.ts";
+import type { Pattern } from "@strudel/core";
+
+export interface AuditionScore { bpm: number; pattern: Pattern<ReferenceEvent>; }
 
 // The five index-zero files resolved by Strudel's RolandTR909 bank. Preview only:
 // do not silently substitute our CC0 kit or vendor an unlicensed sample bank.
@@ -36,15 +39,17 @@ export class ReferencePlayer {
   private readonly output: StereoOutput;
   private readonly volume: GainNode;
   private bass: ThreeOh | undefined;
+  private readonly score: AuditionScore;
   private disposed = false;
   error: string | null = null;
 
-  constructor(private readonly ctx: BaseAudioContext, private readonly variant: ReferenceVariant, private readonly seed: number) {
+  constructor(private readonly ctx: BaseAudioContext, private readonly variant: ReferenceVariant, seed: number, score?: AuditionScore) {
+    this.score = score ?? { bpm: REFERENCE_BPM, pattern: referencePattern(variant, seed) };
     this.volume = ctx.createGain(); this.volume.gain.value = .35;
     this.analyser = ctx.createAnalyser(); this.analyser.fftSize = 2048;
     this.volume.connect(this.analyser); this.volume.connect(ctx.destination);
     this.output = new StereoOutput(ctx, this.volume);
-    this.transport = new Transport(() => ctx.currentTime, REFERENCE_BPM, referencePattern(variant, seed),
+    this.transport = new Transport(() => ctx.currentTime, this.score.bpm, this.score.pattern,
       async (hap, time, duration, cps) => this.play(hap.value as ReferenceEvent, time, duration, cps),
       error => { this.error = String(error); this.stop(); });
     this.ready = this.init();
@@ -87,7 +92,7 @@ export class ReferencePlayer {
   }
   async scheduleRender(end: number, beforeBar?: (bar: number) => Promise<void>): Promise<void> {
     await this.ready; this.createBass();
-    const pattern = referencePattern(this.variant, this.seed), cps = REFERENCE_BPM / 240;
+    const pattern = this.score.pattern, cps = this.score.bpm / 240;
     for (let bar = 0; bar < end; bar++) {
       await beforeBar?.(bar);
       for (const hap of pattern.queryArc(bar, bar + 1)) if (hap.hasOnset()) await this.play(hap.value, +hap.whole.begin / cps, +hap.duration / cps, cps);
