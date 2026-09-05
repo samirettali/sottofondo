@@ -4,23 +4,29 @@
 <style>
 body{font:16px/1.5 system-ui;max-width:760px;margin:3rem auto;padding:0 1rem;background:#17171c;color:#ddd}
 select,input,button{font:inherit;max-width:100%;padding:.35rem .5rem}button{cursor:pointer}input{width:7rem}
+input[type=checkbox]{width:1.25rem;height:1.25rem;margin:.5rem 0}
 .controls{display:flex;flex-wrap:wrap;align-items:end;gap:1rem;margin:1.25rem 0}label{display:grid;gap:.25rem}
 article{margin:2rem 0}audio{width:100%}iframe{display:none}a{color:inherit}small{color:#aaa}
 #play{min-width:8rem}#status{min-height:3rem}button:disabled{cursor:default}details{margin:1.5rem 0}
 </style>
 <h1>Acid studies</h1>
-<p>Three written pieces, each with its own sound and musical vocabulary. Start with Written, then listen to a generated variation of the same piece.</p>
+<p>Compare the same acid riff before and after shaping its accents, note lengths and filter movement. Try the bell reply separately.</p>
 <div class="controls">
-  <label>Piece <select id="study"><option value="pressure">Pressure</option><option value="crosscurrent">Crosscurrent</option><option value="afterglow">Afterglow</option><option value="auto">Seed chooses the piece</option></select></label>
+  <label>Piece <select id="study"><option value="pressure">Pressure</option><option value="reference">Acido sotto casa</option><option value="crosscurrent">Crosscurrent</option><option value="afterglow">Afterglow</option><option value="auto">Seed chooses the piece</option></select></label>
   <label>Version <select id="take"><option value="written">Written</option><option value="generated">Generated</option></select></label>
   <label>Seed (hex) <input id="seed" value="2" disabled></label>
 </div>
+<div class="controls">
+  <label>Execution <select id="performance"><option value="baseline">Before</option><option value="shaped">After — shaped accents and filter</option></select></label>
+  <label><span>Bell reply</span><input id="bell" type="checkbox" disabled></label>
+</div>
+<p><small id="performance-help">Shaped execution is available for Pressure and Acido sotto casa.</small></p>
 <h2 id="title">Pressure</h2><p id="description"></p>
 <div class="controls"><button id="play">Play</button><button id="next">Next seed</button><button id="link">Copy link</button></div>
 <p id="status" role="status">Ready. Drum samples download on first play.</p>
 <p><small>Each piece develops over 32 bars, about one minute. Switching restarts at bar 1.</small></p>
 <details><summary>Compare recordings</summary>
-  <p>Render the written and generated versions at the same tempo and output level. Listen before revealing which is which.</p>
+  <p id="compare-help">Render the written and generated versions at the same tempo and output level. Listen before revealing which is which.</p>
   <button id="compare">Render A/B</button> <button id="reveal" disabled>Reveal takes</button>
   <div id="clips"></div>
 </details>

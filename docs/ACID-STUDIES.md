@@ -44,9 +44,60 @@ to Generated and increments the seed; if playback is running, it restarts at bar
 identities. Copy link preserves the piece, version and seed. This is a preview
 link, not a permanent production recipe format.
 
-Compare recordings exports Written and Generated as anonymous A/B clips. Both
-span the complete 32-bar arrangement at the study's tempo, with the same fixed
-output gain and no normalisation. Reveal takes identifies them afterwards.
+Compare recordings exports anonymous A/B clips. Pressure and Acido sotto casa
+compare Before/After execution of the selected score; the other studies compare
+Written/Generated. Both recordings span 32 bars at the same tempo and fixed
+output gain, without normalisation. Reveal takes identifies them afterwards.
+
+## Execution comparison
+
+The video research motivates a separate performance layer on the existing
+motifs. Open this link to start with the written Pressure score and new execution:
+
+`http://localhost:5196/tools/acid-studies.html?piece=pressure&take=written&s=2&performance=shaped`
+
+- **Execution: Before / After** compares the existing score with coordinated
+  articulation and filter movement. Switching restarts at bar 1.
+- **Bell reply** adds the FM bell from Afterglow, transposed to E. It answers
+  after an acid gap, at most once every eight bars in the groove and return.
+  Its echo can continue underneath the next phrase. The checkbox starts off.
+- **Piece: Acido sotto casa** applies the same experiment to the exact reference.
+  Its Before take retains the original sixteen-bar arrangement, repeated twice
+  for a 32-bar recording. The generated-version and seed controls are disabled.
+- **Version: Generated / Next seed** applies the performance to Pressure's
+  existing seeded motifs. The reference and written Pressure stay seed-independent.
+
+`tools/acid-performance-score.ts` transforms complete score events. Without the
+bell, pitches, onsets and complete drum events are unchanged. Accented notes
+have longer gates and amplitude/filter decays, plus a larger filter envelope;
+quiet notes shorten together. Gates respect the next onset. Three authored
+sixteen-bar curves vary the cutoff gradually between successive onsets, with
+section-dependent opening, withdrawal and return for Pressure. The generated
+seed selects a curve through an independent integer hash. There is no extra
+per-step random draw or timing jitter. The bell only removes the acid onsets in
+its answering half-bar; surviving notes retain their articulation.
+
+These are audition values, not measurements extracted from the tutorials.
+The oscillator and ladder filter remain the reference renderer. Its envelope
+moves within each note; the slower curve is sampled at note onsets. This does
+not implement connected 303 slides, which need a continuous voice and would
+also change the renderer being compared. The original reference, three study
+generators and production recipes remain available unchanged.
+
+This experiment adds musical execution to existing motifs. It does not yet
+expand the finite vocabulary into a broadly diverse production generator, and
+technical audio checks cannot establish a listening preference.
+
+Verification: all 309 unit tests, the production build and the strict tools
+type check pass. New tests compare pitch/onset and complete drum events across
+66 sources, check bell isolation, and query fragmented spans at bar 600. Eight
+Chromium scenarios pass, including live switching and full 32-bar Before/After
+exports for written Pressure, generated Pressure and the original reference.
+The bell exports are checked for nonzero PCM differences before its entrance,
+silence and clipping; no loudness normalisation is applied. One browser test
+was rerun after a development reload interrupted its recording. Written
+Pressure measured RMS 0.07065 in both takes, with peaks 0.376 and 0.385.
+The controls were also checked at 390px without horizontal overflow.
 
 ## Composition rules
 

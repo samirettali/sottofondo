@@ -135,6 +135,11 @@ and each of them wins against a distant distractor.
 
 ## Composer v2
 
+- Pressure and the faithful reference have an opt-in execution comparison in
+  `/tools/acid-studies.html`: `performance=shaped` coordinates gates, accents and
+  filter envelopes; `bell=1` reserves occasional answering gaps. Baseline scores
+  and production recipes stay frozen. Scope and listening instructions:
+  `docs/ACID-STUDIES.md#execution-comparison`.
 - Gemini 3.8 Flash analyzed three acid-making videos with agentic video processing.
   Switch Angel uses random pitches then a fixed ribbon; randomness alone is not
   the established cause of weak output. Observations and corrected model claims:

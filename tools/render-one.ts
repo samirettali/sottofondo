@@ -6,6 +6,7 @@ import { studyPlan } from "../src/composer/studies.ts";
 import { wav } from "./wav.ts";
 import { REFERENCE_BPM, VARIANTS, type ReferenceVariant } from "./acid-reference-score.ts";
 import { createStudy, STUDIES, studyPattern, type StudyId } from "./acid-studies-score.ts";
+import { performedPattern } from "./acid-performance-score.ts";
 
 /** Each render has a fresh realm: Superdough's node pools are process-global. */
 async function render(): Promise<void> {
@@ -18,6 +19,9 @@ async function render(): Promise<void> {
   if (sketchId && params.has("take") && !["written","generated"].includes(params.get("take")!)) throw new Error("Unknown study version");
   if (sketchId && reference) throw new Error("Choose either a study or a reference");
   const sketch = sketchId ? createStudy(sketchId as StudyId, params.get("take") === "generated" ? "generated" : "written", r.seed) : undefined;
+  const shaped = params.get("performance") === "shaped";
+  if (params.has("performance") && !shaped) throw new Error("Unknown performance version");
+  if (shaped && reference !== "original" && sketch?.id !== "pressure") throw new Error("Choose Pressure or the original reference for shaped execution");
   const g = GENRES[r.genre]!;
   const begin = Number(params.get("begin") ?? 0);
   const end = Number(params.get("end") ?? 8);
@@ -41,7 +45,8 @@ async function render(): Promise<void> {
   if (sketch || reference) {
     const { ReferencePlayer } = await import("./acid-reference-player.ts");
     const engine = new ReferencePlayer(ctx, (reference ?? "original") as ReferenceVariant, r.seed,
-      sketch ? { bpm: sketch.bpm, pattern: studyPattern(sketch) } : undefined);
+      shaped ? { bpm: sketch?.bpm ?? REFERENCE_BPM, pattern: performedPattern(sketch ?? "reference", params.get("bell") === "1") }
+        : sketch ? { bpm: sketch.bpm, pattern: studyPattern(sketch) } : undefined);
     await engine.scheduleRender(end, beforeBar);
     dispose = () => engine.dispose();
   } else if (r.engineVersion === "strudel-2") {

@@ -11,6 +11,8 @@
 - [x] Compare written/generated studies, verify multiple seeds and export full arrangements
 - [x] Analyze three acid composition videos with Gemini 3.8 Flash agentic video; record
       observed workflows, usage, and corrections in `docs/ACID-VIDEO-RESEARCH.md`
+- [x] Add a Before/After execution comparison on Pressure and the faithful reference:
+      coordinated accents, gates and filter movement, plus optional FM bell replies
 - [ ] Listen to the new written studies and generated variants, then choose the production direction
 - [x] Add versioned acid phrasing based on the Acido sotto casa feedback: dense
       related riffs, step dynamics, independent filter/envelope cycles and drum replies
