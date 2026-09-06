@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Written pieces — sottofondo</title>
+<style>
+:root{color-scheme:dark;--bg:#17171c;--surface:#202027;--ink:#e7e7e4;--muted:#aaaab3;--line:#44444d;--accent:#c6ef80;--gap:1.25rem}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 "DejaVu Sans",sans-serif}
+main{max-width:900px;margin:3rem auto;padding:0 var(--gap)}a{color:inherit;text-underline-offset:4px}p{max-width:65ch}
+.eyebrow,.number,.meta,time,.bar-label{font:12px/1.5 "DejaVu Sans Mono",monospace;color:var(--muted)}.eyebrow{letter-spacing:.1em;text-transform:uppercase}
+h1{font:400 clamp(2.6rem,6vw,4rem)/1.1 Georgia,serif;letter-spacing:-.04em;margin:1rem 0}h2{font-size:1rem;margin:0 0 .7rem}
+.intro{color:var(--muted);margin:1rem 0 2rem}button{font:inherit;color:inherit;cursor:pointer;min-height:44px;border:1px solid var(--line);border-radius:4px;background:transparent;padding:.6rem .9rem}
+button:disabled{opacity:.5;cursor:wait}button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+#pieces{border-top:1px solid var(--line)}.piece{display:grid;width:100%;grid-template-columns:2.2rem 1fr auto;gap:.2rem 1rem;text-align:left;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:1.1rem .8rem;align-items:baseline}
+.piece .title{font:400 2.3rem/1.2 Georgia,serif;letter-spacing:-.03em}.piece .description{grid-column:2/4;font-size:.85rem;color:var(--muted);max-width:65ch}
+.piece[aria-pressed=true]{background:var(--surface);box-shadow:inset 3px 0 var(--accent)}.piece[aria-pressed=true] .number{color:var(--accent)}.piece .meta{white-space:nowrap}
+.transport{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;margin:1.7rem 0 .7rem}#play{background:var(--accent);border-color:var(--accent);color:#171c10;font-weight:700;min-width:10rem}
+#position{margin-left:auto;white-space:nowrap;font-variant-numeric:tabular-nums}#status{min-height:1.6rem;color:var(--muted);font-size:.85rem;margin:.4rem 0 1.4rem}
+#progress{height:3px;background:var(--line)}#progress span{display:block;background:var(--accent);width:0;height:100%}
+#form{display:flex;gap:3px;margin:.6rem 0}#form span{border-top:2px solid var(--line);padding:.6rem 0 0;min-width:0;font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}#form span.active{border-color:var(--accent);color:var(--ink)}#section-status{margin:.5rem 0 1.5rem;min-height:1.5em}
+.listening{border-top:1px solid var(--line);padding:1.2rem 0}.listening p{color:var(--muted);font-size:.85rem;margin:.3rem 0 1rem}.mix-controls{display:flex;gap:.5rem;flex-wrap:wrap}.mix-controls button[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+details{margin-top:1rem}summary{cursor:pointer;font-size:.85rem;color:var(--muted)}#parts{display:flex;flex-wrap:wrap;gap:.5rem;margin:.8rem 0}#parts button{font-size:.8rem}#parts button[aria-pressed=false]{color:var(--muted);text-decoration:line-through}
+#download{display:inline-block;margin:.5rem 0}#download[hidden]{display:none}footer{border-top:1px solid var(--line);margin-top:1.5rem;padding-top:1rem;color:var(--muted);font-size:.8rem}iframe{display:none}
+@media(max-width:520px){main{margin:1.5rem auto}.piece{grid-template-columns:1.5rem 1fr;padding:1rem .7rem;gap:.25rem .7rem}.piece .description{grid-column:2}.piece .meta{grid-column:2;font-size:.7rem}.piece .title{font-size:2rem}#position{width:100%;margin:.3rem 0 0}#form span{font-size:0}#form span::after{content:attr(data-index);font-size:.7rem}.transport{gap:.5rem}#play{min-width:8rem}}
+</style></head>
+<body><main>
+<div class="eyebrow">sottofondo / listening room</div>
+<h1>Two written pieces.</h1>
+<p class="intro">Two original compositions, each with its own phrase, sound and development. Listen to the full piece first, then explore how the parts work together.</p>
+<div id="pieces" role="group" aria-label="Choose a composition"></div>
+<div class="transport"><button id="play">Play Ferro</button><button id="export">Export WAV</button><button id="link">Copy link</button><time id="position">0:00 / 1:20</time></div>
+<p id="status" role="status">Ready.</p>
+<div id="progress" aria-hidden="true"><span></span></div>
+<div id="form" aria-label="Composition sections"></div>
+<p id="section-status" class="bar-label"></p>
+<a id="download" hidden>Download recording</a>
+<section class="listening" aria-labelledby="listen-heading">
+  <h2 id="listen-heading">Listen inside the piece</h2>
+  <p id="focus-help">Focus keeps the kick and the acid riff. Switch back to hear what the accompaniment adds.</p>
+  <div class="mix-controls"><button id="full" aria-pressed="true">Full mix</button><button id="focus" aria-pressed="false">Focus on the riff</button></div>
+  <details><summary>Individual instruments</summary><div id="parts" role="group" aria-label="Audible instruments"></div></details>
+</section>
+<footer>Written scores · Local instruments · About 80 seconds each<br>
+<a href="/tools/procedural.html">Seeded composer</a> · <a href="/tools/acid-reference.html">First handwritten reference</a></footer>
+</main><script type="module" src="/tools/written.ts"></script></body></html>

@@ -17,5 +17,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "test", "tools/procedural.ts", "tools/render-one.ts"]
+  "include": ["src", "test", "tools/procedural.ts", "tools/render-one.ts", "tools/written.ts"]
 }

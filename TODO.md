@@ -31,8 +31,13 @@
 - [x] Add a versioned mono acid articulation and drive comparison on the liked
       Character seeds, preserving their notes and accompaniment; verify local
       playback, full A/B exports and repeated arrangements in `docs/ACID-VOICE.md`
-- [ ] Listen to separate/linked acid notes and the three drive treatments before
-      choosing execution changes for production
+- [x] Listen to separate/linked acid notes and drive treatments: the user recognizes
+      the acid timbre, but still finds the music lacks the desired character
+- [x] Write two original complete pieces in the existing engine, with distinct
+      foreground/support relationships, full/focused listening and local WAV export;
+      see `docs/WRITTEN-PIECES.md`
+- [ ] Evaluate Ferro and Scia with the user, then test individual compositional
+      relationships before translating accepted observations into generator rules
 - [ ] Compare the new local composer's musical quality and seed identities through
       human listening before production adoption; see `docs/LOCAL-COMPOSER.md`
 - [ ] Run the local-composer score checks in Firefox and WebKit with their required
