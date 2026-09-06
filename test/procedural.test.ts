@@ -92,7 +92,8 @@ test("both comparisons use the same local bank, tempo and synthesis adapter", ()
     assert.notDeepEqual(a.events, b.events);
     for (const audition of [a, b]) for (const n of audition.events.flat()) {
       assert.ok(n.end > n.begin);
-      if (n.kind === "drum") assert.equal(n.sound.bank, "Local");
+      if (n.kind === "drum" && n.sound.s !== "character_kick") assert.equal(n.sound.bank, "Local");
+      else if (n.sound.s === "character_kick") assert.ok(audition.kickDesign);
       else assert.ok(Number.isFinite(n.sound.note));
     }
   }

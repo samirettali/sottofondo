@@ -21,6 +21,8 @@
       continuations and supporting parts conditioned on the actual acid score
 - [x] Verify constraints across 1,000 seeds and expose six seeds, matched-instrument
       old/new playback and 32-bar A/B exports in `/tools/procedural.html`
+- [x] Preserve liked seed 0000001e and its original sound; add seeded physical kicks,
+      regular cymbal roles, shared arp/pad harmony and a sound-update A/B export
 - [ ] Compare the new local composer's musical quality and seed identities through
       human listening before production adoption; see `docs/LOCAL-COMPOSER.md`
 - [ ] Run the local-composer score checks in Firefox and WebKit with their required

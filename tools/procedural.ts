@@ -1,10 +1,11 @@
 import { formatSeed, parseSeed } from "../src/core/rng.ts";
 import { AUDITION_SEEDS } from "../src/composer/procedural.ts";
 import { ReferencePlayer } from "./acid-reference-player.ts";
-import { createAudition, PARTS, type Take } from "./procedural-score.ts";
+import { createAudition, PARTS, type Palette, type Take } from "./procedural-score.ts";
 
 const seed = document.querySelector<HTMLInputElement>("#seed")!;
 const take = document.querySelector<HTMLSelectElement>("#take")!;
+const palette = document.querySelector<HTMLSelectElement>("#palette")!;
 const fixed = document.querySelector<HTMLInputElement>("#fixed")!;
 const play = document.querySelector<HTMLButtonElement>("#play")!;
 const status = document.querySelector<HTMLElement>("#status")!;
@@ -13,27 +14,32 @@ const clips = document.querySelector<HTMLElement>("#clips")!;
 const params = new URLSearchParams(location.search);
 seed.value = formatSeed(parseSeed(params.get("s") ?? "1"));
 if (params.get("take") === "previous") take.value = "previous";
+if (params.get("palette") === "original") palette.value = "original";
 fixed.checked = params.get("fixed") === "1";
 const muted = new Set<string>(), urls: string[] = [];
 let busy = false, ctx: AudioContext | undefined, player: ReferencePlayer | undefined;
 let audition = makeAudition();
 function makeAudition() {
   const begin = performance.now();
-  const result = createAudition(parseSeed(seed.value), take.value as Take, fixed.checked, muted);
+  const result = createAudition(parseSeed(seed.value), take.value as Take, fixed.checked, muted, palette.value as Palette);
   Object.assign(window, { proceduralGenerationMs: performance.now() - begin, proceduralScore: result });
   return result;
 }
 function update() {
   document.querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLSelectElement>("input,button,select").forEach(el => { el.disabled = busy; });
   reveal.disabled = busy || !clips.querySelector("[data-take]");
+  palette.disabled = busy || fixed.checked;
+  document.querySelector<HTMLButtonElement>("#compare-sound")!.disabled = busy || fixed.checked;
   play.textContent = player?.transport.running ? "Stop" : "Play";
   document.querySelectorAll<HTMLButtonElement>("#seeds button").forEach(button => button.setAttribute("aria-pressed", String(parseSeed(seed.value) === Number(button.dataset.seed))));
-  history.replaceState(null, "", `${location.pathname}?${new URLSearchParams({ s: seed.value, take: take.value, fixed: fixed.checked ? "1" : "0" })}`);
+  history.replaceState(null, "", `${location.pathname}?${new URLSearchParams({ s: seed.value, take: take.value, palette: palette.value, fixed: fixed.checked ? "1" : "0" })}`);
 }
 function display() {
   const id = audition.composition.identity;
   const key = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"][fixed.checked ? 4 : id.key];
-  document.querySelector("#identity")!.textContent = `${audition.bpm} BPM · ${key} · ${take.value === "new" ? id.mode : "Minor blues"} · ${fixed.checked ? "sawtooth / hard kit" : `${id.wave} / ${id.kit} kit`}`;
+  const character = audition.character;
+  const instruments = character ? `${character.kick.model} kick · ${id.wave} acid${take.value === "new" && character.arp ? " · arpeggio" : ""}${take.value === "new" && character.pad ? " · chords" : ""}` : fixed.checked ? "sawtooth / hard kit" : `${id.wave} / ${id.kit} kit`;
+  document.querySelector("#identity")!.textContent = `${audition.bpm} BPM · ${key} · ${take.value === "new" ? id.mode : "Minor blues"} · ${instruments}`;
   const form = document.querySelector("#form")!; form.textContent = "";
   if (take.value === "new") for (const section of audition.composition.sections) {
     const span = document.createElement("span"); span.style.flex = String(section.bars);
@@ -82,13 +88,14 @@ async function change() {
   status.textContent = "Ready. Starts at bar 1.";
   if (resume) await start();
 }
-for (const value of AUDITION_SEEDS) {
-  const button = document.createElement("button"); button.textContent = String(value); button.dataset.seed = String(value);
+for (const value of [...AUDITION_SEEDS, 30]) {
+  const button = document.createElement("button"); button.textContent = value === 30 ? "0000001e" : String(value); button.dataset.seed = String(value);
   button.addEventListener("click", () => { seed.value = formatSeed(value); take.value = "new"; void change(); });
   document.querySelector("#seeds")!.append(button);
 }
 seed.addEventListener("change", () => { void change(); });
 take.addEventListener("change", () => { void change(); });
+palette.addEventListener("change", () => { void change(); });
 fixed.addEventListener("change", () => { void change(); });
 play.addEventListener("click", () => { if (player?.transport.running) { stop(); status.textContent = "Stopped."; } else void start(); });
 document.querySelector("#next")!.addEventListener("click", () => { seed.value = formatSeed((parseSeed(seed.value) + 1) >>> 0); take.value = "new"; void change(); });
@@ -98,13 +105,20 @@ document.querySelector("#link")!.addEventListener("click", () => {
 reveal.addEventListener("click", () => {
   clips.querySelectorAll<HTMLElement>("[data-take]").forEach(title => { title.textContent += ` — ${title.dataset.take}`; delete title.dataset.take; }); update();
 });
-document.querySelector("#compare")!.addEventListener("click", () => {
+function compare(kind: "composer" | "sound") {
   stop(); clearClips(); busy = true; update();
   void (async () => {
-    const versions: Take[] = parseSeed(seed.value) % 2 ? ["previous", "new"] : ["new", "previous"];
+    const versions: { take: Take; palette: Palette; label: string; file: string }[] = kind === "composer" ? [
+      { take: "previous", palette: palette.value as Palette, label: "Previous composer", file: "previous" },
+      { take: "new", palette: palette.value as Palette, label: "New composer", file: "new" },
+    ] : [
+      { take: take.value as Take, palette: "original", label: "Original sound", file: "original" },
+      { take: take.value as Take, palette: "character", label: "Character sound", file: "character" },
+    ];
+    if (parseSeed(seed.value) % 2 === 0) versions.reverse();
     for (const [index, version] of versions.entries()) {
       status.textContent = `Rendering ${index + 1}/2…`;
-      const query = new URLSearchParams({ procedural: version, s: seed.value, fixed: fixed.checked ? "1" : "0", begin: "0", end: "32" });
+      const query = new URLSearchParams({ procedural: version.take, palette: version.palette, s: seed.value, fixed: fixed.checked ? "1" : "0", begin: "0", end: "32" });
       const frame = document.createElement("iframe");
       const result = await new Promise<{ bytes: ArrayBuffer; peak: number; rms: number }>((resolve, reject) => {
         const cleanup = () => { clearTimeout(timer); window.removeEventListener("message", receive); frame.remove(); };
@@ -119,13 +133,15 @@ document.querySelector("#compare")!.addEventListener("click", () => {
       if (!(result.peak > 0 && result.peak < 1 && result.rms > 0 && Number.isFinite(result.rms))) throw new Error("Silent or clipped render");
       const url = URL.createObjectURL(new Blob([result.bytes], { type: "audio/wav" })); urls.push(url);
       const article = document.createElement("article"), title = document.createElement("h3"), audio = document.createElement("audio"), link = document.createElement("a");
-      title.textContent = String.fromCharCode(65 + index); title.dataset.take = version === "new" ? "New composer" : "Previous composer";
-      audio.controls = true; audio.src = url; link.href = url; link.download = `composer-${seed.value}-${version}.wav`; link.textContent = "Download WAV";
+      title.textContent = String.fromCharCode(65 + index); title.dataset.take = version.label;
+      audio.controls = true; audio.src = url; link.href = url; link.download = `composer-${seed.value}-${version.file}.wav`; link.textContent = "Download WAV";
       article.dataset.peak = String(result.peak); article.dataset.rms = String(result.rms); article.append(title, audio, link); clips.append(article);
     }
     status.textContent = "Ready. Both recordings span 32 bars, without normalisation.";
   })().catch(error => { status.textContent = String(error); }).finally(() => { busy = false; update(); });
-});
+}
+document.querySelector("#compare")!.addEventListener("click", () => compare("composer"));
+document.querySelector("#compare-sound")!.addEventListener("click", () => compare("sound"));
 const monitor = setInterval(() => {
   if (player?.error) { const error = player.error; stop(); status.textContent = error; }
   else if (player?.transport.running && !busy) {

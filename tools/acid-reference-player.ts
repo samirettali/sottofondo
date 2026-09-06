@@ -4,12 +4,15 @@ import { Transport } from "../src/strudel/transport.ts";
 import { createThreeOh, midiToFrequency, type ThreeOh } from "../src/audio/threeoh.ts";
 import { REFERENCE_BPM, referencePattern, type ReferenceEvent, type ReferenceVariant } from "./acid-reference-score.ts";
 import type { Pattern } from "@strudel/core";
+import { playCharacterKick, type KickVoice } from "../src/audio/character-kick.ts";
+import type { KickDesign } from "../src/composer/character.ts";
 
 export interface AuditionScore {
   bpm: number; pattern: Pattern<ReferenceEvent>;
   /** Explicit local bank for composition experiments; the faithful reference
    * still requests its original TR-909 samples when this is absent. */
   localSamples?: Readonly<Record<string, string>>;
+  kickDesign?: KickDesign;
 }
 
 // The five index-zero files resolved by Strudel's RolandTR909 bank. Preview only:
@@ -44,6 +47,7 @@ export class ReferencePlayer {
   private readonly output: StereoOutput;
   private readonly volume: GainNode;
   private bass: ThreeOh | undefined;
+  private readonly kicks = new Set<KickVoice>();
   private readonly score: AuditionScore;
   private disposed = false;
   error: string | null = null;
@@ -90,19 +94,29 @@ export class ReferencePlayer {
   }
   stop(): void {
     this.transport.stop(); this.volume.gain.value = 0;
+    this.kicks.forEach(voice => voice.dispose()); this.kicks.clear();
     this.bass?.dispose(); this.bass = undefined; this.output.reset();
   }
   dispose(): void { this.disposed = true; this.stop(); this.output.dispose(); this.volume.disconnect(); this.analyser.disconnect(); }
   private async play(event: ReferenceEvent, time: number, duration: number, cps: number): Promise<void> {
     if (this.disposed) return;
+    if (event.sound.s === "character_kick") {
+      if (!this.score.kickDesign) throw new Error("Missing kick design");
+      const design = this.score.kickDesign;
+      // Orbit schedules its callback 10 ms before the duck. Offline rendering
+      // starts at zero, where an unbounded callback time would be negative.
+      this.output.duck([1, 2, 3, 5, 6], Math.max(.01, time), .005, .13, design.model === "driven" ? .4 : .2);
+      const voice = playCharacterKick(this.ctx, this.volume, time, design, Number(event.sound.gain), () => this.kicks.delete(voice));
+      this.kicks.add(voice); return;
+    }
     if (event.laneId === "acid" && this.bass) {
       this.bass.set({ cutoff: Number(event.sound.cutoff), resonance: Number(event.sound.resonance),
         envMod: Number(event.sound.lpenv) * 1200, decay: Number(event.sound.lpdecay) }, time);
       this.bass.noteOn(time, midiToFrequency(event.midi!), false, false, Number(event.sound.gain));
       this.bass.noteOff(time + duration); return;
     }
-    // Preserve the original shared orbit and sample envelopes. No extra mix
-    // saturation, compressor, ducking or delay; all audition variants use this bus.
+    // Reference scores keep their original orbits and envelopes; procedural
+    // auditions carry their own per-instrument controls through this same bus.
     const { bank, ...sound } = event.sound;
     const asset = this.score.localSamples?.[String(sound.s)];
     if (bank === "Local" && !asset) throw new Error(`Unknown local sample: ${sound.s}`);

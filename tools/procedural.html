@@ -23,24 +23,27 @@ article{margin:1.5rem 0}article audio{display:block;width:100%;margin:.5rem 0}if
 <body><main>
 <div class="eyebrow">sottofondo / listening room</div>
 <h1>A different piece from each seed.</h1>
-<p>New acid motifs, with drums and supporting voices composed around them. Each piece develops over 32 bars.</p>
+<p>Acid motifs, distinct kicks, rolling arpeggios and sustained chords. Each piece develops over 32 bars.</p>
 <div class="controls">
   <label>Seed <input id="seed" value="00000001" spellcheck="false" aria-describedby="seed-help"></label>
   <label>Composition <select id="take"><option value="new">New composer</option><option value="previous">Previous composer</option></select></label>
+  <label>Sound <select id="palette"><option value="character">Character</option><option value="original">Original</option></select></label>
   <button id="play">Play</button><button id="next">Next seed</button><button id="link">Copy link</button>
 </div>
 <small id="seed-help">Use a word or a hexadecimal seed. Switching restarts the piece.</small>
-<p>Start with these six seeds:</p><div id="seeds" aria-label="Comparison seeds"></div>
+<p>Try these seeds, including the saved reference:</p><div id="seeds" aria-label="Comparison seeds"></div>
 <p id="identity"></p><p id="status" role="status">Ready.</p>
 <div id="form" aria-label="Arrangement"></div>
 <svg id="motif" role="img" aria-label="Acid motif: time runs left to right, pitch runs bottom to top"></svg>
 <div id="parts" aria-label="Audible instruments"></div>
 <small>Toggle an instrument to hear how the parts fit together.</small>
-<details><summary>Compare compositions</summary>
-  <p>The previous composer plays through the same instruments and output level. Fix the palette to compare seeds at 138 BPM in E.</p>
+<details><summary>Compare versions</summary>
+  <p>Compare Original with Character on this composition. The acid notes stay the same; Character changes the instruments and hats, and adds harmony to the new composer.</p>
+  <button id="compare-sound">Compare sound update</button>
+  <p>Or compare the two composition algorithms through the selected sound palette. Fix the palette to compare seeds at 138 BPM in E.</p>
   <label class="check"><input type="checkbox" id="fixed"> Use the same sounds and tempo across seeds</label>
   <p>Export the first 32 bars from each composer, then listen before revealing which is which. Recordings include all instruments. The previous composer's full arrangement is longer.</p>
-  <button id="compare">Render A/B</button> <button id="reveal" disabled>Reveal takes</button>
+  <button id="compare">Compare composers</button> <button id="reveal" disabled>Reveal takes</button>
   <div id="clips"></div>
 </details>
 <footer>Local generation and bundled instruments. Experimental composer; the main app uses the existing version.<br>

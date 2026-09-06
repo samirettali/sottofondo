@@ -5,13 +5,16 @@ import { createComposition, semitone, TICKS, type Composition, type Part } from 
 import { createSongPlan } from "../src/composer/plan.ts";
 import { composeSongBar } from "../src/composer/compose.ts";
 import { KITS } from "../src/composer/catalog.ts";
+import { arrangeCharacter, createCharacter, type Character } from "../src/composer/character.ts";
 import type { ReferenceEvent } from "./acid-reference-score.ts";
 import type { AuditionScore } from "./acid-reference-player.ts";
 
 export type Take = "new" | "previous";
-export const PARTS: readonly Part[] = ["acid", "kick", "clap", "hat", "open", "perc", "answer", "sub"];
+export type Palette = "character" | "original";
+export const PARTS: readonly Part[] = ["acid", "kick", "clap", "hat", "open", "perc", "answer", "sub", "arp", "pad"];
 export interface Audition extends AuditionScore {
   composition: Composition; take: Take; fixed: boolean; events: readonly (readonly ReferenceEvent[])[];
+  character?: Character;
 }
 const DRUMS = { kick: "bd", clap: "cp", hat: "hh", open: "oh", perc: "perc" } as const;
 
@@ -50,10 +53,43 @@ function sound(composition: Composition, part: Part, bar: number, tick: number, 
       { ...common, s: "sine", fmi: 1.6, fmh: 1, fmdecay: .12, fmsustain: 0, decay: .3 };
 }
 
-export function createAudition(seed: number, take: Take = "new", fixed = false, muted: ReadonlySet<string> = new Set()): Audition {
+function characterSound(c: Composition, design: Character, part: Part, bar: number, tick: number, velocity: number): ReferenceEvent["sound"] {
+  if (part === "kick") return { s: "character_kick", gain: velocity / 100 };
+  if (part === "arp") return {
+    s: design.arpVoice, orbit: 5, gain: .25 * velocity / 100, hcutoff: 500,
+    cutoff: 1500 + design.brightness * 27, attack: .002, decay: .13, sustain: .1, release: .055,
+    delay: .16 + design.space / 700, delaysync: .1875, delayfeedback: .3 + design.space / 600,
+    room: .18 + design.space / 500, pan: .38,
+  };
+  if (part === "pad") return {
+    s: design.space > 50 ? "supersaw" : "triangle", unison: 3, spread: .12,
+    orbit: 6, gain: .15 * velocity / 100, hcutoff: 220, cutoff: 550 + design.brightness * 9,
+    attack: .25, decay: .3, sustain: .6, release: .28, room: .35 + design.space / 300, roomsize: 1.5,
+  };
+  const base = sound(c, part, bar, tick, velocity, false);
+  if (part === "acid") return {
+    ...base, cutoff: Number(base.cutoff) * (.7 + design.brightness / 65),
+    resonance: 4.5 + design.edge / 25, lpenv: Number(base.lpenv) + design.edge / 40,
+    shape: .04 + design.edge / 400, shapevol: .8,
+    delay: .05 + design.space / 500, delaysync: .1875, delayfeedback: .25 + design.space / 500,
+    // In this pinned Superdough, ftype also applies to hcutoff, but ladder
+    // implements only lowpass. A second cutoff here would bury the acid voice.
+  };
+  if (part === "hat" || part === "open") return {
+    ...base, attack: .001, decay: part === "hat" ? design.hatDecay : .09 + design.space / 1200,
+    sustain: 0, release: .015, clip: 1, cut: 99, hcutoff: 2300 + design.brightness * 20,
+    gain: Number(base.gain) * (part === "open" ? .7 : .85),
+  };
+  if (part === "clap") return { ...base, shape: design.edge / 700, shapevol: .85, room: .08 + design.space / 450 };
+  return base;
+}
+
+export function createAudition(seed: number, take: Take = "new", fixed = false, muted: ReadonlySet<string> = new Set(), palette: Palette = "character"): Audition {
   const composition = createComposition(seed), id = composition.identity;
+  const character = !fixed && palette === "character" ? createCharacter(composition) : undefined;
   const kit = KITS[fixed ? "hard" : id.kit];
-  const localSamples = { bd: kit.kick, cp: kit.backbeat, hh: kit.hat, oh: kit.open, perc: kit.perc };
+  const localSamples: Record<string, string> = { cp: kit.backbeat, hh: kit.hat, oh: kit.open, perc: kit.perc };
+  if (!character) localSamples.bd = kit.kick;
   const bpm = fixed ? 138 : id.bpm, key = fixed ? 4 : id.key;
   const register = id.sub ? 48 : 36;
   const event = (part: Part, bar: number, tick: number, gate: number, velocity: number, midi?: number): ReferenceEvent => ({
@@ -61,12 +97,13 @@ export function createAudition(seed: number, take: Take = "new", fixed = false, 
     begin: bar + tick / TICKS, end: bar + (tick + gate) / TICKS,
     velocity: velocity / 100, accent: velocity >= 85,
     ...(midi === undefined ? {} : { midi }),
-    sound: { ...sound(composition, part, bar, tick, velocity, fixed), ...(midi === undefined ? {} : { note: midi }) },
+    sound: { ...(character ? characterSound(composition, character, part, bar, tick, velocity) : sound(composition, part, bar, tick, velocity, fixed)), ...(midi === undefined ? {} : { note: midi }) },
   });
   const old = take === "previous" ? createSongPlan("acid", seed, 2) : undefined;
-  const events = composition.bars.map((notes, bar) => {
+  const arranged = character ? arrangeCharacter(composition, character) : composition.bars;
+  const events = arranged.map((notes, bar) => {
     if (!old) return notes.map(n => event(n.part, bar, n.tick, n.gate, n.velocity,
-      Object.hasOwn(DRUMS, n.part) ? undefined : (n.part === "acid" ? register : n.part === "sub" ? 24 : 60) + key + semitone(id.scale, n.degree)));
+      Object.hasOwn(DRUMS, n.part) ? undefined : (n.part === "acid" ? register : n.part === "sub" ? 24 : n.part === "pad" ? 48 : 60) + key + semitone(id.scale, n.degree)));
     const mapping: Record<string, Part> = { bass: "acid", lead: "answer", support: "answer", answer: "answer", kick: "kick", backbeat: "clap", hat: "hat", open: "open", perc: "perc" };
     return composeSongBar(old, bar).flatMap(n => {
       const part = mapping[n.laneId];
@@ -91,5 +128,5 @@ export function createAudition(seed: number, take: Take = "new", fixed = false, 
     }
     return haps.sort((a, b) => +a.whole.begin - +b.whole.begin || (a.value.laneId < b.value.laneId ? -1 : a.value.laneId > b.value.laneId ? 1 : 0));
   });
-  return { composition, take, fixed, events, bpm, pattern, localSamples };
+  return { composition, take, fixed, events, bpm, pattern, localSamples, ...(character ? { character, kickDesign: character.kick } : {}) };
 }

@@ -15,7 +15,7 @@ async function render(): Promise<void> {
   const r = readRecipe(params);
   const procedural = params.get("procedural");
   if (procedural && procedural !== "new" && procedural !== "previous") throw new Error("Unknown procedural take");
-  const audition = procedural ? createAudition(r.seed, procedural as "new" | "previous", params.get("fixed") === "1") : undefined;
+  const audition = procedural ? createAudition(r.seed, procedural as "new" | "previous", params.get("fixed") === "1", new Set(), params.get("palette") === "original" ? "original" : "character") : undefined;
   const reference = params.get("reference");
   if (reference && !Object.hasOwn(VARIANTS, reference)) throw new Error("Unknown reference take");
   const sketchId = params.get("sketch");

@@ -145,6 +145,11 @@ and each of them wins against a distant distractor.
   notes. It uses local CC0 assets and a shared per-note ladder adapter for old/new
   auditions; production recipes are unchanged. Scope, measurements and pending
   listening/cross-engine checks: `docs/LOCAL-COMPOSER.md`.
+- The user liked local seed `0000001e` but disliked its arbitrary cymbals and
+  similar kicks across seeds. Character adds seeded physical kicks, regular
+  hats and shared arp/pad harmony; Original preserves the accepted score and
+  prior sound. The supplied acid-trance reference guides orchestration roles,
+  not stored riffs. See `docs/LOCAL-COMPOSER.md#character-sound-and-orchestration`.
 - Pressure and the faithful reference have an opt-in execution comparison in
   `/tools/acid-studies.html`: `performance=shaped` coordinates gates, accents and
   filter envelopes; `bell=1` reserves occasional answering gaps. Baseline scores
