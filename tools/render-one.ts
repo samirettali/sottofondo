@@ -7,11 +7,15 @@ import { wav } from "./wav.ts";
 import { REFERENCE_BPM, VARIANTS, type ReferenceVariant } from "./acid-reference-score.ts";
 import { createStudy, STUDIES, studyPattern, type StudyId } from "./acid-studies-score.ts";
 import { performedPattern } from "./acid-performance-score.ts";
+import { createAudition } from "./procedural-score.ts";
 
 /** Each render has a fresh realm: Superdough's node pools are process-global. */
 async function render(): Promise<void> {
   const params = new URLSearchParams(location.search);
   const r = readRecipe(params);
+  const procedural = params.get("procedural");
+  if (procedural && procedural !== "new" && procedural !== "previous") throw new Error("Unknown procedural take");
+  const audition = procedural ? createAudition(r.seed, procedural as "new" | "previous", params.get("fixed") === "1") : undefined;
   const reference = params.get("reference");
   if (reference && !Object.hasOwn(VARIANTS, reference)) throw new Error("Unknown reference take");
   const sketchId = params.get("sketch");
@@ -27,7 +31,7 @@ async function render(): Promise<void> {
   const end = Number(params.get("end") ?? 8);
   const rate = 48000;
   const plan = r.engineVersion === "strudel-2" ? params.has("study") ? studyPlan(params.get("study")!) : createSongPlan(r.genre as ElectronicGenre,r.seed,r.genreVersion) : undefined;
-  const secondsPerBar = 240 / (sketch?.bpm ?? (reference ? REFERENCE_BPM : plan?.bpm ?? g.clock.bpm.default));
+  const secondsPerBar = 240 / (audition?.bpm ?? sketch?.bpm ?? (reference ? REFERENCE_BPM : plan?.bpm ?? g.clock.bpm.default));
   const ctx = new OfflineAudioContext(2, Math.ceil((end * secondsPerBar + 2) * rate), rate);
   let rendering: Promise<AudioBuffer> | undefined;
   // Suspend at bar boundaries so future worklets do not process minutes of silence.
@@ -42,11 +46,11 @@ async function render(): Promise<void> {
     await paused;
   };
   let dispose = () => {};
-  if (sketch || reference) {
+  if (sketch || reference || audition) {
     const { ReferencePlayer } = await import("./acid-reference-player.ts");
     const engine = new ReferencePlayer(ctx, (reference ?? "original") as ReferenceVariant, r.seed,
-      shaped ? { bpm: sketch?.bpm ?? REFERENCE_BPM, pattern: performedPattern(sketch ?? "reference", params.get("bell") === "1") }
-        : sketch ? { bpm: sketch.bpm, pattern: studyPattern(sketch) } : undefined);
+      audition ?? (shaped ? { bpm: sketch?.bpm ?? REFERENCE_BPM, pattern: performedPattern(sketch ?? "reference", params.get("bell") === "1") }
+        : sketch ? { bpm: sketch.bpm, pattern: studyPattern(sketch) } : undefined));
     await engine.scheduleRender(end, beforeBar);
     dispose = () => engine.dispose();
   } else if (r.engineVersion === "strudel-2") {
@@ -74,7 +78,7 @@ async function render(): Promise<void> {
   }
   if (rendering) await ctx.resume();
   const rendered = await (rendering ?? ctx.startRendering());
-  const offset = Math.round((begin * secondsPerBar + (!sketch && !reference && r.engineVersion === "legacy-1" ? 0.05 : 0)) * rate);
+  const offset = Math.round((begin * secondsPerBar + (!audition && !sketch && !reference && r.engineVersion === "legacy-1" ? 0.05 : 0)) * rate);
   const length = Math.round((end - begin) * secondsPerBar * rate);
   const clip = new AudioBuffer({ numberOfChannels: 2, length, sampleRate: rate });
   let peak = 0; let squares = 0;

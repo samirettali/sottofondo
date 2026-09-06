@@ -140,6 +140,11 @@ and each of them wins against a distant distractor.
   authored studies do not meet the goal. The studies remain listening references,
   not the accepted production direction. Research and a proposed constraint-based
   experiment: `docs/PROCEDURAL-MUSIC-RESEARCH.md`.
+- `/tools/procedural.html` now hosts the `relational-1` experiment: newly generated
+  motifs with bounded pitch search, gap-aware replies and harmony-conditioned sub
+  notes. It uses local CC0 assets and a shared per-note ladder adapter for old/new
+  auditions; production recipes are unchanged. Scope, measurements and pending
+  listening/cross-engine checks: `docs/LOCAL-COMPOSER.md`.
 - Pressure and the faithful reference have an opt-in execution comparison in
   `/tools/acid-studies.html`: `performance=shaped` coordinates gates, accents and
   filter envelopes; `bell=1` reserves occasional answering gaps. Baseline scores

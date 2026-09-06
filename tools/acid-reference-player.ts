@@ -5,7 +5,12 @@ import { createThreeOh, midiToFrequency, type ThreeOh } from "../src/audio/three
 import { REFERENCE_BPM, referencePattern, type ReferenceEvent, type ReferenceVariant } from "./acid-reference-score.ts";
 import type { Pattern } from "@strudel/core";
 
-export interface AuditionScore { bpm: number; pattern: Pattern<ReferenceEvent>; }
+export interface AuditionScore {
+  bpm: number; pattern: Pattern<ReferenceEvent>;
+  /** Explicit local bank for composition experiments; the faithful reference
+   * still requests its original TR-909 samples when this is absent. */
+  localSamples?: Readonly<Record<string, string>>;
+}
 
 // The five index-zero files resolved by Strudel's RolandTR909 bank. Preview only:
 // do not silently substitute our CC0 kit or vendor an unlicensed sample bank.
@@ -58,6 +63,17 @@ export class ReferencePlayer {
     if (!this.ctx.audioWorklet) throw new Error("Audio needs HTTPS or localhost. Use the existing SSH tunnel.");
     setAudioContext(this.ctx); setSuperdoughAudioController(this.output);
     await initAudio({ maxPolyphony: this.ctx instanceof OfflineAudioContext ? 100000 : 128 }); registerSynthSounds();
+    if (this.score.localSamples) {
+      for (const asset of new Set(Object.values(this.score.localSamples))) {
+        if (this.disposed) return;
+        const response = await fetch(`/samples/v2/${asset}.json`);
+        if (!response.ok) throw new Error(`Could not load ${asset}. Try Play again.`);
+        const entry = await response.json() as { data: string };
+        await loadBuffer(entry.data, this.ctx, `audition_${asset}`);
+        await samples({ [`audition_${asset}`]: [entry.data] });
+      }
+      return;
+    }
     for (const [id, url] of Object.entries(REFERENCE_SAMPLES)) {
       if (this.disposed) return;
       const data = await sampleData(url);
@@ -88,7 +104,9 @@ export class ReferencePlayer {
     // Preserve the original shared orbit and sample envelopes. No extra mix
     // saturation, compressor, ducking or delay; all audition variants use this bus.
     const { bank, ...sound } = event.sound;
-    await superdough({ ...sound, ...(bank ? { s: `reference909_${sound.s}` } : {}) }, time, duration, cps, event.begin);
+    const asset = this.score.localSamples?.[String(sound.s)];
+    if (bank === "Local" && !asset) throw new Error(`Unknown local sample: ${sound.s}`);
+    await superdough({ ...sound, ...(bank ? { s: asset ? `audition_${asset}` : `reference909_${sound.s}` } : {}) }, time, duration, cps, event.begin);
   }
   async scheduleRender(end: number, beforeBar?: (bar: number) => Promise<void>): Promise<void> {
     await this.ready; this.createBass();

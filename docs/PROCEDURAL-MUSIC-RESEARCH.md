@@ -3,6 +3,9 @@
 Research date: 2026-09-05. This records source inspection, not a listening test of
 the external systems. No generator was changed as part of this research.
 
+The subsequent implementation and its validation are documented in
+[LOCAL-COMPOSER.md](LOCAL-COMPOSER.md).
+
 ## Requirement and status
 
 The user wants a seed to determine a new composition with its own musical

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local composer — sottofondo</title>
+<style>
+:root{color-scheme:dark;--bg:#17171c;--ink:#e7e7e4;--muted:#aaaab3;--line:#44444d;--accent:#c6ef80}
+*{box-sizing:border-box}body{font:16px/1.5 system-ui;margin:0;background:var(--bg);color:var(--ink)}
+main{max-width:880px;margin:3rem auto;padding:0 1.25rem}h1{font-size:2.2rem;letter-spacing:-.04em;margin:.4rem 0}h2{font-size:1.2rem}
+.eyebrow,small{color:var(--muted)}.eyebrow{font:13px ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}
+button,input,select{font:inherit;padding:.6rem .75rem;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink)}
+button{cursor:pointer;min-height:44px}button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+label{display:grid;gap:.35rem}.controls{display:flex;gap:.75rem;flex-wrap:wrap;align-items:end;margin:1.5rem 0}.controls input{width:10rem}
+#play{min-width:7rem;background:var(--accent);color:#171c10;border-color:var(--accent);font-weight:650}a{color:inherit}
+#seeds{display:flex;flex-wrap:wrap;gap:.5rem;margin:.75rem 0}#seeds button[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+#identity{font-size:1.05rem;margin:1.5rem 0 .5rem}#status{min-height:1.6rem;color:var(--accent)}
+#form{display:flex;gap:3px;margin:1.5rem 0 .5rem}#form span{min-width:0;padding:.5rem .35rem;border-top:3px solid var(--line);font-size:.8rem;overflow-wrap:anywhere}
+#form span.active{border-color:var(--accent)}#motif{width:100%;height:140px;display:block;background:#202027;border:1px solid var(--line)}
+#parts{display:flex;flex-wrap:wrap;gap:.4rem;margin:1rem 0}#parts button{font-size:.85rem;padding:.4rem .6rem}#parts button[aria-pressed=false]{color:var(--muted);text-decoration:line-through}
+details{border-top:1px solid var(--line);padding:1rem 0;margin-top:1.5rem}summary{cursor:pointer}.check{display:flex;align-items:center;gap:.6rem}.check input{width:1.2rem;height:1.2rem}
+article{margin:1.5rem 0}article audio{display:block;width:100%;margin:.5rem 0}iframe{display:none}footer{margin:2rem 0;color:var(--muted);font-size:.9rem}
+@media(max-width:480px){main{margin-top:1.5rem}h1{font-size:1.9rem}.controls{gap:.6rem}#form span{font-size:.7rem;padding:.5rem 0;overflow-wrap:normal}#motif{height:110px}}
+</style></head>
+<body><main>
+<div class="eyebrow">sottofondo / listening room</div>
+<h1>A different piece from each seed.</h1>
+<p>New acid motifs, with drums and supporting voices composed around them. Each piece develops over 32 bars.</p>
+<div class="controls">
+  <label>Seed <input id="seed" value="00000001" spellcheck="false" aria-describedby="seed-help"></label>
+  <label>Composition <select id="take"><option value="new">New composer</option><option value="previous">Previous composer</option></select></label>
+  <button id="play">Play</button><button id="next">Next seed</button><button id="link">Copy link</button>
+</div>
+<small id="seed-help">Use a word or a hexadecimal seed. Switching restarts the piece.</small>
+<p>Start with these six seeds:</p><div id="seeds" aria-label="Comparison seeds"></div>
+<p id="identity"></p><p id="status" role="status">Ready.</p>
+<div id="form" aria-label="Arrangement"></div>
+<svg id="motif" role="img" aria-label="Acid motif: time runs left to right, pitch runs bottom to top"></svg>
+<div id="parts" aria-label="Audible instruments"></div>
+<small>Toggle an instrument to hear how the parts fit together.</small>
+<details><summary>Compare compositions</summary>
+  <p>The previous composer plays through the same instruments and output level. Fix the palette to compare seeds at 138 BPM in E.</p>
+  <label class="check"><input type="checkbox" id="fixed"> Use the same sounds and tempo across seeds</label>
+  <p>Export the first 32 bars from each composer, then listen before revealing which is which. Recordings include all instruments. The previous composer's full arrangement is longer.</p>
+  <button id="compare">Render A/B</button> <button id="reveal" disabled>Reveal takes</button>
+  <div id="clips"></div>
+</details>
+<footer>Local generation and bundled instruments. Experimental composer; the main app uses the existing version.<br>
+<a href="/tools/acid-reference.html">Handwritten reference</a> · <a href="/tools/acid-studies.html">Earlier studies</a></footer>
+</main><script type="module" src="/tools/procedural.ts"></script></body></html>

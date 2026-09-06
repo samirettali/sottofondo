@@ -17,8 +17,14 @@
       identities, rather than small variations of authored studies
 - [x] Research procedural composition through web search, Tavily, Monid and X;
       inspect primary papers and code in `docs/PROCEDURAL-MUSIC-RESEARCH.md`
-- [ ] Test the proposed local composer with relationships between parts and newly
-      generated motifs; compare quality and seed diversity before production adoption
+- [x] Implement a local composition preview with new motifs, constrained pitch
+      continuations and supporting parts conditioned on the actual acid score
+- [x] Verify constraints across 1,000 seeds and expose six seeds, matched-instrument
+      old/new playback and 32-bar A/B exports in `/tools/procedural.html`
+- [ ] Compare the new local composer's musical quality and seed identities through
+      human listening before production adoption; see `docs/LOCAL-COMPOSER.md`
+- [ ] Run the local-composer score checks in Firefox and WebKit with their required
+      system libraries available
 - [x] Add versioned acid phrasing based on the Acido sotto casa feedback: dense
       related riffs, step dynamics, independent filter/envelope cycles and drum replies
 - [x] Compare the new acid revision against the previous composer at identical tempo
