@@ -6,6 +6,10 @@ is named `relational-1`. Production recipes and the previous generators remain
 frozen. Listening acceptance is pending; the checks below do not establish that
 the new music is preferable.
 
+The subsequent **Acid trance** ensemble is documented in
+[ACID-TRANCE.md](ACID-TRANCE.md). It is the default for a fresh preview visit;
+this document describes the retained Character and Original versions.
+
 ## Listen
 
 The existing development server runs in the composer worktree on port 5196.
@@ -15,11 +19,11 @@ From the Mac, use the existing tunnel or start it:
 ssh -N -L 5196:127.0.0.1:5196 andromeda
 ```
 
-Open <http://localhost:5196/tools/procedural.html>. It starts with **New composer**
-and seed 1, with **Sound → Character**. Play, then use the six numbered seed
+Open <http://localhost:5196/tools/procedural.html?s=1&palette=character>. It starts
+with **New composer** and seed 1, with **Version → Character**. Play, then use the six numbered seed
 buttons. They select seeds 1–6 without an audition-based selection process.
 The additional **0000001e** button restores the seed the user liked. Switch
-**Sound → Original** to hear its sound and arrangement before this update.
+**Version → Original** to hear its sound and arrangement before this update.
 Next seed increments the seed; typed words are hashed through the existing
 seed parser. Switching restarts at
 bar 1. Each new arrangement lasts 32 bars and repeats.

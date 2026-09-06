@@ -23,11 +23,11 @@ article{margin:1.5rem 0}article audio{display:block;width:100%;margin:.5rem 0}if
 <body><main>
 <div class="eyebrow">sottofondo / listening room</div>
 <h1>A different piece from each seed.</h1>
-<p>Acid motifs, distinct kicks, rolling arpeggios and sustained chords. Each piece develops over 32 bars.</p>
+<p>Acid trance with a different ensemble for each seed: plucks, wide leads, pulsing chords and electronic percussion. Each piece develops over 32 bars.</p>
 <div class="controls">
   <label>Seed <input id="seed" value="00000001" spellcheck="false" aria-describedby="seed-help"></label>
   <label>Composition <select id="take"><option value="new">New composer</option><option value="previous">Previous composer</option></select></label>
-  <label>Sound <select id="palette"><option value="character">Character</option><option value="original">Original</option></select></label>
+  <label>Version <select id="palette"><option value="trance-1">Acid trance</option><option value="character">Character</option><option value="original">Original</option></select></label>
   <button id="play">Play</button><button id="next">Next seed</button><button id="link">Copy link</button>
 </div>
 <small id="seed-help">Use a word or a hexadecimal seed. Switching restarts the piece.</small>
@@ -38,6 +38,8 @@ article{margin:1.5rem 0}article audio{display:block;width:100%;margin:.5rem 0}if
 <div id="parts" aria-label="Audible instruments"></div>
 <small>Toggle an instrument to hear how the parts fit together.</small>
 <details><summary>Compare versions</summary>
+  <p>Compare Acid trance with Character on this seed. Acid trance uses more instruments, different supporting parts and a tempo between 138 and 146 BPM.</p>
+  <button id="compare-trance">Compare Acid trance / Character</button>
   <p>Compare Original with Character on this composition. The acid notes stay the same; Character changes the instruments and hats, and adds harmony to the new composer.</p>
   <button id="compare-sound">Compare sound update</button>
   <p>Or compare the two composition algorithms through the selected sound palette. Fix the palette to compare seeds at 138 BPM in E.</p>

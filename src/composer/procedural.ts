@@ -4,7 +4,7 @@ import { cyrb128, h32 } from "../core/rng.ts";
 export const PROCEDURAL_VERSION = "relational-1";
 export const AUDITION_SEEDS = [1, 2, 3, 4, 5, 6] as const;
 export const TICKS = 32;
-export type Part = "acid" | "kick" | "clap" | "hat" | "open" | "perc" | "answer" | "sub" | "arp" | "pad";
+export type Part = "acid" | "kick" | "clap" | "hat" | "open" | "perc" | "answer" | "sub" | "arp" | "pad" | "pulse" | "texture";
 export interface Note { tick: number; gate: number; degree: number; velocity: number; }
 export interface Hit extends Note { part: Part; }
 export interface Identity {

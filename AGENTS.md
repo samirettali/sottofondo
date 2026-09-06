@@ -150,6 +150,11 @@ and each of them wins against a distant distractor.
   hats and shared arp/pad harmony; Original preserves the accepted score and
   prior sound. The supplied acid-trance reference guides orchestration roles,
   not stored riffs. See `docs/LOCAL-COMPOSER.md#character-sound-and-orchestration`.
+- The user also liked Character seed `9d2371fe` and wants more instrument/part
+  variety within acid trance. `palette=trance-1` adds a 24-patch synth library
+  and generated ensemble writing; the two earlier palette keys stay frozen.
+  Existing seed links without a palette still select Character. Both liked
+  Character configurations are snapshot-tested. See `docs/ACID-TRANCE.md`.
 - Pressure and the faithful reference have an opt-in execution comparison in
   `/tools/acid-studies.html`: `performance=shaped` coordinates gates, accents and
   filter envelopes; `bell=1` reserves occasional answering gaps. Baseline scores

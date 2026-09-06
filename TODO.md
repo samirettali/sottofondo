@@ -23,6 +23,8 @@
       old/new playback and 32-bar A/B exports in `/tools/procedural.html`
 - [x] Preserve liked seed 0000001e and its original sound; add seeded physical kicks,
       regular cymbal roles, shared arp/pad harmony and a sound-update A/B export
+- [x] Add the versioned acid-trance ensemble with 24 local synth patches, different
+      lead/chord/percussion writing, and preserved Character seeds 0000001e/9d2371fe
 - [ ] Compare the new local composer's musical quality and seed identities through
       human listening before production adoption; see `docs/LOCAL-COMPOSER.md`
 - [ ] Run the local-composer score checks in Firefox and WebKit with their required

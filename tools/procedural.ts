@@ -1,7 +1,8 @@
 import { formatSeed, parseSeed } from "../src/core/rng.ts";
 import { AUDITION_SEEDS } from "../src/composer/procedural.ts";
 import { ReferencePlayer } from "./acid-reference-player.ts";
-import { createAudition, PARTS, type Palette, type Take } from "./procedural-score.ts";
+import { createAudition, PARTS, readPalette, type Palette, type Take } from "./procedural-score.ts";
+import { TRANCE_VOICES } from "../src/composer/trance-voices.ts";
 
 const seed = document.querySelector<HTMLInputElement>("#seed")!;
 const take = document.querySelector<HTMLSelectElement>("#take")!;
@@ -14,7 +15,9 @@ const clips = document.querySelector<HTMLElement>("#clips")!;
 const params = new URLSearchParams(location.search);
 seed.value = formatSeed(parseSeed(params.get("s") ?? "1"));
 if (params.get("take") === "previous") take.value = "previous";
-if (params.get("palette") === "original") palette.value = "original";
+// Existing seed links retain Character. A fresh visit opens the new version.
+try { palette.value = readPalette(params.get("palette"), params.has("s") || params.has("take") ? "character" : "trance-1"); }
+catch (error) { document.querySelector("main")!.textContent = String(error); throw error; }
 fixed.checked = params.get("fixed") === "1";
 const muted = new Set<string>(), urls: string[] = [];
 let busy = false, ctx: AudioContext | undefined, player: ReferencePlayer | undefined;
@@ -30,6 +33,7 @@ function update() {
   reveal.disabled = busy || !clips.querySelector("[data-take]");
   palette.disabled = busy || fixed.checked;
   document.querySelector<HTMLButtonElement>("#compare-sound")!.disabled = busy || fixed.checked;
+  document.querySelector<HTMLButtonElement>("#compare-trance")!.disabled = busy || fixed.checked;
   play.textContent = player?.transport.running ? "Stop" : "Play";
   document.querySelectorAll<HTMLButtonElement>("#seeds button").forEach(button => button.setAttribute("aria-pressed", String(parseSeed(seed.value) === Number(button.dataset.seed))));
   history.replaceState(null, "", `${location.pathname}?${new URLSearchParams({ s: seed.value, take: take.value, palette: palette.value, fixed: fixed.checked ? "1" : "0" })}`);
@@ -38,7 +42,8 @@ function display() {
   const id = audition.composition.identity;
   const key = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"][fixed.checked ? 4 : id.key];
   const character = audition.character;
-  const instruments = character ? `${character.kick.model} kick · ${id.wave} acid${take.value === "new" && character.arp ? " · arpeggio" : ""}${take.value === "new" && character.pad ? " · chords" : ""}` : fixed.checked ? "sawtooth / hard kit" : `${id.wave} / ${id.kit} kit`;
+  const harmony = audition.trance && { wash: "sustained chords", gated: "gated chords", stabs: "chord stabs" }[audition.trance.harmony];
+  const instruments = audition.trance ? `Acid trance · ${character!.kick.model} kick${take.value === "new" ? ` · ${audition.trance.motion} lead · ${harmony}` : " · previous arrangement"}` : character ? `${character.kick.model} kick · ${id.wave} acid${take.value === "new" && character.arp ? " · arpeggio" : ""}${take.value === "new" && character.pad ? " · chords" : ""}` : fixed.checked ? "sawtooth / hard kit" : `${id.wave} / ${id.kit} kit`;
   document.querySelector("#identity")!.textContent = `${audition.bpm} BPM · ${key} · ${take.value === "new" ? id.mode : "Minor blues"} · ${instruments}`;
   const form = document.querySelector("#form")!; form.textContent = "";
   if (take.value === "new") for (const section of audition.composition.sections) {
@@ -60,7 +65,10 @@ function display() {
   }
   const parts = document.querySelector("#parts")!; parts.textContent = "";
   for (const part of PARTS.filter(part => audition.events.some(bar => bar.some(e => e.laneId === part)))) {
-    const button = document.createElement("button"); button.textContent = part; button.setAttribute("aria-pressed", String(!muted.has(part)));
+    const instrument = audition.trance?.voices[part as keyof typeof audition.trance.voices];
+    const roles: Partial<Record<typeof part, string>> = { arp: "Lead", pad: "Chords", answer: "Reply", pulse: "Percussion", texture: "Transition" };
+    const button = document.createElement("button"); button.textContent = instrument ? `${roles[part]} · ${TRANCE_VOICES[instrument].label}` : part;
+    button.dataset.part = part; button.setAttribute("aria-pressed", String(!muted.has(part)));
     button.addEventListener("click", () => {
       if (muted.has(part)) muted.delete(part); else muted.add(part);
       button.setAttribute("aria-pressed", String(!muted.has(part)));
@@ -88,8 +96,8 @@ async function change() {
   status.textContent = "Ready. Starts at bar 1.";
   if (resume) await start();
 }
-for (const value of [...AUDITION_SEEDS, 30]) {
-  const button = document.createElement("button"); button.textContent = value === 30 ? "0000001e" : String(value); button.dataset.seed = String(value);
+for (const value of [...AUDITION_SEEDS, 30, 0x9d2371fe]) {
+  const button = document.createElement("button"); button.textContent = value > 6 ? formatSeed(value) : String(value); button.dataset.seed = String(value);
   button.addEventListener("click", () => { seed.value = formatSeed(value); take.value = "new"; void change(); });
   document.querySelector("#seeds")!.append(button);
 }
@@ -105,12 +113,15 @@ document.querySelector("#link")!.addEventListener("click", () => {
 reveal.addEventListener("click", () => {
   clips.querySelectorAll<HTMLElement>("[data-take]").forEach(title => { title.textContent += ` — ${title.dataset.take}`; delete title.dataset.take; }); update();
 });
-function compare(kind: "composer" | "sound") {
+function compare(kind: "composer" | "sound" | "trance") {
   stop(); clearClips(); busy = true; update();
   void (async () => {
     const versions: { take: Take; palette: Palette; label: string; file: string }[] = kind === "composer" ? [
       { take: "previous", palette: palette.value as Palette, label: "Previous composer", file: "previous" },
       { take: "new", palette: palette.value as Palette, label: "New composer", file: "new" },
+    ] : kind === "trance" ? [
+      { take: take.value as Take, palette: "character", label: "Character", file: "character" },
+      { take: take.value as Take, palette: "trance-1", label: "Acid trance", file: "trance-1" },
     ] : [
       { take: take.value as Take, palette: "original", label: "Original sound", file: "original" },
       { take: take.value as Take, palette: "character", label: "Character sound", file: "character" },
@@ -142,6 +153,7 @@ function compare(kind: "composer" | "sound") {
 }
 document.querySelector("#compare")!.addEventListener("click", () => compare("composer"));
 document.querySelector("#compare-sound")!.addEventListener("click", () => compare("sound"));
+document.querySelector("#compare-trance")!.addEventListener("click", () => compare("trance"));
 const monitor = setInterval(() => {
   if (player?.error) { const error = player.error; stop(); status.textContent = error; }
   else if (player?.transport.running && !busy) {

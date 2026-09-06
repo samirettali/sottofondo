@@ -6,15 +6,22 @@ import { createSongPlan } from "../src/composer/plan.ts";
 import { composeSongBar } from "../src/composer/compose.ts";
 import { KITS } from "../src/composer/catalog.ts";
 import { arrangeCharacter, createCharacter, type Character } from "../src/composer/character.ts";
+import { arrangeTrance, createTrance, tranceRegister, tranceSound, type TranceDesign } from "../src/composer/trance.ts";
 import type { ReferenceEvent } from "./acid-reference-score.ts";
 import type { AuditionScore } from "./acid-reference-player.ts";
 
 export type Take = "new" | "previous";
-export type Palette = "character" | "original";
-export const PARTS: readonly Part[] = ["acid", "kick", "clap", "hat", "open", "perc", "answer", "sub", "arp", "pad"];
+export type Palette = "character" | "original" | "trance-1";
+export function readPalette(value: string | null, fallback: Palette = "character"): Palette {
+  if (value === null) return fallback;
+  if (value === "character" || value === "original" || value === "trance-1") return value;
+  throw new Error(`Unknown sound version: ${value}`);
+}
+export const PARTS: readonly Part[] = ["acid", "kick", "clap", "hat", "open", "perc", "answer", "sub", "arp", "pad", "pulse", "texture"];
 export interface Audition extends AuditionScore {
   composition: Composition; take: Take; fixed: boolean; events: readonly (readonly ReferenceEvent[])[];
   character?: Character;
+  trance?: TranceDesign;
 }
 const DRUMS = { kick: "bd", clap: "cp", hat: "hh", open: "oh", perc: "perc" } as const;
 
@@ -86,24 +93,31 @@ function characterSound(c: Composition, design: Character, part: Part, bar: numb
 
 export function createAudition(seed: number, take: Take = "new", fixed = false, muted: ReadonlySet<string> = new Set(), palette: Palette = "character"): Audition {
   const composition = createComposition(seed), id = composition.identity;
-  const character = !fixed && palette === "character" ? createCharacter(composition) : undefined;
+  readPalette(palette);
+  const character = !fixed && palette !== "original" ? createCharacter(composition) : undefined;
+  const trance = !fixed && palette === "trance-1" ? createTrance(composition) : undefined;
   const kit = KITS[fixed ? "hard" : id.kit];
   const localSamples: Record<string, string> = { cp: kit.backbeat, hh: kit.hat, oh: kit.open, perc: kit.perc };
   if (!character) localSamples.bd = kit.kick;
-  const bpm = fixed ? 138 : id.bpm, key = fixed ? 4 : id.key;
+  if (trance && take === "new") delete localSamples.perc;
+  const bpm = fixed ? 138 : trance?.bpm ?? id.bpm, key = fixed ? 4 : id.key;
   const register = id.sub ? 48 : 36;
+  const controls = (part: Part, bar: number, tick: number, velocity: number): ReferenceEvent["sound"] => {
+    const base = character ? characterSound(composition, character, part, bar, tick, velocity) : sound(composition, part, bar, tick, velocity, fixed);
+    return trance ? tranceSound(composition, character!, trance, part, bar, tick, velocity, base) : base;
+  };
   const event = (part: Part, bar: number, tick: number, gate: number, velocity: number, midi?: number): ReferenceEvent => ({
     laneId: part, kind: Object.hasOwn(DRUMS, part) ? "drum" : "bass",
     begin: bar + tick / TICKS, end: bar + (tick + gate) / TICKS,
     velocity: velocity / 100, accent: velocity >= 85,
     ...(midi === undefined ? {} : { midi }),
-    sound: { ...(character ? characterSound(composition, character, part, bar, tick, velocity) : sound(composition, part, bar, tick, velocity, fixed)), ...(midi === undefined ? {} : { note: midi }) },
+    sound: { ...controls(part, bar, tick, velocity), ...(midi === undefined ? {} : { note: midi }) },
   });
   const old = take === "previous" ? createSongPlan("acid", seed, 2) : undefined;
-  const arranged = character ? arrangeCharacter(composition, character) : composition.bars;
+  const arranged = trance ? arrangeTrance(composition, character!, trance) : character ? arrangeCharacter(composition, character) : composition.bars;
   const events = arranged.map((notes, bar) => {
     if (!old) return notes.map(n => event(n.part, bar, n.tick, n.gate, n.velocity,
-      Object.hasOwn(DRUMS, n.part) ? undefined : (n.part === "acid" ? register : n.part === "sub" ? 24 : n.part === "pad" ? 48 : 60) + key + semitone(id.scale, n.degree)));
+      Object.hasOwn(DRUMS, n.part) ? undefined : (n.part === "acid" ? register : n.part === "sub" ? 24 : trance ? tranceRegister(n.part) : n.part === "pad" ? 48 : 60) + key + semitone(id.scale, n.degree)));
     const mapping: Record<string, Part> = { bass: "acid", lead: "answer", support: "answer", answer: "answer", kick: "kick", backbeat: "clap", hat: "hat", open: "open", perc: "perc" };
     return composeSongBar(old, bar).flatMap(n => {
       const part = mapping[n.laneId];
@@ -128,5 +142,5 @@ export function createAudition(seed: number, take: Take = "new", fixed = false, 
     }
     return haps.sort((a, b) => +a.whole.begin - +b.whole.begin || (a.value.laneId < b.value.laneId ? -1 : a.value.laneId > b.value.laneId ? 1 : 0));
   });
-  return { composition, take, fixed, events, bpm, pattern, localSamples, ...(character ? { character, kickDesign: character.kick } : {}) };
+  return { composition, take, fixed, events, bpm, pattern, localSamples, ...(character ? { character, kickDesign: character.kick } : {}), ...(trance ? { trance } : {}) };
 }
