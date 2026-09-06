@@ -140,6 +140,10 @@ and each of them wins against a distant distractor.
   https://www.youtube.com/watch?v=yUXmO5XmymU (`~/colin.webm`). The expanded
   ensemble still lacks the desired character. Creator evidence, bounded audio
   analysis and proposed listening experiments: `docs/ACID-COMPOSITION-RESEARCH.html`.
+- The next listening experiment keeps the liked Character scores fixed and
+  compares Current voice with versioned mono execution and three drive treatments.
+  Separate/linked mono takes share one graph; old links still use Current voice.
+  Scope, A/B controls and validation: `docs/ACID-VOICE.md`. Human acceptance is pending.
 
 - The user requires composition to run entirely locally, without generation APIs.
   Different seeds should create distinct musical identities; small variations of

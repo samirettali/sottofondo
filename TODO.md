@@ -28,6 +28,11 @@
 - [x] Research acid composition against the confirmed Blade rave track and supplied
       Colin McRae Rally 2 theme; separate creator evidence, audio inference and code
       limitations in `docs/ACID-COMPOSITION-RESEARCH.html`
+- [x] Add a versioned mono acid articulation and drive comparison on the liked
+      Character seeds, preserving their notes and accompaniment; verify local
+      playback, full A/B exports and repeated arrangements in `docs/ACID-VOICE.md`
+- [ ] Listen to separate/linked acid notes and the three drive treatments before
+      choosing execution changes for production
 - [ ] Compare the new local composer's musical quality and seed identities through
       human listening before production adoption; see `docs/LOCAL-COMPOSER.md`
 - [ ] Run the local-composer score checks in Firefox and WebKit with their required

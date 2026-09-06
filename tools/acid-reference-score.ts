@@ -3,6 +3,7 @@ import { Hap } from "@strudel/core/hap.mjs";
 import { TimeSpan } from "@strudel/core/timespan.mjs";
 import { createSongPlan, degreeMidi, draw } from "../src/composer/plan.ts";
 import type { ScoreEvent } from "../src/strudel/compose.ts";
+import type { AcidChain } from "../src/audio/acid-mono.ts";
 
 export type ReferenceVariant = "original" | "biquad" | "303" | "generated" | "variation";
 export const VARIANTS: Record<ReferenceVariant, string> = {
@@ -18,7 +19,7 @@ export const PHRASES: readonly (readonly (number | null)[])[] = [
   [0,null,6,0,1,null,0,3,2,1,null,6,5,null,1,0],
   [0,6,0,null,3,2,1,0,null,5,6,null,7,6,5,0],
 ];
-export interface ReferenceEvent extends ScoreEvent { sound: Record<string, string | number | number[]>; }
+export interface ReferenceEvent extends ScoreEvent { sound: Record<string, string | number | number[]>; acidChain?: AcidChain; }
 
 /** Swap two inner notes in each of two bars. Anchors, rests, endings, pitch pool,
  * synth, drums and automation stay fixed. This is an audition of one hypothesis,

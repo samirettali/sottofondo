@@ -3,10 +3,14 @@ import { AUDITION_SEEDS } from "../src/composer/procedural.ts";
 import { ReferencePlayer } from "./acid-reference-player.ts";
 import { createAudition, PARTS, readPalette, type Palette, type Take } from "./procedural-score.ts";
 import { TRANCE_VOICES } from "../src/composer/trance-voices.ts";
+import { readAcidSettings, type AcidVoice, type AcidDrive } from "../src/audio/acid-mono.ts";
+import { withAcidVoice } from "./acid-voice-score.ts";
 
 const seed = document.querySelector<HTMLInputElement>("#seed")!;
 const take = document.querySelector<HTMLSelectElement>("#take")!;
 const palette = document.querySelector<HTMLSelectElement>("#palette")!;
+const acidVoice = document.querySelector<HTMLSelectElement>("#acid-voice")!;
+const acidDrive = document.querySelector<HTMLSelectElement>("#acid-drive")!;
 const fixed = document.querySelector<HTMLInputElement>("#fixed")!;
 const play = document.querySelector<HTMLButtonElement>("#play")!;
 const status = document.querySelector<HTMLElement>("#status")!;
@@ -19,12 +23,15 @@ if (params.get("take") === "previous") take.value = "previous";
 try { palette.value = readPalette(params.get("palette"), params.has("s") || params.has("take") ? "character" : "trance-1"); }
 catch (error) { document.querySelector("main")!.textContent = String(error); throw error; }
 fixed.checked = params.get("fixed") === "1";
+const initialAcid = readAcidSettings(params.get("voice"), params.get("drive"));
+acidVoice.value = initialAcid.voice; acidDrive.value = initialAcid.drive;
 const muted = new Set<string>(), urls: string[] = [];
 let busy = false, ctx: AudioContext | undefined, player: ReferencePlayer | undefined;
 let audition = makeAudition();
 function makeAudition() {
   const begin = performance.now();
-  const result = createAudition(parseSeed(seed.value), take.value as Take, fixed.checked, muted, palette.value as Palette);
+  const base = createAudition(parseSeed(seed.value), take.value as Take, fixed.checked, muted, palette.value as Palette);
+  const result = withAcidVoice(base, readAcidSettings(acidVoice.value, acidDrive.value), muted);
   Object.assign(window, { proceduralGenerationMs: performance.now() - begin, proceduralScore: result });
   return result;
 }
@@ -32,11 +39,14 @@ function update() {
   document.querySelectorAll<HTMLInputElement | HTMLButtonElement | HTMLSelectElement>("input,button,select").forEach(el => { el.disabled = busy; });
   reveal.disabled = busy || !clips.querySelector("[data-take]");
   palette.disabled = busy || fixed.checked;
+  acidDrive.disabled = busy || acidVoice.value === "current";
   document.querySelector<HTMLButtonElement>("#compare-sound")!.disabled = busy || fixed.checked;
   document.querySelector<HTMLButtonElement>("#compare-trance")!.disabled = busy || fixed.checked;
   play.textContent = player?.transport.running ? "Stop" : "Play";
   document.querySelectorAll<HTMLButtonElement>("#seeds button").forEach(button => button.setAttribute("aria-pressed", String(parseSeed(seed.value) === Number(button.dataset.seed))));
-  history.replaceState(null, "", `${location.pathname}?${new URLSearchParams({ s: seed.value, take: take.value, palette: palette.value, fixed: fixed.checked ? "1" : "0" })}`);
+  const query = new URLSearchParams({ s: seed.value, take: take.value, palette: palette.value, fixed: fixed.checked ? "1" : "0" });
+  if (acidVoice.value !== "current" || acidDrive.value !== "clean") { query.set("voice", acidVoice.value); query.set("drive", acidDrive.value); }
+  history.replaceState(null, "", `${location.pathname}?${query}`);
 }
 function display() {
   const id = audition.composition.identity;
@@ -105,6 +115,8 @@ seed.addEventListener("change", () => { void change(); });
 take.addEventListener("change", () => { void change(); });
 palette.addEventListener("change", () => { void change(); });
 fixed.addEventListener("change", () => { void change(); });
+acidVoice.addEventListener("change", () => { void change(); });
+acidDrive.addEventListener("change", () => { void change(); });
 play.addEventListener("click", () => { if (player?.transport.running) { stop(); status.textContent = "Stopped."; } else void start(); });
 document.querySelector("#next")!.addEventListener("click", () => { seed.value = formatSeed((parseSeed(seed.value) + 1) >>> 0); take.value = "new"; void change(); });
 document.querySelector("#link")!.addEventListener("click", () => {
@@ -113,10 +125,13 @@ document.querySelector("#link")!.addEventListener("click", () => {
 reveal.addEventListener("click", () => {
   clips.querySelectorAll<HTMLElement>("[data-take]").forEach(title => { title.textContent += ` — ${title.dataset.take}`; delete title.dataset.take; }); update();
 });
-function compare(kind: "composer" | "sound" | "trance") {
+function compare(kind: "composer" | "sound" | "trance" | "articulation") {
   stop(); clearClips(); busy = true; update();
   void (async () => {
-    const versions: { take: Take; palette: Palette; label: string; file: string }[] = kind === "composer" ? [
+    const versions: { take: Take; palette: Palette; label: string; file: string; voice?: AcidVoice; drive?: AcidDrive }[] = kind === "articulation" ? [
+      { take: take.value as Take, palette: palette.value as Palette, voice: "mono-step-1", drive: acidDrive.value as AcidDrive, label: `Mono · separate notes · ${acidDrive.value}`, file: `mono-step-1-${acidDrive.value}` },
+      { take: take.value as Take, palette: palette.value as Palette, voice: "mono-link-1", drive: acidDrive.value as AcidDrive, label: `Mono · linked notes · ${acidDrive.value}`, file: `mono-link-1-${acidDrive.value}` },
+    ] : kind === "composer" ? [
       { take: "previous", palette: palette.value as Palette, label: "Previous composer", file: "previous" },
       { take: "new", palette: palette.value as Palette, label: "New composer", file: "new" },
     ] : kind === "trance" ? [
@@ -130,6 +145,9 @@ function compare(kind: "composer" | "sound" | "trance") {
     for (const [index, version] of versions.entries()) {
       status.textContent = `Rendering ${index + 1}/2…`;
       const query = new URLSearchParams({ procedural: version.take, palette: version.palette, s: seed.value, fixed: fixed.checked ? "1" : "0", begin: "0", end: "32" });
+      // Existing version comparisons retain their original execution. The new
+      // experiment compares articulation through one mono graph and drive setting.
+      if (version.voice) { query.set("voice", version.voice); query.set("drive", version.drive!); }
       const frame = document.createElement("iframe");
       const result = await new Promise<{ bytes: ArrayBuffer; peak: number; rms: number }>((resolve, reject) => {
         const cleanup = () => { clearTimeout(timer); window.removeEventListener("message", receive); frame.remove(); };
@@ -154,6 +172,7 @@ function compare(kind: "composer" | "sound" | "trance") {
 document.querySelector("#compare")!.addEventListener("click", () => compare("composer"));
 document.querySelector("#compare-sound")!.addEventListener("click", () => compare("sound"));
 document.querySelector("#compare-trance")!.addEventListener("click", () => compare("trance"));
+document.querySelector("#compare-articulation")!.addEventListener("click", () => compare("articulation"));
 const monitor = setInterval(() => {
   if (player?.error) { const error = player.error; stop(); status.textContent = error; }
   else if (player?.transport.running && !busy) {

@@ -7,6 +7,7 @@ declare module "superdough/superdoughoutput.mjs" {
   export class Orbit {
     constructor(ctx: BaseAudioContext);
     output: GainNode;
+    connectToOutput(node: AudioNode): void;
     disconnect(): void;
     duck(time: number, onset: number, attack: number, depth: number): void;
   }

@@ -6,6 +6,7 @@ import { REFERENCE_BPM, referencePattern, type ReferenceEvent, type ReferenceVar
 import type { Pattern } from "@strudel/core";
 import { playCharacterKick, type KickVoice } from "../src/audio/character-kick.ts";
 import type { KickDesign } from "../src/composer/character.ts";
+import { createAcidMono, type AcidMono, type AcidSettings } from "../src/audio/acid-mono.ts";
 
 export interface AuditionScore {
   bpm: number; pattern: Pattern<ReferenceEvent>;
@@ -13,6 +14,8 @@ export interface AuditionScore {
    * still requests its original TR-909 samples when this is absent. */
   localSamples?: Readonly<Record<string, string>>;
   kickDesign?: KickDesign;
+  acidSettings?: AcidSettings;
+  acidWave?: "sawtooth" | "square";
 }
 
 // The five index-zero files resolved by Strudel's RolandTR909 bank. Preview only:
@@ -47,6 +50,7 @@ export class ReferencePlayer {
   private readonly output: StereoOutput;
   private readonly volume: GainNode;
   private bass: ThreeOh | undefined;
+  private acidMono: AcidMono | undefined;
   private readonly kicks = new Set<KickVoice>();
   private readonly score: AuditionScore;
   private disposed = false;
@@ -86,6 +90,11 @@ export class ReferencePlayer {
     }
   }
   private createBass(): void {
+    if (this.score.acidSettings && this.score.acidSettings.voice !== "current") {
+      const orbit = this.output.getOrbit(1);
+      const input = this.ctx.createGain(); orbit.connectToOutput(input);
+      this.acidMono = createAcidMono(this.ctx, input, this.score.acidSettings.drive, this.score.acidWave ?? "sawtooth");
+    }
     if (this.variant === "303") this.bass = createThreeOh(this.ctx, this.volume, "sawtooth", { cutoff: 180, resonance: 7, envMod: 3600, decay: .12 });
   }
   start(): void {
@@ -96,10 +105,12 @@ export class ReferencePlayer {
     this.transport.stop(); this.volume.gain.value = 0;
     this.kicks.forEach(voice => voice.dispose()); this.kicks.clear();
     this.bass?.dispose(); this.bass = undefined; this.output.reset();
+    this.acidMono?.dispose(); this.acidMono = undefined;
   }
   dispose(): void { this.disposed = true; this.stop(); this.output.dispose(); this.volume.disconnect(); this.analyser.disconnect(); }
   private async play(event: ReferenceEvent, time: number, duration: number, cps: number): Promise<void> {
     if (this.disposed) return;
+    if (event.acidChain && this.acidMono) { this.acidMono.play(event.acidChain, time, cps); return; }
     if (event.sound.s === "character_kick") {
       if (!this.score.kickDesign) throw new Error("Missing kick design");
       const design = this.score.kickDesign;

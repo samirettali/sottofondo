@@ -8,6 +8,8 @@ import { REFERENCE_BPM, VARIANTS, type ReferenceVariant } from "./acid-reference
 import { createStudy, STUDIES, studyPattern, type StudyId } from "./acid-studies-score.ts";
 import { performedPattern } from "./acid-performance-score.ts";
 import { createAudition, readPalette } from "./procedural-score.ts";
+import { readAcidSettings } from "../src/audio/acid-mono.ts";
+import { withAcidVoice } from "./acid-voice-score.ts";
 
 /** Each render has a fresh realm: Superdough's node pools are process-global. */
 async function render(): Promise<void> {
@@ -15,7 +17,8 @@ async function render(): Promise<void> {
   const r = readRecipe(params);
   const procedural = params.get("procedural");
   if (procedural && procedural !== "new" && procedural !== "previous") throw new Error("Unknown procedural take");
-  const audition = procedural ? createAudition(r.seed, procedural as "new" | "previous", params.get("fixed") === "1", new Set(), readPalette(params.get("palette"))) : undefined;
+  const baseAudition = procedural ? createAudition(r.seed, procedural as "new" | "previous", params.get("fixed") === "1", new Set(), readPalette(params.get("palette"))) : undefined;
+  const audition = baseAudition ? withAcidVoice(baseAudition, readAcidSettings(params.get("voice"), params.get("drive"))) : undefined;
   const reference = params.get("reference");
   if (reference && !Object.hasOwn(VARIANTS, reference)) throw new Error("Unknown reference take");
   const sketchId = params.get("sketch");
