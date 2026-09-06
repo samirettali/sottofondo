@@ -135,6 +135,12 @@ and each of them wins against a distant distractor.
 
 ## Composer v2
 
+- The user confirmed Blade's rave track as New Order's Confusion (Pump Panel
+  Reconstruction Mix), and supplied Colin McRae Rally 2's original theme at
+  https://www.youtube.com/watch?v=yUXmO5XmymU (`~/colin.webm`). The expanded
+  ensemble still lacks the desired character. Creator evidence, bounded audio
+  analysis and proposed listening experiments: `docs/ACID-COMPOSITION-RESEARCH.html`.
+
 - The user requires composition to run entirely locally, without generation APIs.
   Different seeds should create distinct musical identities; small variations of
   authored studies do not meet the goal. The studies remain listening references,

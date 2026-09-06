@@ -25,6 +25,9 @@
       regular cymbal roles, shared arp/pad harmony and a sound-update A/B export
 - [x] Add the versioned acid-trance ensemble with 24 local synth patches, different
       lead/chord/percussion writing, and preserved Character seeds 0000001e/9d2371fe
+- [x] Research acid composition against the confirmed Blade rave track and supplied
+      Colin McRae Rally 2 theme; separate creator evidence, audio inference and code
+      limitations in `docs/ACID-COMPOSITION-RESEARCH.html`
 - [ ] Compare the new local composer's musical quality and seed identities through
       human listening before production adoption; see `docs/LOCAL-COMPOSER.md`
 - [ ] Run the local-composer score checks in Firefox and WebKit with their required
